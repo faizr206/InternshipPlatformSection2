@@ -17,6 +17,10 @@ def test_opportunity_list_only_shows_published_open(client):
     assert "OP-034" not in ids and "OP-035" not in ids
 
 
+def test_skills_vocabulary(client):
+    assert client.get("/api/skills").json()["SK-JIRA-01"] == "Jira"
+
+
 def test_search_and_no_results(client):
     assert [o["opportunity_id"] for o in client.get("/api/opportunities?q=emirates").json()] == ["OP-028"]
     assert client.get("/api/opportunities?q=zzz").json() == []

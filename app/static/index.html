@@ -3,43 +3,125 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Coop Platform – P04/P05 Skeleton</title>
+<title>Coop Matching</title>
 <style>
-  body { font-family: sans-serif; max-width: 900px; margin: 1rem auto; padding: 0 1rem; }
-  .banner { background: #fff3cd; padding: .5rem; border: 1px solid #e0c46c; }
-  .card { border: 1px solid #ccc; padding: .5rem; margin: .5rem 0; }
-  .error { color: #b00020; }
-  .muted { color: #666; }
-  table { border-collapse: collapse; } td, th { border: 1px solid #ccc; padding: .25rem .5rem; }
+  :root {
+    --bg: #f5f6f8; --surface: #fff; --border: #e3e6eb; --text: #1d2330; --muted: #6b7280;
+    --accent: #1f6f50; --accent-soft: #e5f2ec;
+    --ok: #1f7a4d; --ok-soft: #e3f4ea; --warn: #9a6400; --warn-soft: #fdf1d8;
+    --bad: #b42318; --bad-soft: #fde8e6; --info-soft: #eef1f5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--accent); color: #fff; padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 18px; margin: 0; }
+  header select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 0; }
+  .demo { background: var(--warn-soft); color: var(--warn); padding: 8px 24px; font-size: 13px; border-bottom: 1px solid #f1dfb0; }
+  main { display: grid; grid-template-columns: 320px 1fr; gap: 20px; padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 820px) { main { grid-template-columns: 1fr; padding: 16px; } }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  aside .panel { position: sticky; top: 16px; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 12.5px; background: var(--info-soft); white-space: nowrap; }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .chip.accent { background: var(--accent-soft); color: var(--accent); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .tabs button { font: inherit; background: none; border: 0; padding: 8px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .btn { font: inherit; border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  .btn.secondary { background: #fff; color: var(--accent); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .toolbar input, .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  .card.conflict { border-left: 4px solid var(--bad); }
+  .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .card-head .title { font-weight: 600; font-size: 15.5px; }
+  .score { min-width: 56px; text-align: center; border-radius: 8px; padding: 4px 8px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 18px; line-height: 1.1; }
+  .score small { display: block; font-size: 10px; font-weight: 500; text-transform: uppercase; }
+  .why { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-top: 10px; }
+  @media (max-width: 600px) { .why { grid-template-columns: 1fr; } }
+  .why ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .why h4 { margin: 0 0 4px; font-size: 13px; }
+  .meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+  .empty { padding: 24px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; }
+  .msg { font-size: 13.5px; }
+  .msg.error { color: var(--bad); }
+  .msg.success { color: var(--ok); }
+  dialog { border: 0; border-radius: 12px; padding: 20px; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  dialog::backdrop { background: rgba(0,0,0,.3); }
+  .legend { margin-top: 14px; font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
-<p class="banner">Demo only: synthetic data, simulated student selection (no login),
-rules-based matching <strong>rules-v1</strong> (no AI yet). Submitting an application does not create a placement.</p>
+<header>
+  <h1>Coop Platform · Opportunity Matching</h1>
+  <label>Viewing as student (simulated):
+    <select id="student" aria-label="Student"></select>
+  </label>
+</header>
+<div class="demo">Demo only: synthetic data, simulated student selection (no login), rules-based matching (no AI yet).
+Submitting an application does not create a placement.</div>
 
-<label>Student (simulated): <select id="student"></select></label>
-<span id="profile" class="muted"></span>
+<main>
+  <aside>
+    <section class="panel" id="profile" aria-label="Student profile"></section>
+  </aside>
 
-<h2>1. Recommendations</h2>
-<button id="recommend">Get recommendations</button>
-<div id="recs"></div>
+  <section>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="recs" aria-selected="true">Recommendations</button>
+      <button role="tab" data-tab="browse" aria-selected="false">Browse opportunities</button>
+      <button role="tab" data-tab="apps" aria-selected="false">My applications <span id="appCount"></span></button>
+    </div>
 
-<h2>2. Opportunities</h2>
-<label>Search <input id="q" placeholder="title or employer"></label>
-<label>Work mode
-  <select id="mode"><option value="">any</option><option>on-site</option><option>hybrid</option><option>remote</option></select>
-</label>
-<button id="search">Search</button>
-<div id="opps"></div>
+    <div id="tab-recs">
+      <div class="toolbar">
+        <button class="btn" id="recommend">Run matching</button>
+        <span class="muted" id="recInfo"></span>
+      </div>
+      <div id="recs"></div>
+    </div>
 
-<h2>3. Opportunity detail</h2>
-<div id="detail" class="muted">Select an opportunity.</div>
+    <div id="tab-browse" hidden>
+      <div class="toolbar">
+        <input id="q" placeholder="Search title or employer" aria-label="Search">
+        <select id="mode" aria-label="Work mode">
+          <option value="">Any work mode</option><option>on-site</option><option>hybrid</option><option>remote</option>
+        </select>
+        <button class="btn secondary" id="search">Search</button>
+      </div>
+      <div id="opps"></div>
+    </div>
 
-<h2>4. My applications</h2>
-<div id="apps"></div>
+    <div id="tab-apps" hidden><div id="apps"></div></div>
+  </section>
+</main>
+
+<dialog id="confirm">
+  <h2>Submit application?</h2>
+  <p id="confirmText"></p>
+  <p class="muted">This creates an application with status Submitted. It does not approve a placement.</p>
+  <div class="actions">
+    <button class="btn" id="confirmYes">Submit</button>
+    <button class="btn secondary" id="confirmNo">Cancel</button>
+  </div>
+</dialog>
 
 <script>
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const state = { skills: {}, student: null, opps: {}, apps: [] };
+const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
 
 async function api(path, opts) {
@@ -48,80 +130,199 @@ async function api(path, opts) {
   if (!res.ok) throw new Error(body.detail || res.statusText);
   return body;
 }
-const list = (title, items) => items.length ? `<b>${title}:</b><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>` : "";
 
-async function loadStudents() {
-  const students = await api("/api/students");
-  $("student").innerHTML = students.map(s => `<option value="${s.student_id}">${s.display_name} (${s.student_id})</option>`).join("");
-  await onStudentChange();
+async function opp(id) {
+  if (!state.opps[id]) state.opps[id] = await api(`/api/opportunities/${id}`);
+  return state.opps[id];
 }
 
-async function onStudentChange() {
-  const s = await api(`/api/students/${studentId()}`);
-  $("profile").textContent = `profile v${s.profile_version}`;
-  await Promise.all([showRecs(await api(`/api/students/${studentId()}/recommendations`)), loadApps()]);
+// ---------- Profile ----------
+function renderProfile(s) {
+  const skills = s.skills || [];
+  const avail = s.availability_start && s.availability_end
+    ? `${esc(s.availability_start)} → ${esc(s.availability_end)}`
+    : `<span class="chip warn">Not provided</span>`;
+  $("profile").innerHTML = `
+    <h2>${esc(s.display_name)}</h2>
+    <div class="muted">${esc(s.student_id)} · profile version ${esc(s.profile_version)}</div>
+    <h3>Interests</h3>
+    <div class="chips">${(s.interests || []).length
+      ? s.interests.map(i => `<span class="chip accent">${esc(i)}</span>`).join("")
+      : `<span class="chip warn">Not provided</span>`}</div>
+    <h3>Availability</h3>
+    <div>${avail}</div>
+    <h3>Skills</h3>
+    <div class="chips">${skills.length
+      ? skills.map(sk => sk.evidence_status === "reviewed"
+          ? `<span class="chip ok" title="Supported by reviewed evidence">✓ ${esc(skillName(sk.skill_id))}</span>`
+          : `<span class="chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
+      : `<span class="chip warn">None listed</span>`}</div>
+    <p class="legend">Read-only fixture standing in for the P01 profile. ✓ means reviewed evidence;
+      self-declared skills are not treated as verified.</p>`;
 }
 
-function showRecs(recs) {
-  $("recs").innerHTML = recs.length ? recs.map(r => `
-    <div class="card">
-      <b>${r.opportunity_id}</b> v${r.opportunity_version} — score ${r.score}
-      ${r.compatible ? "" : '<span class="error">(mandatory conflict)</span>'}
-      <button onclick="showDetail('${r.opportunity_id}')">Open opportunity</button>
-      ${list("Reasons", r.reasons)}${list("Gaps", r.gaps)}${list("Unknowns", r.unknowns)}
-      <div class="muted">${r.recommendation_id} · ${r.method_version} · profile v${r.profile_version} · ${r.created_at}</div>
-    </div>`).join("") : '<p class="muted">No recommendations yet.</p>';
-}
-
-async function searchOpps() {
-  const params = new URLSearchParams({ q: $("q").value, work_mode: $("mode").value });
-  const opps = await api(`/api/opportunities?${params}`);
-  $("opps").innerHTML = opps.length ? opps.map(o => `
-    <div class="card"><b>${o.title}</b> — ${o.employer_name}, ${o.location} (${o.work_mode})
-      <button onclick="showDetail('${o.opportunity_id}')">Open</button></div>`).join("")
-    : '<p class="muted">No opportunities match your search.</p>';
-}
-
-async function showDetail(id) {
-  const o = await api(`/api/opportunities/${id}`);
-  $("detail").className = "";
-  $("detail").innerHTML = `
-    <div class="card">
-      <b>${o.title}</b> (${o.opportunity_id}, version ${o.version})<br>
-      ${o.employer_name} · ${o.location} · ${o.work_mode} · ${o.start_date ?? "dates unknown"} – ${o.end_date ?? ""}<br>
-      Required: ${o.required_skills.join(", ") || "none"} · Desirable: ${o.desirable_skills.join(", ") || "none"}<br>
-      <button onclick="apply('${o.opportunity_id}', '${o.title.replace(/'/g, "")}')">Apply</button>
-      <span id="applyMsg"></span>
+// ---------- Skill chips relative to the student ----------
+function skillChips(o) {
+  const held = Object.fromEntries((state.student.skills || []).map(s => [s.skill_id, s.evidence_status]));
+  const chip = (id, required) => {
+    const name = esc(skillName(id));
+    if (!held[id]) return required ? `<span class="chip bad">✗ ${name}</span>` : `<span class="chip">${name}</span>`;
+    return held[id] === "reviewed" ? `<span class="chip ok">✓ ${name}</span>` : `<span class="chip ok">${name} · self-declared</span>`;
+  };
+  return `
+    <div class="chips" style="margin-top:8px">
+      <span class="muted">Required:</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="muted">none</span>'}
+    </div>
+    <div class="chips" style="margin-top:4px">
+      <span class="muted">Desirable:</span> ${o.desirable_skills.map(id => chip(id, false)).join("") || '<span class="muted">none</span>'}
     </div>`;
 }
 
-async function apply(oppId, title) {
-  if (!confirm(`Submit application for ${$("student").selectedOptions[0].text} to ${title} (${oppId})?\nThis does not create a placement.`)) return;
+function oppSummary(o) {
+  const dates = o.start_date ? `${esc(o.start_date)} → ${esc(o.end_date)}` : "dates not provided";
+  return `<div class="muted">${esc(o.employer_name)} · ${esc(o.location)} · ${esc(o.work_mode)} · ${dates} · sector: ${esc(o.sector)}</div>`;
+}
+
+function applyButton(o) {
+  const existing = state.apps.find(a => a.opportunity_id === o.opportunity_id && a.application_status === "Submitted");
+  if (existing) return `<span class="chip ok">Applied · ${esc(existing.application_id)}</span>`;
+  return `<button class="btn" data-apply="${esc(o.opportunity_id)}">Apply</button>`;
+}
+
+// ---------- Recommendations ----------
+async function renderRecs(recs) {
+  if (!recs.length) {
+    $("recInfo").textContent = "";
+    $("recs").innerHTML = `<div class="empty">No recommendations yet. Click <b>Run matching</b> to score open opportunities against this profile.</div>`;
+    return;
+  }
+  $("recInfo").textContent = `Last run ${recs[0].created_at} · method ${recs[0].method_version} · profile v${recs[0].profile_version}`;
+  const opps = await Promise.all(recs.map(r => opp(r.opportunity_id)));
+  const list = (items, empty) => items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : `<div class="muted">${empty}</div>`;
+  $("recs").innerHTML = recs.map((r, i) => {
+    const o = opps[i];
+    return `
+    <article class="card ${r.compatible ? "" : "conflict"}">
+      <div class="card-head">
+        <div>
+          <div class="title">${esc(o.title)}</div>
+          ${oppSummary(o)}
+          <div class="chips" style="margin-top:6px">
+            ${r.compatible ? `<span class="chip ok">Meets mandatory conditions</span>` : `<span class="chip bad">Mandatory conflict</span>`}
+            ${r.unknowns.length ? `<span class="chip warn">Needs checking</span>` : ""}
+            ${r.gaps.length ? `<span class="chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : ""}
+          </div>
+        </div>
+        <div class="score">${r.score}<small>score</small></div>
+      </div>
+      ${skillChips(o)}
+      <div class="why">
+        <div><h4>Why it matches</h4>${list(r.reasons, "No matching interests or skills")}</div>
+        <div>
+          <h4>Gaps</h4>${list(r.gaps, "No missing required skills")}
+          <h4 style="margin-top:8px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
+        </div>
+      </div>
+      <div class="actions">${applyButton(o)} <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta">
+        <span>${esc(r.recommendation_id)}</span><span>${esc(o.opportunity_id)} v${esc(r.opportunity_version)}</span>
+        <span>profile v${esc(r.profile_version)}</span><span>${esc(r.method_version)}</span>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+// ---------- Browse ----------
+async function searchOpps() {
+  const params = new URLSearchParams({ q: $("q").value, work_mode: $("mode").value });
+  const opps = await api(`/api/opportunities?${params}`);
+  opps.forEach(o => state.opps[o.opportunity_id] = o);
+  $("opps").innerHTML = opps.length ? opps.map(o => `
+    <article class="card">
+      <div class="title" style="font-weight:600">${esc(o.title)}</div>
+      ${oppSummary(o)}
+      ${skillChips(o)}
+      <div class="actions">${applyButton(o)} <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta"><span>${esc(o.opportunity_id)} v${esc(o.version)}</span><span>published · open</span></div>
+    </article>`).join("")
+    : `<div class="empty">No opportunities match your search.</div>`;
+}
+
+// ---------- Applications ----------
+async function loadApps() {
+  state.apps = await api(`/api/students/${studentId()}/applications`);
+  $("appCount").textContent = state.apps.length ? `(${state.apps.length})` : "";
+  if (!state.apps.length) { $("apps").innerHTML = `<div class="empty">No applications yet.</div>`; return; }
+  const opps = await Promise.all(state.apps.map(a => opp(a.opportunity_id)));
+  $("apps").innerHTML = `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Application</th><th>Opportunity</th><th>Profile</th><th>Application status</th><th>Placement status</th><th>Submitted</th></tr>
+    ${state.apps.map((a, i) => `<tr>
+      <td>${esc(a.application_id)}</td>
+      <td>${esc(opps[i].title)}<div class="muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
+      <td>v${esc(a.profile_version)}</td>
+      <td><span class="chip accent">${esc(a.application_status)}</span></td>
+      <td><span class="chip">${esc(a.placement_status)}</span></td>
+      <td class="muted">${esc(a.submitted_at)}</td></tr>`).join("")}
+  </table></div>`;
+}
+
+// ---------- Apply flow ----------
+let pendingApply = null;
+document.addEventListener("click", async e => {
+  const id = e.target.dataset?.apply;
+  if (!id) return;
+  const o = await opp(id);
+  pendingApply = id;
+  $("confirmText").innerHTML = `<b>${esc(state.student.display_name)}</b> (${esc(state.student.student_id)}, profile v${esc(state.student.profile_version)})
+    → <b>${esc(o.title)}</b> at ${esc(o.employer_name)} (${esc(o.opportunity_id)} v${esc(o.version)})`;
+  $("confirm").showModal();
+});
+$("confirmNo").onclick = () => { pendingApply = null; $("confirm").close(); };
+$("confirmYes").onclick = async () => {
+  const id = pendingApply;
+  $("confirm").close();
+  const msgs = () => document.querySelectorAll(`[data-msg="${id}"]`);
   try {
     const a = await api("/api/applications", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ student_id: studentId(), opportunity_id: oppId }),
+      body: JSON.stringify({ student_id: studentId(), opportunity_id: id }),
     });
-    $("applyMsg").innerHTML = `Submitted ${a.application_id}.`;
-    await loadApps();
-  } catch (e) {
-    $("applyMsg").innerHTML = `<span class="error">${e.message}</span>`;
+    await refreshLists();
+    msgs().forEach(m => { m.className = "msg success"; m.textContent = `Submitted as ${a.application_id}`; });
+  } catch (err) {
+    msgs().forEach(m => { m.className = "msg error"; m.textContent = err.message; });
   }
+};
+
+// ---------- Wiring ----------
+async function refreshLists() {
+  await loadApps();
+  await Promise.all([renderRecs(await api(`/api/students/${studentId()}/recommendations`)), searchOpps()]);
 }
 
-async function loadApps() {
-  const apps = await api(`/api/students/${studentId()}/applications`);
-  $("apps").innerHTML = apps.length ? `<table>
-    <tr><th>Application</th><th>Opportunity</th><th>Profile</th><th>Application status</th><th>Placement status</th><th>Submitted</th></tr>
-    ${apps.map(a => `<tr><td>${a.application_id}</td><td>${a.opportunity_id} v${a.opportunity_version}</td><td>v${a.profile_version}</td>
-      <td>${a.application_status}</td><td>${a.placement_status}</td><td>${a.submitted_at}</td></tr>`).join("")}</table>`
-    : '<p class="muted">No applications yet.</p>';
+async function onStudentChange() {
+  state.student = await api(`/api/students/${studentId()}`);
+  renderProfile(state.student);
+  await refreshLists();
 }
 
+document.querySelectorAll(".tabs button").forEach(btn => btn.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(b => {
+    b.setAttribute("aria-selected", b === btn);
+    $(`tab-${b.dataset.tab}`).hidden = b !== btn;
+  });
+});
 $("student").onchange = onStudentChange;
-$("recommend").onclick = async () => showRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+$("recommend").onclick = async () => renderRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
 $("search").onclick = searchOpps;
-loadStudents().then(searchOpps);
+$("q").onkeydown = e => { if (e.key === "Enter") searchOpps(); };
+
+(async () => {
+  state.skills = await api("/api/skills");
+  const students = await api("/api/students");
+  $("student").innerHTML = students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
+  await onStudentChange();
+})();
 </script>
 </body>
 </html>

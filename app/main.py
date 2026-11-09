@@ -54,6 +54,11 @@ def index():
     return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 
+@app.get("/api/skills")
+def list_skills():
+    return db.skill_names()
+
+
 # --- Students (P01 stand-in) ---
 @app.get("/api/students")
 def list_students():
