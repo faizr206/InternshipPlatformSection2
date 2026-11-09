@@ -1,0 +1,72 @@
+[
+  {
+    "student_id": "COOP-B001",
+    "profile_version": 1,
+    "display_name": "Layla Hassan",
+    "interests": ["aviation", "analytics"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-06-30",
+    "skills": [
+      {"skill_id": "SK-SQL-01", "evidence_status": "self_declared"},
+      {"skill_id": "SK-EXCEL-01", "evidence_status": "reviewed"},
+      {"skill_id": "SK-TABLEAU-01", "evidence_status": "self_declared"}
+    ]
+  },
+  {
+    "student_id": "COOP-B002",
+    "profile_version": 1,
+    "display_name": "Omar Saleh",
+    "interests": ["software"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-04-30",
+    "skills": [
+      {"skill_id": "SK-PY-01", "evidence_status": "reviewed"},
+      {"skill_id": "SK-JIRA-01", "evidence_status": "self_declared"}
+    ]
+  },
+  {
+    "student_id": "COOP-B003",
+    "profile_version": 2,
+    "display_name": "Mei Chen",
+    "interests": ["design"],
+    "availability_start": null,
+    "availability_end": null,
+    "skills": [
+      {"skill_id": "SK-FIGMA-01", "evidence_status": "reviewed"}
+    ]
+  },
+  {
+    "student_id": "COOP-B004",
+    "profile_version": 1,
+    "display_name": "Daniel Okafor",
+    "interests": ["marketing", "retail"],
+    "availability_start": "2027-07-01",
+    "availability_end": "2027-12-31",
+    "skills": [
+      {"skill_id": "SK-MKT-01", "evidence_status": "self_declared"},
+      {"skill_id": "SK-COMM-01", "evidence_status": "reviewed"}
+    ]
+  },
+  {
+    "student_id": "COOP-B005",
+    "profile_version": 1,
+    "display_name": "Sara Novak",
+    "interests": ["analytics", "finance"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-12-31",
+    "skills": [
+      {"skill_id": "SK-PY-01", "evidence_status": "self_declared"},
+      {"skill_id": "SK-SQL-01", "evidence_status": "reviewed"},
+      {"skill_id": "SK-JIRA-01", "evidence_status": "reviewed"}
+    ]
+  },
+  {
+    "student_id": "COOP-B006",
+    "profile_version": 1,
+    "display_name": "Ravi Patel",
+    "interests": [],
+    "availability_start": "2027-02-01",
+    "availability_end": "2027-05-31",
+    "skills": []
+  }
+]

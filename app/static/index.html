@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coop Platform – P04/P05 Skeleton</title>
+<style>
+  body { font-family: sans-serif; max-width: 900px; margin: 1rem auto; padding: 0 1rem; }
+  .banner { background: #fff3cd; padding: .5rem; border: 1px solid #e0c46c; }
+  .card { border: 1px solid #ccc; padding: .5rem; margin: .5rem 0; }
+  .error { color: #b00020; }
+  .muted { color: #666; }
+  table { border-collapse: collapse; } td, th { border: 1px solid #ccc; padding: .25rem .5rem; }
+</style>
+</head>
+<body>
+<p class="banner">Demo only: synthetic data, simulated student selection (no login),
+rules-based matching <strong>rules-v1</strong> (no AI yet). Submitting an application does not create a placement.</p>
+
+<label>Student (simulated): <select id="student"></select></label>
+<span id="profile" class="muted"></span>
+
+<h2>1. Recommendations</h2>
+<button id="recommend">Get recommendations</button>
+<div id="recs"></div>
+
+<h2>2. Opportunities</h2>
+<label>Search <input id="q" placeholder="title or employer"></label>
+<label>Work mode
+  <select id="mode"><option value="">any</option><option>on-site</option><option>hybrid</option><option>remote</option></select>
+</label>
+<button id="search">Search</button>
+<div id="opps"></div>
+
+<h2>3. Opportunity detail</h2>
+<div id="detail" class="muted">Select an opportunity.</div>
+
+<h2>4. My applications</h2>
+<div id="apps"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const studentId = () => $("student").value;
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.detail || res.statusText);
+  return body;
+}
+const list = (title, items) => items.length ? `<b>${title}:</b><ul>${items.map(i => `<li>${i}</li>`).join("")}</ul>` : "";
+
+async function loadStudents() {
+  const students = await api("/api/students");
+  $("student").innerHTML = students.map(s => `<option value="${s.student_id}">${s.display_name} (${s.student_id})</option>`).join("");
+  await onStudentChange();
+}
+
+async function onStudentChange() {
+  const s = await api(`/api/students/${studentId()}`);
+  $("profile").textContent = `profile v${s.profile_version}`;
+  await Promise.all([showRecs(await api(`/api/students/${studentId()}/recommendations`)), loadApps()]);
+}
+
+function showRecs(recs) {
+  $("recs").innerHTML = recs.length ? recs.map(r => `
+    <div class="card">
+      <b>${r.opportunity_id}</b> v${r.opportunity_version} — score ${r.score}
+      ${r.compatible ? "" : '<span class="error">(mandatory conflict)</span>'}
+      <button onclick="showDetail('${r.opportunity_id}')">Open opportunity</button>
+      ${list("Reasons", r.reasons)}${list("Gaps", r.gaps)}${list("Unknowns", r.unknowns)}
+      <div class="muted">${r.recommendation_id} · ${r.method_version} · profile v${r.profile_version} · ${r.created_at}</div>
+    </div>`).join("") : '<p class="muted">No recommendations yet.</p>';
+}
+
+async function searchOpps() {
+  const params = new URLSearchParams({ q: $("q").value, work_mode: $("mode").value });
+  const opps = await api(`/api/opportunities?${params}`);
+  $("opps").innerHTML = opps.length ? opps.map(o => `
+    <div class="card"><b>${o.title}</b> — ${o.employer_name}, ${o.location} (${o.work_mode})
+      <button onclick="showDetail('${o.opportunity_id}')">Open</button></div>`).join("")
+    : '<p class="muted">No opportunities match your search.</p>';
+}
+
+async function showDetail(id) {
+  const o = await api(`/api/opportunities/${id}`);
+  $("detail").className = "";
+  $("detail").innerHTML = `
+    <div class="card">
+      <b>${o.title}</b> (${o.opportunity_id}, version ${o.version})<br>
+      ${o.employer_name} · ${o.location} · ${o.work_mode} · ${o.start_date ?? "dates unknown"} – ${o.end_date ?? ""}<br>
+      Required: ${o.required_skills.join(", ") || "none"} · Desirable: ${o.desirable_skills.join(", ") || "none"}<br>
+      <button onclick="apply('${o.opportunity_id}', '${o.title.replace(/'/g, "")}')">Apply</button>
+      <span id="applyMsg"></span>
+    </div>`;
+}
+
+async function apply(oppId, title) {
+  if (!confirm(`Submit application for ${$("student").selectedOptions[0].text} to ${title} (${oppId})?\nThis does not create a placement.`)) return;
+  try {
+    const a = await api("/api/applications", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id: studentId(), opportunity_id: oppId }),
+    });
+    $("applyMsg").innerHTML = `Submitted ${a.application_id}.`;
+    await loadApps();
+  } catch (e) {
+    $("applyMsg").innerHTML = `<span class="error">${e.message}</span>`;
+  }
+}
+
+async function loadApps() {
+  const apps = await api(`/api/students/${studentId()}/applications`);
+  $("apps").innerHTML = apps.length ? `<table>
+    <tr><th>Application</th><th>Opportunity</th><th>Profile</th><th>Application status</th><th>Placement status</th><th>Submitted</th></tr>
+    ${apps.map(a => `<tr><td>${a.application_id}</td><td>${a.opportunity_id} v${a.opportunity_version}</td><td>v${a.profile_version}</td>
+      <td>${a.application_status}</td><td>${a.placement_status}</td><td>${a.submitted_at}</td></tr>`).join("")}</table>`
+    : '<p class="muted">No applications yet.</p>';
+}
+
+$("student").onchange = onStudentChange;
+$("recommend").onclick = async () => showRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+$("search").onclick = searchOpps;
+loadStudents().then(searchOpps);
+</script>
+</body>
+</html>

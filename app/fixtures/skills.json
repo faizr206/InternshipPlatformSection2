@@ -1,0 +1,10 @@
+[
+  {"skill_id": "SK-JIRA-01", "name": "Jira"},
+  {"skill_id": "SK-SQL-01", "name": "SQL"},
+  {"skill_id": "SK-PY-01", "name": "Python"},
+  {"skill_id": "SK-EXCEL-01", "name": "Excel"},
+  {"skill_id": "SK-TABLEAU-01", "name": "Tableau"},
+  {"skill_id": "SK-FIGMA-01", "name": "Figma"},
+  {"skill_id": "SK-COMM-01", "name": "Communication"},
+  {"skill_id": "SK-MKT-01", "name": "Digital marketing"}
+]
