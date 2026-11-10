@@ -41,6 +41,15 @@ def all_opportunities(conn) -> list[dict]:
     return [json.loads(r["data"]) for r in conn.execute("SELECT data FROM opportunities ORDER BY opportunity_id")]
 
 
+# Supervisor contact comes from P03 and is passed on to P07 with a confirmed placement;
+# it is never shown to students (agreed with P01-P03, 10 Nov).
+PRIVATE_LISTING_FIELDS = ("supervisor_name", "supervisor_contact")
+
+
+def student_view(opp: dict) -> dict:
+    return {k: v for k, v in opp.items() if k not in PRIVATE_LISTING_FIELDS}
+
+
 def rec_row_to_dict(r) -> dict:
     d = dict(r)
     d["compatible"] = bool(d["compatible"])
@@ -90,7 +99,7 @@ def list_opportunities(q: str = "", work_mode: str = ""):
         opps = [o for o in opps if ql in o["title"].lower() or ql in o["employer_name"].lower()]
     if work_mode:
         opps = [o for o in opps if o["work_mode"] == work_mode]
-    return opps
+    return [student_view(o) for o in opps]
 
 
 @app.get("/api/opportunities/{opportunity_id}")
@@ -99,7 +108,7 @@ def read_opportunity(opportunity_id: str):
         opp = get_opportunity(conn, opportunity_id)
     if not opp:
         raise HTTPException(404, "Opportunity not found")
-    return opp
+    return student_view(opp)
 
 
 # --- Recommendations (P05-02, P05-03) ---

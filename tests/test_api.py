@@ -21,7 +21,7 @@ def test_opportunity_list_only_shows_published_open(client):
 
 
 def test_skills_vocabulary(client):
-    assert client.get("/api/skills").json()["SK-JIRA-01"] == "Jira"
+    assert client.get("/api/skills").json()["SK-JIRA"] == "Jira"
 
 
 def test_search_and_no_results(client):
@@ -35,7 +35,7 @@ def test_walking_skeleton_thread(client):
     op028 = next(r for r in recs if r["opportunity_id"] == "OP-028")
     assert op028["method_version"] == "rules-v2"
     assert op028["recommendation_id"].startswith("REC-")
-    assert any("SK-JIRA-01" in g for g in op028["gaps"])
+    assert any("SK-JIRA" in g for g in op028["gaps"])
 
     # Stored recommendations survive (re-read)
     stored = client.get("/api/students/COOP-B001/recommendations").json()
@@ -80,7 +80,7 @@ def test_eligibility_and_ranking_survive_reloading(client, student_id):
         for opportunity_id in ("OP-032", "OP-033"):
             row = conn.execute("SELECT data FROM opportunities WHERE opportunity_id = ?", (opportunity_id,)).fetchone()
             opportunity = json.loads(row["data"])
-            opportunity.update(sector="aviation", required_skills=["SK-SQL-01", "SK-EXCEL-01", "SK-TABLEAU-01"])
+            opportunity.update(sector="aviation", required_skills=["SK-SQL", "SK-EXCEL", "SK-VIZ"])
             conn.execute("UPDATE opportunities SET data = ? WHERE opportunity_id = ?",
                          (json.dumps(opportunity), opportunity_id))
     response = client.post(f"/api/students/{student_id}/recommendations")
@@ -131,3 +131,42 @@ def test_two_listings_can_be_compared_with_versions_and_requirements(client):
     for o in (a, b):
         assert {"version", "required_skills", "desirable_skills"} <= o.keys()
     assert (a["version"], b["version"]) == (2, 1)
+
+
+def test_shared_skill_ids_from_p01_p06_agreement(client):
+    assert set(client.get("/api/skills").json()) == {
+        "SK-JIRA", "SK-SQL", "SK-VIZ", "SK-PY", "SK-EXCEL", "SK-FIGMA", "SK-COMM", "SK-DMKT"}
+
+
+def test_reviewed_skills_carry_reviewer_and_evidence(client):
+    for student in client.get("/api/students").json():
+        for skill in student["skills"]:
+            review = (skill["reviewed_by"], skill["reviewed_at"], skill["evidence_id"])
+            if skill["evidence_status"] == "reviewed":
+                assert all(review)
+            else:
+                assert review == (None, None, None)
+
+
+def test_supervisor_contact_is_never_shown_to_students(client):
+    listings = client.get("/api/opportunities").json() + [client.get("/api/opportunities/OP-028").json()]
+    for o in listings:
+        assert "supervisor_name" not in o and "supervisor_contact" not in o
+        assert "submission_version" in o
+    # ...but it is kept for the P07 placement handoff.
+    with db.connect() as conn:
+        row = conn.execute("SELECT data FROM opportunities WHERE opportunity_id = 'OP-028'").fetchone()
+    assert json.loads(row["data"])["supervisor_contact"]
+
+
+def test_fixture_changes_reach_an_existing_database(tmp_path, monkeypatch):
+    monkeypatch.setenv("APP_DB", str(tmp_path / "old.db"))
+    db.init_db()
+    with db.connect() as conn:
+        old = json.loads(conn.execute("SELECT data FROM students WHERE student_id = 'COOP-B001'").fetchone()["data"])
+        old["skills"] = [{"skill_id": "SK-JIRA-01", "evidence_status": "reviewed"}]
+        conn.execute("UPDATE students SET data = ? WHERE student_id = 'COOP-B001'", (json.dumps(old),))
+    db.init_db()  # restart
+    with db.connect() as conn:
+        data = json.loads(conn.execute("SELECT data FROM students WHERE student_id = 'COOP-B001'").fetchone()["data"])
+    assert "SK-JIRA-01" not in json.dumps(data) and data["skills"][0]["skill_id"] == "SK-SQL"

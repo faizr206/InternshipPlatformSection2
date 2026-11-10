@@ -166,7 +166,7 @@ function renderProfile(s) {
     <h3>Skills</h3>
     <div class="chips">${skills.length
       ? skills.map(sk => sk.evidence_status === "reviewed"
-          ? `<span class="chip ok" title="Supported by reviewed evidence">✓ ${esc(skillName(sk.skill_id))}</span>`
+          ? `<span class="chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
           : `<span class="chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
       : `<span class="chip warn">None listed</span>`}</div>
     <p class="legend">Read-only fixture standing in for the P01 profile. ✓ means reviewed evidence;

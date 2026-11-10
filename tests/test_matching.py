@@ -52,15 +52,15 @@ def test_layla_op028_reasons_and_jira_gap():
     op028 = by_id(recommend(LAYLA, OPPS, SKILLS))["OP-028"]
     assert op028["eligibility"] == "eligible"
     assert op028["compatible"] is True
-    assert any("SK-JIRA-01" in g for g in op028["gaps"])
+    assert any("SK-JIRA" in g for g in op028["gaps"])
     assert any("aviation" in r for r in op028["reasons"])
     # SQL is self-declared and must not be labelled as reviewed
-    assert any("SK-SQL-01, self-declared" in r for r in op028["reasons"])
+    assert any("SK-SQL, self-declared" in r for r in op028["reasons"])
     assert op028["profile_version"] == 1 and op028["opportunity_version"] == 2
 
 
 def test_changing_a_skill_changes_the_result():
-    with_jira = {**LAYLA, "skills": LAYLA["skills"] + [{"skill_id": "SK-JIRA-01", "evidence_status": "reviewed"}]}
+    with_jira = {**LAYLA, "skills": LAYLA["skills"] + [{"skill_id": "SK-JIRA", "evidence_status": "reviewed"}]}
     before = by_id(recommend(LAYLA, OPPS, SKILLS))["OP-028"]
     after = by_id(recommend(with_jira, OPPS, SKILLS))["OP-028"]
     assert after["score"] > before["score"]

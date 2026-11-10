@@ -62,10 +62,11 @@ def init_db() -> None:
     with connect() as conn:
         conn.executescript(SCHEMA)
         _migrate_recommendation_eligibility(conn)
-        if conn.execute("SELECT COUNT(*) FROM students").fetchone()[0] == 0:
-            _load(conn, "students.json", "students", "student_id", "profile_version")
-        if conn.execute("SELECT COUNT(*) FROM opportunities").fetchone()[0] == 0:
-            _load(conn, "opportunities.json", "opportunities", "opportunity_id", "version")
+        # Fixtures are read-only stand-ins for P01/P03, so the files are the source of truth:
+        # refresh them on every startup (e.g. after the shared skill IDs changed).
+        # Stored recommendations and applications are never touched.
+        _load(conn, "students.json", "students", "student_id", "profile_version")
+        _load(conn, "opportunities.json", "opportunities", "opportunity_id", "version")
 
 
 def _migrate_recommendation_eligibility(conn: sqlite3.Connection) -> None:
@@ -98,7 +99,7 @@ def _load(conn, filename, table, id_field, version_field) -> None:
             log.warning("Skipping malformed %s record: %s", table, record)
             continue
         conn.execute(
-            f"INSERT INTO {table} VALUES (?, ?, ?)",
+            f"INSERT OR REPLACE INTO {table} VALUES (?, ?, ?)",
             (record[id_field], record[version_field], json.dumps(record)),
         )
 

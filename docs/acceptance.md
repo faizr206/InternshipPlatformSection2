@@ -8,7 +8,7 @@ placement stays **Not placed**.
 Source references are the story-map story IDs and catalogue acceptance evidence (AE). Sprint 0
 R-numbers still need to be added from the team backlog.
 
-Automated evidence: `uv run pytest` gives 31 passed.
+Automated evidence: `uv run pytest` gives 35 passed.
 
 | Story | Acceptance check | Result | Evidence |
 |---|---|---|---|

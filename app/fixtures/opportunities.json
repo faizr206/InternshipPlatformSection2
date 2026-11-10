@@ -2,6 +2,7 @@
   {
     "opportunity_id": "OP-028",
     "version": 2,
+    "submission_version": 2,
     "employer_name": "Emirates Group",
     "title": "Aviation Analytics Intern",
     "sector": "aviation",
@@ -9,14 +10,17 @@
     "work_mode": "on-site",
     "start_date": "2027-02-01",
     "end_date": "2027-05-31",
-    "required_skills": ["SK-SQL-01", "SK-JIRA-01"],
-    "desirable_skills": ["SK-TABLEAU-01"],
+    "required_skills": ["SK-SQL", "SK-JIRA"],
+    "desirable_skills": ["SK-VIZ"],
     "publication_status": "published",
-    "listing_status": "open"
+    "listing_status": "open",
+    "supervisor_name": "Aisha Rahman",
+    "supervisor_contact": "aisha.rahman@emirates.example"
   },
   {
     "opportunity_id": "OP-031",
     "version": 1,
+    "submission_version": 1,
     "employer_name": "Northstar Analytics",
     "title": "Data Analytics Intern",
     "sector": "analytics",
@@ -24,14 +28,17 @@
     "work_mode": "remote",
     "start_date": "2027-01-15",
     "end_date": "2027-04-15",
-    "required_skills": ["SK-EXCEL-01"],
-    "desirable_skills": ["SK-SQL-01", "SK-PY-01"],
+    "required_skills": ["SK-EXCEL"],
+    "desirable_skills": ["SK-SQL", "SK-PY"],
     "publication_status": "published",
-    "listing_status": "open"
+    "listing_status": "open",
+    "supervisor_name": "Tom Becker",
+    "supervisor_contact": "tom.becker@northstar.example"
   },
   {
     "opportunity_id": "OP-032",
     "version": 1,
+    "submission_version": 1,
     "employer_name": "Evergreen Labs",
     "title": "Product Design Intern",
     "sector": "design",
@@ -39,14 +46,17 @@
     "work_mode": "hybrid",
     "start_date": null,
     "end_date": null,
-    "required_skills": ["SK-FIGMA-01"],
-    "desirable_skills": ["SK-COMM-01"],
+    "required_skills": ["SK-FIGMA"],
+    "desirable_skills": ["SK-COMM"],
     "publication_status": "published",
-    "listing_status": "open"
+    "listing_status": "open",
+    "supervisor_name": "Lina Haddad",
+    "supervisor_contact": "lina.haddad@evergreen.example"
   },
   {
     "opportunity_id": "OP-033",
     "version": 1,
+    "submission_version": 1,
     "employer_name": "Gulf Software House",
     "title": "Junior Developer Intern",
     "sector": "software",
@@ -54,14 +64,17 @@
     "work_mode": "on-site",
     "start_date": "2027-08-01",
     "end_date": "2027-11-30",
-    "required_skills": ["SK-PY-01"],
-    "desirable_skills": ["SK-JIRA-01"],
+    "required_skills": ["SK-PY"],
+    "desirable_skills": ["SK-JIRA"],
     "publication_status": "published",
-    "listing_status": "open"
+    "listing_status": "open",
+    "supervisor_name": "Karim Nasser",
+    "supervisor_contact": "karim.nasser@gulfsoft.example"
   },
   {
     "opportunity_id": "OP-034",
     "version": 3,
+    "submission_version": 3,
     "employer_name": "Desert Retail Co.",
     "title": "Marketing Intern",
     "sector": "marketing",
@@ -69,14 +82,17 @@
     "work_mode": "on-site",
     "start_date": "2027-03-01",
     "end_date": "2027-06-30",
-    "required_skills": ["SK-MKT-01"],
+    "required_skills": ["SK-DMKT"],
     "desirable_skills": [],
     "publication_status": "published",
-    "listing_status": "closed"
+    "listing_status": "closed",
+    "supervisor_name": "Priya Menon",
+    "supervisor_contact": "priya.menon@desertretail.example"
   },
   {
     "opportunity_id": "OP-035",
     "version": 1,
+    "submission_version": 1,
     "employer_name": "Falcon Finance",
     "title": "Finance Analyst Intern",
     "sector": "finance",
@@ -84,9 +100,11 @@
     "work_mode": "hybrid",
     "start_date": "2027-02-01",
     "end_date": "2027-06-30",
-    "required_skills": ["SK-EXCEL-01", "SK-SQL-01"],
+    "required_skills": ["SK-EXCEL", "SK-SQL"],
     "desirable_skills": [],
     "publication_status": "unpublished",
-    "listing_status": "open"
+    "listing_status": "open",
+    "supervisor_name": "Yusuf Ali",
+    "supervisor_contact": "yusuf.ali@falconfinance.example"
   }
 ]
