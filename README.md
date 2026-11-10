@@ -22,6 +22,17 @@ uv run uvicorn app.main:app --reload
 Open http://127.0.0.1:8000. The API docs are at http://127.0.0.1:8000/docs.
 To reset the demo data, stop the server and delete `app.db`.
 
+### Public demo (ngrok)
+
+```bash
+scripts/demo.sh            # runs the tests, starts the app, opens the ngrok tunnel
+scripts/demo.sh --reset    # same, starting from fresh demo data
+scripts/demo.sh --local    # app only, no ngrok
+```
+
+Needs ngrok set up once (`ngrok config add-authtoken <token>`). The public link is
+`https://$NGROK_DOMAIN` (defaults to the static domain on the Sprint 1 slides). Ctrl+C stops both.
+
 ## Test
 
 ```bash
