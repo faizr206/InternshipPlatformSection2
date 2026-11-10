@@ -40,6 +40,7 @@
   .toolbar input, .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
   .card.conflict { border-left: 4px solid var(--bad); }
+  .card.unknown { border-left: 4px solid var(--warn); }
   .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
   .card-head .title { font-weight: 600; font-size: 15.5px; }
   .score { min-width: 56px; text-align: center; border-radius: 8px; padding: 4px 8px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 18px; line-height: 1.1; }
@@ -201,15 +202,20 @@ async function renderRecs(recs) {
   const list = (items, empty) => items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : `<div class="muted">${empty}</div>`;
   $("recs").innerHTML = recs.map((r, i) => {
     const o = opps[i];
+    const eligibilityBadge = {
+      eligible: `<span class="chip ok">Meets mandatory conditions</span>`,
+      unknown: `<span class="chip warn">Eligibility needs checking</span>`,
+      ineligible: `<span class="chip bad">Mandatory conflict</span>`,
+    }[r.eligibility];
     return `
-    <article class="card ${r.compatible ? "" : "conflict"}">
+    <article class="card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}">
       <div class="card-head">
         <div>
           <div class="title">${esc(o.title)}</div>
           ${oppSummary(o)}
           <div class="chips" style="margin-top:6px">
-            ${r.compatible ? `<span class="chip ok">Meets mandatory conditions</span>` : `<span class="chip bad">Mandatory conflict</span>`}
-            ${r.unknowns.length ? `<span class="chip warn">Needs checking</span>` : ""}
+            ${eligibilityBadge}
+            ${r.unknowns.length && r.eligibility !== "unknown" ? `<span class="chip warn">Needs checking</span>` : ""}
             ${r.gaps.length ? `<span class="chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : ""}
           </div>
         </div>

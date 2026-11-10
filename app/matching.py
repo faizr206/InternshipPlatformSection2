@@ -6,7 +6,7 @@ Missing information is reported as unknown, never treated as satisfied.
 """
 
 RULES = {
-    "version": "rules-v1",
+    "version": "rules-v2",
     "weights": {"interest": 3, "required_skill": 2, "desirable_skill": 1},
 }
 
@@ -18,18 +18,19 @@ def is_eligible_listing(opp: dict) -> bool:
 def match(student: dict, opp: dict, skill_names: dict[str, str], rules: dict = RULES) -> dict:
     w = rules["weights"]
     score = 0
-    compatible = True
+    eligibility = "unknown"
     reasons, gaps, unknowns = [], [], []
 
     # Mandatory: availability
     s_start, s_end = student.get("availability_start"), student.get("availability_end")
     o_start, o_end = opp.get("start_date"), opp.get("end_date")
-    if None in (s_start, s_end, o_start, o_end):
+    if not all((s_start, s_end, o_start, o_end)):
         unknowns.append("Availability: Needs checking (dates missing)")
     elif s_start <= o_start and s_end >= o_end:
+        eligibility = "eligible"
         reasons.append(f"Availability {s_start}..{s_end} covers {o_start}..{o_end}")
     else:
-        compatible = False
+        eligibility = "ineligible"
         reasons.append(f"Mandatory conflict: availability {s_start}..{s_end} does not cover {o_start}..{o_end}")
 
     # Preference: interests
@@ -66,7 +67,8 @@ def match(student: dict, opp: dict, skill_names: dict[str, str], rules: dict = R
         "opportunity_version": opp["version"],
         "method_version": rules["version"],
         "score": score,
-        "compatible": compatible,
+        "eligibility": eligibility,
+        "compatible": eligibility == "eligible",
         "reasons": reasons,
         "gaps": gaps,
         "unknowns": unknowns,
@@ -76,5 +78,6 @@ def match(student: dict, opp: dict, skill_names: dict[str, str], rules: dict = R
 def recommend(student: dict, opportunities: list[dict], skill_names: dict[str, str],
               rules: dict = RULES) -> list[dict]:
     results = [match(student, o, skill_names, rules) for o in opportunities if is_eligible_listing(o)]
-    # Compatible first, then highest score, then id for a stable order.
-    return sorted(results, key=lambda r: (not r["compatible"], -r["score"], r["opportunity_id"]))
+    # Confirmed eligibility first, unknown next, conflicts last; stable within each group.
+    eligibility_order = {"eligible": 0, "unknown": 1, "ineligible": 2}
+    return sorted(results, key=lambda r: (eligibility_order[r["eligibility"]], -r["score"], r["opportunity_id"]))

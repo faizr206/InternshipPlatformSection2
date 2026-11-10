@@ -34,15 +34,19 @@ uv run pytest
 |---|---|
 | `app/fixtures/*.json` | Synthetic profiles (stand-in for P01), listings (stand-in for P03), and the skill vocabulary |
 | `app/db.py` | SQLite schema; loads the fixtures when the DB is empty |
-| `app/matching.py` | Rules baseline `rules-v1`. The weights live in `RULES` |
+| `app/matching.py` | Rules baseline `rules-v2`. The weights live in `RULES` |
 | `app/main.py` | FastAPI routes |
 | `app/static/index.html` | Minimal UI |
 
-## Matching rules (rules-v1)
+## Matching rules (rules-v2)
 - Only `published` + `open` listings can be recommended.
-- **Mandatory:** the student's availability must cover the opportunity dates. A conflict is flagged
-  as `compatible: false`. If dates are missing, the result says "Needs checking" and doesn't count
-  the condition as met.
+- **Mandatory:** the student's availability must cover the opportunity dates. Eligibility is
+  `eligible` when dates are covered, `ineligible` for a conflict, or `unknown` when any date is
+  missing or empty. Only `eligible` results have `compatible: true`.
+- Results rank by eligibility (`eligible`, then `unknown`, then `ineligible`), followed by score
+  descending and opportunity ID. The interface shows unknown eligibility as "Eligibility needs checking".
+- Existing databases migrate automatically on startup, preserving saved recommendation IDs and
+  method versions while correcting eligibility from the original saved assessment.
 - **Preferences:** a sector in the student's interests adds 3, each required skill held adds 2,
   each desirable skill held adds 1.
 - Missing required skills are listed as **gaps**. Self-declared skills are never labelled as reviewed.

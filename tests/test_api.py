@@ -1,6 +1,9 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
+from app import db
 from app.main import app
 
 
@@ -30,7 +33,7 @@ def test_walking_skeleton_thread(client):
     # Layla gets rules-based recommendations
     recs = client.post("/api/students/COOP-B001/recommendations").json()
     op028 = next(r for r in recs if r["opportunity_id"] == "OP-028")
-    assert op028["method_version"] == "rules-v1"
+    assert op028["method_version"] == "rules-v2"
     assert op028["recommendation_id"].startswith("REC-")
     assert any("SK-JIRA-01" in g for g in op028["gaps"])
 
@@ -68,3 +71,25 @@ def test_unknown_student_or_opportunity(client):
     assert client.post("/api/applications", json={"student_id": "NOPE", "opportunity_id": "OP-028"}).status_code == 400
     assert client.post("/api/applications", json={"student_id": "COOP-B001", "opportunity_id": "NOPE"}).status_code == 400
     assert client.post("/api/students/NOPE/recommendations").status_code == 404
+
+
+@pytest.mark.parametrize("student_id", ["COOP-B001", "COOP-B003"])
+def test_eligibility_and_ranking_survive_reloading(client, student_id):
+    # Make unknown and conflicting opportunities score above the confirmed matches.
+    with db.connect() as conn:
+        for opportunity_id in ("OP-032", "OP-033"):
+            row = conn.execute("SELECT data FROM opportunities WHERE opportunity_id = ?", (opportunity_id,)).fetchone()
+            opportunity = json.loads(row["data"])
+            opportunity.update(sector="aviation", required_skills=["SK-SQL-01", "SK-EXCEL-01", "SK-TABLEAU-01"])
+            conn.execute("UPDATE opportunities SET data = ? WHERE opportunity_id = ?",
+                         (json.dumps(opportunity), opportunity_id))
+    response = client.post(f"/api/students/{student_id}/recommendations")
+    assert response.status_code == 200
+    results = response.json()
+    assert client.get(f"/api/students/{student_id}/recommendations").json() == results
+    assert all(r["compatible"] == (r["eligibility"] == "eligible") for r in results)
+    if student_id == "COOP-B003":
+        assert {r["eligibility"] for r in results} == {"unknown"}
+    else:
+        assert [r["eligibility"] for r in results] == ["eligible", "eligible", "unknown", "ineligible"]
+        assert results[0]["score"] < results[2]["score"]

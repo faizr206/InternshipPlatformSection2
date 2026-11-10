@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS recommendations (
     reasons TEXT NOT NULL,
     gaps TEXT NOT NULL,
     unknowns TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    eligibility TEXT NOT NULL CHECK (eligibility IN ('eligible', 'unknown', 'ineligible'))
 );
 CREATE TABLE IF NOT EXISTS applications (
     application_id TEXT PRIMARY KEY,
@@ -60,10 +61,35 @@ def connect() -> sqlite3.Connection:
 def init_db() -> None:
     with connect() as conn:
         conn.executescript(SCHEMA)
+        _migrate_recommendation_eligibility(conn)
         if conn.execute("SELECT COUNT(*) FROM students").fetchone()[0] == 0:
             _load(conn, "students.json", "students", "student_id", "profile_version")
         if conn.execute("SELECT COUNT(*) FROM opportunities").fetchone()[0] == 0:
             _load(conn, "opportunities.json", "opportunities", "opportunity_id", "version")
+
+
+def _migrate_recommendation_eligibility(conn: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(recommendations)")}
+    if "eligibility" in columns:
+        return
+    # Keep the schema change and backfill atomic if startup is interrupted.
+    conn.execute("BEGIN")
+    conn.execute(
+        "ALTER TABLE recommendations ADD COLUMN eligibility TEXT NOT NULL DEFAULT 'unknown' "
+        "CHECK (eligibility IN ('eligible', 'unknown', 'ineligible'))"
+    )
+    # Recover the original assessment from its saved explanation, not today's profile/listing.
+    for row in conn.execute("SELECT recommendation_id, compatible, unknowns FROM recommendations").fetchall():
+        if not row["compatible"]:
+            eligibility = "ineligible"
+        elif any(u.startswith("Availability:") for u in json.loads(row["unknowns"])):
+            eligibility = "unknown"
+        else:
+            eligibility = "eligible"
+        conn.execute(
+            "UPDATE recommendations SET eligibility = ?, compatible = ? WHERE recommendation_id = ?",
+            (eligibility, int(eligibility == "eligible"), row["recommendation_id"]),
+        )
 
 
 def _load(conn, filename, table, id_field, version_field) -> None:

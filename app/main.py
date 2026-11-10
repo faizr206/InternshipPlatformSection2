@@ -110,11 +110,14 @@ def run_recommendations(student_id: str):
             r["recommendation_id"] = f"REC-{uuid.uuid4().hex[:8]}"
             r["run_id"], r["created_at"] = run_id, created_at
             conn.execute(
-                "INSERT INTO recommendations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO recommendations "
+                "(recommendation_id, run_id, student_id, profile_version, opportunity_id, opportunity_version, "
+                "method_version, score, compatible, reasons, gaps, unknowns, created_at, eligibility) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (r["recommendation_id"], run_id, r["student_id"], r["profile_version"],
                  r["opportunity_id"], r["opportunity_version"], r["method_version"], r["score"],
                  int(r["compatible"]), json.dumps(r["reasons"]), json.dumps(r["gaps"]),
-                 json.dumps(r["unknowns"]), created_at),
+                 json.dumps(r["unknowns"]), created_at, r["eligibility"]),
             )
     return results
 
@@ -129,7 +132,9 @@ def latest_recommendations(student_id: str):
         if not last:
             return []
         rows = conn.execute(
-            "SELECT * FROM recommendations WHERE run_id = ? ORDER BY compatible DESC, score DESC, opportunity_id",
+            "SELECT * FROM recommendations WHERE run_id = ? "
+            "ORDER BY CASE eligibility WHEN 'eligible' THEN 0 WHEN 'unknown' THEN 1 ELSE 2 END, "
+            "score DESC, opportunity_id",
             (last["run_id"],),
         ).fetchall()
     return [rec_row_to_dict(r) for r in rows]
