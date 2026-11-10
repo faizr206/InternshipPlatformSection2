@@ -61,6 +61,14 @@
   dialog { border: 0; border-radius: 12px; padding: 20px; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
   dialog::backdrop { background: rgba(0,0,0,.3); }
   .legend { margin-top: 14px; font-size: 12px; color: var(--muted); }
+  .card.highlight { outline: 3px solid var(--accent); }
+  .linkish { font: inherit; font-size: 13px; background: none; border: 0; color: var(--accent); text-decoration: underline; cursor: pointer; padding: 0; }
+  .compare-pick { font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+  .compare th { width: 140px; }
+  .compare td { vertical-align: top; }
+  details.rules { font-size: 13px; margin-bottom: 12px; }
+  details.rules summary { cursor: pointer; color: var(--accent); }
+  :focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -90,6 +98,7 @@ Submitting an application does not create a placement.</div>
         <button class="btn" id="recommend">Run matching</button>
         <span class="muted" id="recInfo"></span>
       </div>
+      <details class="rules"><summary>How matching works</summary><div id="rules"></div></details>
       <div id="recs"></div>
     </div>
 
@@ -100,7 +109,9 @@ Submitting an application does not create a placement.</div>
           <option value="">Any work mode</option><option>on-site</option><option>hybrid</option><option>remote</option>
         </select>
         <button class="btn secondary" id="search">Search</button>
+        <span class="muted">Tick two opportunities to compare them.</span>
       </div>
+      <div id="compare"></div>
       <div id="opps"></div>
     </div>
 
@@ -121,7 +132,7 @@ Submitting an application does not create a placement.</div>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const state = { skills: {}, student: null, opps: {}, apps: [] };
+const state = { skills: {}, student: null, opps: {}, apps: [], recs: {}, compare: [] };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
 
@@ -163,13 +174,14 @@ function renderProfile(s) {
 }
 
 // ---------- Skill chips relative to the student ----------
-function skillChips(o) {
+function chip(id, required) {
   const held = Object.fromEntries((state.student.skills || []).map(s => [s.skill_id, s.evidence_status]));
-  const chip = (id, required) => {
-    const name = esc(skillName(id));
-    if (!held[id]) return required ? `<span class="chip bad">✗ ${name}</span>` : `<span class="chip">${name}</span>`;
-    return held[id] === "reviewed" ? `<span class="chip ok">✓ ${name}</span>` : `<span class="chip ok">${name} · self-declared</span>`;
-  };
+  const name = esc(skillName(id));
+  if (!held[id]) return required ? `<span class="chip bad">✗ ${name}</span>` : `<span class="chip">${name}</span>`;
+  return held[id] === "reviewed" ? `<span class="chip ok">✓ ${name}</span>` : `<span class="chip ok">${name} · self-declared</span>`;
+}
+
+function skillChips(o) {
   return `
     <div class="chips" style="margin-top:8px">
       <span class="muted">Required:</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="muted">none</span>'}
@@ -192,6 +204,7 @@ function applyButton(o) {
 
 // ---------- Recommendations ----------
 async function renderRecs(recs) {
+  state.recs = Object.fromEntries(recs.map(r => [r.opportunity_id, r]));
   if (!recs.length) {
     $("recInfo").textContent = "";
     $("recs").innerHTML = `<div class="empty">No recommendations yet. Click <b>Run matching</b> to score open opportunities against this profile.</div>`;
@@ -208,7 +221,7 @@ async function renderRecs(recs) {
       ineligible: `<span class="chip bad">Mandatory conflict</span>`,
     }[r.eligibility];
     return `
-    <article class="card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}">
+    <article class="card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}" id="rec-${esc(o.opportunity_id)}">
       <div class="card-head">
         <div>
           <div class="title">${esc(o.title)}</div>
@@ -229,7 +242,9 @@ async function renderRecs(recs) {
           <h4 style="margin-top:8px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
         </div>
       </div>
-      <div class="actions">${applyButton(o)} <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="actions">${applyButton(o)}
+        <button class="btn secondary" data-view="${esc(o.opportunity_id)}">Open in catalogue</button>
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
       <div class="meta">
         <span>${esc(r.recommendation_id)}</span><span>${esc(o.opportunity_id)} v${esc(r.opportunity_version)}</span>
         <span>profile v${esc(r.profile_version)}</span><span>${esc(r.method_version)}</span>
@@ -243,15 +258,102 @@ async function searchOpps() {
   const params = new URLSearchParams({ q: $("q").value, work_mode: $("mode").value });
   const opps = await api(`/api/opportunities?${params}`);
   opps.forEach(o => state.opps[o.opportunity_id] = o);
-  $("opps").innerHTML = opps.length ? opps.map(o => `
-    <article class="card">
-      <div class="title" style="font-weight:600">${esc(o.title)}</div>
+  $("opps").innerHTML = opps.length ? opps.map(o => {
+    const rec = state.recs[o.opportunity_id];
+    return `
+    <article class="card" id="opp-${esc(o.opportunity_id)}">
+      <div class="card-head">
+        <div class="title" style="font-weight:600">${esc(o.title)}</div>
+        <label class="compare-pick"><input type="checkbox" data-compare="${esc(o.opportunity_id)}"
+          ${state.compare.includes(o.opportunity_id) ? "checked" : ""}> Compare</label>
+      </div>
       ${oppSummary(o)}
       ${skillChips(o)}
-      <div class="actions">${applyButton(o)} <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
-      <div class="meta"><span>${esc(o.opportunity_id)} v${esc(o.version)}</span><span>published · open</span></div>
-    </article>`).join("")
+      <div class="actions">${applyButton(o)}
+        ${rec ? `<button class="linkish" data-viewrec="${esc(o.opportunity_id)}">View recommendation (score ${rec.score}, ${esc(rec.recommendation_id)})</button>` : ""}
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta"><span>${esc(o.opportunity_id)}</span><span>approved version v${esc(o.version)}</span><span>published · open</span></div>
+    </article>`;
+  }).join("")
     : `<div class="empty">No opportunities match your search.</div>`;
+  renderCompare();
+}
+
+// ---------- Compare (P04-01 AC2) ----------
+async function renderCompare() {
+  if (state.compare.length < 2) {
+    $("compare").innerHTML = state.compare.length ? `<p class="muted">Selected ${esc(state.compare[0])}. Tick one more to compare.</p>` : "";
+    return;
+  }
+  const [a, b] = await Promise.all(state.compare.map(opp));
+  const skills = (ids, required) => ids.length
+    ? `<div class="chips">${ids.map(id => chip(id, required)).join("")}</div>` : "none";
+  const recCell = o => state.recs[o.opportunity_id]
+    ? `score ${state.recs[o.opportunity_id].score} · ${esc(state.recs[o.opportunity_id].eligibility)}`
+    : "not in last matching run";
+  const rows = [
+    ["Opportunity", o => `${esc(o.opportunity_id)} · approved version v${esc(o.version)}`],
+    ["Employer", o => esc(o.employer_name)],
+    ["Location / mode", o => `${esc(o.location)} · ${esc(o.work_mode)}`],
+    ["Dates", o => o.start_date ? `${esc(o.start_date)} → ${esc(o.end_date)}` : "not provided"],
+    ["Sector", o => esc(o.sector)],
+    ["Required skills", o => skills(o.required_skills, true)],
+    ["Desirable skills", o => skills(o.desirable_skills, false)],
+    ["Recommendation", recCell],
+  ];
+  $("compare").innerHTML = `<div class="card" style="overflow-x:auto">
+    <div class="card-head"><h2>Compare</h2><button class="linkish" id="clearCompare">Clear</button></div>
+    <table class="compare">
+      <tr><th></th><th>${esc(a.title)}</th><th>${esc(b.title)}</th></tr>
+      ${rows.map(([label, f]) => `<tr><th>${label}</th><td>${f(a)}</td><td>${f(b)}</td></tr>`).join("")}
+    </table></div>`;
+  $("clearCompare").onclick = () => { state.compare = []; searchOpps(); };
+}
+
+document.addEventListener("change", e => {
+  const id = e.target.dataset?.compare;
+  if (!id) return;
+  state.compare = state.compare.filter(x => x !== id);
+  if (e.target.checked) state.compare.push(id);
+  if (state.compare.length > 2) state.compare.shift();  // keep the two most recent picks
+  document.querySelectorAll("[data-compare]").forEach(cb => cb.checked = state.compare.includes(cb.dataset.compare));
+  renderCompare();
+});
+
+// ---------- Cross-links: recommendation <-> catalogue (same opportunity ID, no application created) ----------
+function showTab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => {
+    b.setAttribute("aria-selected", b.dataset.tab === name);
+    $(`tab-${b.dataset.tab}`).hidden = b.dataset.tab !== name;
+  });
+}
+async function focusCard(tab, elementId) {
+  showTab(tab);
+  if (tab === "browse") { $("q").value = ""; $("mode").value = ""; await searchOpps(); }
+  const el = $(elementId);
+  if (!el) return;
+  document.querySelectorAll(".card.highlight").forEach(c => c.classList.remove("highlight"));
+  el.classList.add("highlight");
+  el.setAttribute("tabindex", "-1");  // move keyboard focus to the card, not a hidden button
+  el.focus({ preventScroll: true });
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+document.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.view) focusCard("browse", `opp-${d.view}`);
+  if (d.viewrec) focusCard("recs", `rec-${d.viewrec}`);
+});
+
+function renderRules(rules) {
+  const m = rules.mandatory || {};
+  $("rules").innerHTML = `
+    <p><b>Method ${esc(rules.version)}</b> (rules-based, no AI). Edit <code>app/rules.json</code> to change it.</p>
+    <p><b>Mandatory condition</b> (decides eligibility, not score):
+      availability must cover the opportunity dates — ${m.availability_covers_dates === false ? "switched off" : "on"}.
+      Missing dates give "Eligibility needs checking", never a pass.</p>
+    <p><b>Preferences</b> (add to score): interest matches sector +${rules.weights.interest},
+      each required skill held +${rules.weights.required_skill}, each desirable skill held +${rules.weights.desirable_skill}.</p>
+    <p>Only published, open opportunities are matched. Self-declared skills count but are labelled as not verified.</p>`;
 }
 
 // ---------- Applications ----------
@@ -303,7 +405,8 @@ $("confirmYes").onclick = async () => {
 // ---------- Wiring ----------
 async function refreshLists() {
   await loadApps();
-  await Promise.all([renderRecs(await api(`/api/students/${studentId()}/recommendations`)), searchOpps()]);
+  await renderRecs(await api(`/api/students/${studentId()}/recommendations`));
+  await searchOpps();  // after recs, so catalogue cards can link back to their recommendation
 }
 
 async function onStudentChange() {
@@ -312,19 +415,18 @@ async function onStudentChange() {
   await refreshLists();
 }
 
-document.querySelectorAll(".tabs button").forEach(btn => btn.onclick = () => {
-  document.querySelectorAll(".tabs button").forEach(b => {
-    b.setAttribute("aria-selected", b === btn);
-    $(`tab-${b.dataset.tab}`).hidden = b !== btn;
-  });
-});
+document.querySelectorAll(".tabs button").forEach(btn => btn.onclick = () => showTab(btn.dataset.tab));
 $("student").onchange = onStudentChange;
-$("recommend").onclick = async () => renderRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+$("recommend").onclick = async () => {
+  await renderRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+  await searchOpps();
+};
 $("search").onclick = searchOpps;
 $("q").onkeydown = e => { if (e.key === "Enter") searchOpps(); };
 
 (async () => {
   state.skills = await api("/api/skills");
+  renderRules(await api("/api/rules"));
   const students = await api("/api/students");
   $("student").innerHTML = students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
   await onStudentChange();

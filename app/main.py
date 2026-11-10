@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app import db
-from app.matching import is_eligible_listing, recommend
+from app.matching import RULES, is_eligible_listing, recommend
 
 ACTIVE_STATUSES = ("Submitted",)  # extend as the lifecycle grows (Under review, Shortlisted, ...)
 
@@ -57,6 +57,11 @@ def index():
 @app.get("/api/skills")
 def list_skills():
     return db.skill_names()
+
+
+@app.get("/api/rules")
+def read_rules():
+    return RULES
 
 
 # --- Students (P01 stand-in) ---

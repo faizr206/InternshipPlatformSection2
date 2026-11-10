@@ -1,14 +1,14 @@
-"""Rules-based matching baseline (P05-02). Pure functions, no I/O.
+"""Rules-based matching baseline (P05-02). Pure functions; rules are read from rules.json.
 
-Mandatory condition: the student's availability covers the opportunity dates.
-Preferences (scored): sector in interests, required skills held, desirable skills held.
+Mandatory condition (on/off in rules.json): the student's availability covers the opportunity dates.
+Preferences (scored, weights in rules.json): sector in interests, required skills held, desirable skills held.
 Missing information is reported as unknown, never treated as satisfied.
+Change "version" in rules.json whenever the rules change, so stored recommendations stay traceable.
 """
+import json
+from pathlib import Path
 
-RULES = {
-    "version": "rules-v2",
-    "weights": {"interest": 3, "required_skill": 2, "desirable_skill": 1},
-}
+RULES = json.loads((Path(__file__).parent / "rules.json").read_text())
 
 
 def is_eligible_listing(opp: dict) -> bool:
@@ -24,7 +24,9 @@ def match(student: dict, opp: dict, skill_names: dict[str, str], rules: dict = R
     # Mandatory: availability
     s_start, s_end = student.get("availability_start"), student.get("availability_end")
     o_start, o_end = opp.get("start_date"), opp.get("end_date")
-    if not all((s_start, s_end, o_start, o_end)):
+    if not rules.get("mandatory", {}).get("availability_covers_dates", True):
+        eligibility = "eligible"  # no mandatory condition is switched on
+    elif not all((s_start, s_end, o_start, o_end)):
         unknowns.append("Availability: Needs checking (dates missing)")
     elif s_start <= o_start and s_end >= o_end:
         eligibility = "eligible"

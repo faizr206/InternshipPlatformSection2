@@ -1,0 +1,11 @@
+{
+  "version": "rules-v2",
+  "mandatory": {
+    "availability_covers_dates": true
+  },
+  "weights": {
+    "interest": 3,
+    "required_skill": 2,
+    "desirable_skill": 1
+  }
+}

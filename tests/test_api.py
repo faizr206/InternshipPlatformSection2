@@ -93,3 +93,41 @@ def test_eligibility_and_ranking_survive_reloading(client, student_id):
     else:
         assert [r["eligibility"] for r in results] == ["eligible", "eligible", "unknown", "ineligible"]
         assert results[0]["score"] < results[2]["score"]
+
+
+def test_malformed_fixture_records_are_skipped(tmp_path, monkeypatch, caplog):
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "students.json").write_text(json.dumps([
+        {"student_id": "OK-1", "profile_version": 1, "display_name": "Valid"},
+        {"student_id": "", "profile_version": 1},           # missing id
+        {"student_id": "BAD-2", "profile_version": "one"},  # version not an integer
+    ]))
+    (fixtures / "opportunities.json").write_text(json.dumps([
+        {"opportunity_id": "OP-OK", "version": 1},
+        {"version": 2},                                     # missing id
+    ]))
+    monkeypatch.setattr(db, "FIXTURES", fixtures)
+    monkeypatch.setenv("APP_DB", str(tmp_path / "malformed.db"))
+    db.init_db()
+    with db.connect() as conn:
+        assert [r[0] for r in conn.execute("SELECT student_id FROM students")] == ["OK-1"]
+        assert [r[0] for r in conn.execute("SELECT opportunity_id FROM opportunities")] == ["OP-OK"]
+    assert caplog.text.count("Skipping malformed") == 3
+
+
+def test_missing_required_application_field_is_rejected(client):
+    assert client.post("/api/applications", json={"student_id": "COOP-B001"}).status_code == 422
+    assert client.get("/api/students/COOP-B001/applications").json() == []
+
+
+def test_rules_endpoint(client):
+    rules = client.get("/api/rules").json()
+    assert rules["version"] == "rules-v2" and "mandatory" in rules and "weights" in rules
+
+
+def test_two_listings_can_be_compared_with_versions_and_requirements(client):
+    a, b = (client.get(f"/api/opportunities/{i}").json() for i in ("OP-028", "OP-031"))
+    for o in (a, b):
+        assert {"version", "required_skills", "desirable_skills"} <= o.keys()
+    assert (a["version"], b["version"]) == (2, 1)

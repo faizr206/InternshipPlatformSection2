@@ -95,3 +95,19 @@ def test_missing_preferences_do_not_make_mandatory_eligibility_unknown():
     assert result["unknowns"] == ["Interests: not provided"]
     assert result["eligibility"] == "eligible"
     assert result["compatible"] is True
+
+
+def test_mandatory_rule_can_be_switched_off_in_rules_config():
+    from app.matching import RULES
+    no_mandatory = {**RULES, "mandatory": {"availability_covers_dates": False}}
+    op033 = by_id(recommend(LAYLA, OPPS, SKILLS, no_mandatory))["OP-033"]
+    assert op033["eligibility"] == "eligible"
+    # Switching off a mandatory rule never changes preference scoring
+    assert op033["score"] == by_id(recommend(LAYLA, OPPS, SKILLS))["OP-033"]["score"]
+
+
+def test_rules_config_separates_mandatory_from_preferences():
+    from app.matching import RULES
+    assert RULES["version"] == "rules-v2"
+    assert set(RULES["mandatory"]) == {"availability_covers_dates"}
+    assert set(RULES["weights"]) == {"interest", "required_skill", "desirable_skill"}

@@ -34,7 +34,10 @@ uv run pytest
 |---|---|
 | `app/fixtures/*.json` | Synthetic profiles (stand-in for P01), listings (stand-in for P03), and the skill vocabulary |
 | `app/db.py` | SQLite schema; loads the fixtures when the DB is empty |
-| `app/matching.py` | Rules baseline `rules-v2`. The weights live in `RULES` |
+| `app/matching.py` | Rules baseline engine |
+| `app/rules.json` | Editable rules (`rules-v2`): mandatory conditions and preference weights |
+| `docs/data-dictionary.md` | Records, statuses and API contract |
+| `docs/acceptance.md` | Sprint 1 acceptance results per story |
 | `app/main.py` | FastAPI routes |
 | `app/static/index.html` | Minimal UI |
 
@@ -56,5 +59,5 @@ uv run pytest
   closed-listing checks, and SQLite persistence.
 - **Simulated:** student selection (no login). Profiles and listings come from fixtures, not from
   live P01/P03 modules.
-- **Deferred:** authentication, drafts, the compare view, employer/coordinator decisions, the
+- **Deferred:** authentication, drafts, employer/coordinator decisions, the
   AI matching feature (Sprint 2), rematching, the P06/P07 handoffs, and deployment.
