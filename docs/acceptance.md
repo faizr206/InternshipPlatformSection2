@@ -1,4 +1,48 @@
-# Sprint 1 acceptance results (P04 / P05)
+# Sprint acceptance results (P04 / P05)
+
+## Sprint 2 — Response and revision
+
+Sprint goal (from *Projects 4 and 5 User Stories and Story Map*): a student's world responds
+and revises — Layla saves and refines an application draft, a simulated employer reviewer
+decides on her application with visible actor/timestamp/next action, a bounded and labelled
+AI term-matching feature runs alongside the unchanged rules baseline, and a coordinator can
+inspect a flagged recommendation, record a correction and rematch against a new input
+version with the original recommendation still traceable.
+
+Automated evidence: `uv run pytest` gives **58 passed** (35 Sprint 1 tests kept green, 23 added).
+Live smoke check of the full thread (draft → submit → decline → flag → accept → rematch) at
+`127.0.0.1:8000`.
+
+| Story | Acceptance check | Result | Evidence |
+|---|---|---|---|
+| **P04-02** Save and revise a draft | AC1 Draft links student, opportunity version and profile version; survives reload with its Draft label | Met | `test_draft_save_edit_and_submit_lifecycle`, `test_draft_upsert_one_per_student_and_opportunity` |
+| | AC2 Editing/saving does not submit; submission with a missing required field gives a useful error and preserves entered data | Met | `test_statement_is_required_for_submission`, draft lifecycle test (422 keeps statement); apply dialog keeps the typed text |
+| **P04-04** Review and decide | AC1 Submitted → Under review → Shortlisted/Declined; student sees decision, actor, timestamp, next action and decline reason | Met | `test_decision_flow_records_actor_timestamp_and_next_action`, `test_decline_requires_reason_and_is_shown_to_the_student`; My applications history |
+| | AC2 Decline cannot move to an offer; unauthorised demo roles blocked; role simulation visibly labelled | Met | `test_invalid_transitions_and_unauthorised_roles_are_blocked` (Offer → 422, Declined terminal, 403 for student/coordinator/faculty); sidebar labels |
+| **P05-04** Bounded AI assistance | AC1 Identifies the terms it used and records its method version alongside the separate rules result | Met | `ai_method_version = ai-termmatch-v1`, `ai_matches` cite term + field + skill + evidence status; `test_ai_terms_recorded_alongside_the_separate_rules_result`, tests/test_ai.py |
+| | AC2 Cannot override a mandatory conflict or invent a qualification; labelled simulated; rules baseline still usable | Met | AI matches only map terms to held skills; eligibility/score/gaps byte-identical to the rules engine; "AI assistance — simulated, deterministic" box; `test_ai_never_changes_the_rules_result`, `test_ai_finds_nothing_when_the_student_has_no_relevant_skills` |
+| **P05-05** Challenge and correct inputs | AC1 Student flags a result; coordinator sees reason, affected field and source version; records a correction request for the owning module | Met | `test_flag_correction_accept_and_rematch_stays_traceable`, `test_p03_and_skill_corrections_are_recorded_only`; Coordinator view |
+| | AC2 Accepted correction uses a new input version and can be rematched; original recommendation stays traceable; P01/P03 records never silently overwritten | Met | correction acceptance → `profile_revisions` v+1 (fixture table untouched); rematch stores a new run; `recommendation-runs` endpoint lists both; guards in `test_correction_flow_guards` |
+
+### Shared completion checks (Sprint 2)
+- **Simulated, labelled in the UI:** role switching (Student / Employer reviewer / Coordinator /
+  Faculty — no login), P01/P03 data (fixtures + correction revisions as new versions), AI term
+  matching (deterministic, labelled "simulated AI").
+- **Working:** drafts, submissions, decision history, the duplicate and transition rules,
+  bounded term matching, correction requests and version-traceable rematching, SQLite persistence.
+- **Keyboard:** role switching, tabs, dialogs (Esc/Cancel) and all actions are keyboard-operable;
+  focus is visible (gold outline in the sidebar, blue elsewhere).
+- **Accessibility gaps still open (carried from Sprint 1):** tabs don't support arrow-key
+  movement; contrast not measured with a tool; no screen-reader test yet.
+
+### Sprint 2 additions to the contract
+`statement` is now required at submission (P04-02 AC2 makes the missing-field case real).
+Sprint 1's `POST /api/applications` checks were re-run with the new field and stay green.
+`ACTIVE_STATUSES` extended to Submitted / Under review / Shortlisted as planned in v1.
+
+---
+
+## Sprint 1 — Walking skeleton
 
 Sprint goal (from *Projects 4 and 5 User Stories and Story Map*): using six synthetic profiles
 and six opportunities, Layla receives a rules-based recommendation with reasons, opens a
@@ -7,8 +51,6 @@ placement stays **Not placed**.
 
 Source references are the story-map story IDs and catalogue acceptance evidence (AE). Sprint 0
 R-numbers still need to be added from the team backlog.
-
-Automated evidence: `uv run pytest` gives 35 passed.
 
 | Story | Acceptance check | Result | Evidence |
 |---|---|---|---|
@@ -27,16 +69,11 @@ Automated evidence: `uv run pytest` gives 35 passed.
 | | AC2 Compare two listings with requirements and approved versions | Met | Compare table in Browse; `test_two_listings_can_be_compared_with_versions_and_requirements` |
 | | AC2 Opening a linked recommendation preserves the opportunity ID | Met | "View recommendation" link from a catalogue card (manual check) |
 | **P04-03** Submit and see status | AC1 Unique application ID linked to student, opportunity version and profile version; Submitted / Not placed after reload | Met | `test_walking_skeleton_thread`; manual reload check |
-| | AC2 Closed/unpublished, missing data or duplicate active application blocked; no extra record | Met | `test_walking_skeleton_thread`, `test_unknown_student_or_opportunity`, `test_missing_required_application_field_is_rejected` |
+| | AC2 Closed/unpublished, missing data or duplicate active application blocked; no extra record | Met | `test_walking_skeleton_thread`, `test_unknown_student_or_opportunity`, `test_missing_required_application_field_is_rejected` (re-run in Sprint 2 with the new required `statement`) |
 
-## Shared completion checks
-- **Simulated, labelled in the UI:** student selection (no login), P01/P03 data (fixtures), AI (none yet).
-- **Keyboard:** the core journey can be done by keyboard (Tab, Enter or Space; Esc closes the confirm dialog).
-  Focus is clearly visible.
-- **Accessibility gaps recorded:** tabs don't support arrow-key movement; colour contrast hasn't been
-  measured with a tool; there's been no screen-reader test.
-
-## Deferred (not Sprint 1)
-Login and role permissions, drafts (P04-02), employer/coordinator decisions (P04-04 to P04-06),
-withdrawal (P04-07), AI assistance (P05-04), correction requests (P05-05), P06/P07 handoffs, live
+## Deferred (not Sprint 2)
+Login and real role permissions, offers and student acceptance (P04-05), university placement
+confirmation + P07 handoff (P04-06), withdrawal (P04-07), skill-gap → P06 (P05-06), general
+rematching after profile changes (P05-07), baseline evaluation (P05-08), applying P03 listing
+corrections and P01/P06 skill-evidence corrections (need the live owning modules), live
 P01/P03 connections, deployment.
