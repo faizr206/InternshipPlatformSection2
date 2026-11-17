@@ -13,7 +13,9 @@ Sprint 1: walking skeleton demo. Local standalone implementation is complete and
 - Added four-student selection, shared skills/evidence display and explicit missing interests/availability for Noor. Seed fetch is relative to the Pages project path, with visible failure/retry. Old browser data remains untouched under v1 while this seed uses v2.
 - Verification: npm test **75/75 passed**, JavaScript syntax checks and git diff --check passed. Runtime tests execute the real store, UI helpers and app in a bounded DOM substitute, including Student rail/activity filtering and retained Employer Applicants. Asset hashes refreshed with npm run stamp. No lint/typecheck tooling or build step is configured.
 - HTTP verification on the local server: all six demo assets/endpoints returned 200, JSON MIME and contents matched the shared file exactly; plan.md, PROGRESS.md, .git/config and an unlisted JSON path returned 404.
-- Remaining verification limit: real-browser/layout testing could not be repeated because this session lacks browser-control permissions. No browser-layout or live-rendering claim is made. GitHub publication is checked after committing.
+- Remaining verification limit: real-browser/layout testing could not be repeated because this session lacks browser-control permissions. No browser-layout or live-rendering claim is made.
+- Published implementation commit **d48ef6c** to main. GitHub Pages build completed successfully for that commit. Downloaded the raw GitHub JSON and live Pages JSON and confirmed both match the supplied fixture exactly; live index.html and all four versioned CSS/JS assets also match the verified checkout.
+- Shareable file: <https://github.com/ray-suton/ipp-walking-skeleton-demo/blob/main/data/ipp_sample_data.json>. Direct JSON: <https://raw.githubusercontent.com/ray-suton/ipp-walking-skeleton-demo/main/data/ipp_sample_data.json>. Live demo: <https://ray-suton.github.io/ipp-walking-skeleton-demo/>.
 
 ## 2026-11-10: Employer HR can view applications (published to GitHub Pages)
 
