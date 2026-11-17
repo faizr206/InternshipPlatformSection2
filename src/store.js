@@ -1,126 +1,101 @@
-/*
- * IPP demo store: shared records, business rules and browser-local persistence.
- *
- * Classic script (no modules) so the demo also works when index.html is opened
- * straight from disk. It publishes `IPPStore` on globalThis; tests import it in Node.
- *
- * Everything here is synthetic demo data. Role switching and HR authorization are
- * simulated in the UI; nothing in this file is production access control.
- */
+/* Shared synthetic IPP records and browser-local demo rules. No production access control. */
 (function (root) {
   'use strict';
 
-  const STORAGE_KEY = 'ipp-demo-v1';
-  const SCHEMA_VERSION = 1;
+  const STORAGE_KEY = 'ipp-demo-v2';
+  const SCHEMA_VERSION = 2;
   const ACTIVITY_LIMIT = 60;
-
   const OPPORTUNITY_STATUS = Object.freeze({ PENDING: 'Pending Review', APPROVED: 'Approved' });
   const APPLICATION_STATUS = Object.freeze({ SUBMITTED: 'Submitted' });
-  // Placement is a separate concept from application status. Placement decisions are
-  // deferred (IPP-22), so every application shows this constant and never changes it.
   const PLACEMENT_STATUS = 'Not placed';
   const REVIEW_STATUS = Object.freeze({ NOT_STARTED: 'Not started' });
   const WORK_MODES = Object.freeze(['On-site', 'Hybrid', 'Remote']);
-
-  const LIMITS = Object.freeze({
-    organization_name: 80,
-    title: 100,
-    location: 80,
-    description: 600,
-    duration: 40,
-    display_name: 60,
-  });
-
-  const FIELD_LABELS = Object.freeze({
-    organization_name: 'Organization name',
-    title: 'Title',
-    description: 'Description',
-    location: 'Location',
-    display_name: 'Display name',
-  });
-
-  const REQUIRED_OPPORTUNITY_FIELDS = Object.freeze(['organization_name', 'title', 'description', 'location']);
-
-  function seedState() {
-    return {
-      version: SCHEMA_VERSION,
-      employers: [
-        { employer_id: 'EMP-001', organization_name: 'Evergreen Labs', hr_user_id: 'HR-001', hr_authorized: true },
-        { employer_id: 'EMP-002', organization_name: 'Northstar Analytics', hr_user_id: 'HR-002', hr_authorized: true },
-      ],
-      opportunities: [
-        {
-          opportunity_id: 'OPP-001',
-          employer_id: 'EMP-001',
-          title: 'Product Design Intern',
-          description:
-            'Work with the design team on user research and interface prototypes for a sustainability dashboard.',
-          location: 'Abu Dhabi',
-          work_mode: 'Hybrid',
-          duration: '12 weeks',
-          approval_status: OPPORTUNITY_STATUS.APPROVED,
-          origin: 'sample',
-        },
-        {
-          opportunity_id: 'OPP-002',
-          employer_id: 'EMP-002',
-          title: 'Data Analytics Intern',
-          description: 'Clean, analyse and visualise operational data sets and present findings to product managers.',
-          location: 'Dubai',
-          work_mode: 'On-site',
-          duration: '10 weeks',
-          approval_status: OPPORTUNITY_STATUS.APPROVED,
-          origin: 'sample',
-        },
-      ],
-      students: [{ student_id: 'STU-001', display_name: 'Alex Lee', eligibility_status: 'Eligible' }],
-      faculty: [{ faculty_id: 'FAC-001', display_name: 'Dr. Sam Okafor' }],
-      applications: [],
-      reviews: [],
-      activity: [],
-    };
-  }
+  const LIMITS = Object.freeze({ organization_name: 80, title: 100, location: 80, description: 600, duration: 40, display_name: 60 });
+  const FIELD_LABELS = { organization_name: 'Organization name', title: 'Title', description: 'Description', location: 'Location' };
+  const REQUIRED_FIELDS = ['organization_name', 'title', 'description', 'location'];
+  const SEED_ARRAYS = ['student_profiles', 'published_listings', 'skills_vocabulary'];
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
   }
 
+  function hasSharedRecords(value) {
+    return value && typeof value === 'object' && SEED_ARRAYS.every((key) => Array.isArray(value[key]));
+  }
+
+  function seedState(seed) {
+    if (!hasSharedRecords(seed)) throw new Error('Load data/ipp_sample_data.json before creating the demo store.');
+    return Object.assign(clone(seed), {
+      version: SCHEMA_VERSION,
+      faculty: [{ faculty_id: 'FAC-001', display_name: 'Dr. Sam Okafor' }],
+      applications: [],
+      reviews: [],
+      activity: [],
+    });
+  }
+
+  function latestSubmitted(profiles, studentId) {
+    return profiles.reduce((latest, profile) => {
+      if (profile.student_id !== studentId || profile.profile_status !== 'submitted') return latest;
+      return !latest || Number(profile.profile_version) > Number(latest.profile_version) ? profile : latest;
+    }, null);
+  }
+
+  function isAvailable(listing) {
+    return listing.publication_status === 'published' && listing.listing_status === 'open';
+  }
+
+  // Read projections stop supervisor fields reaching student cards, dialogs or application history.
+  function studentListing(listing) {
+    if (!listing) return null;
+    const safe = clone(listing);
+    delete safe.supervisor_name;
+    delete safe.supervisor_contact;
+    return safe;
+  }
+
   function nextId(prefix, records, key) {
-    let max = 0;
-    for (const record of records) {
+    const max = records.reduce((result, record) => {
       const match = /-(\d+)$/.exec(String(record[key]));
-      if (match) max = Math.max(max, Number(match[1]));
-    }
-    return `${prefix}-${String(max + 1).padStart(3, '0')}`;
+      return match ? Math.max(result, Number(match[1])) : result;
+    }, 0);
+    return prefix + '-' + String(max + 1).padStart(3, '0');
+  }
+
+  function validProfile(profile) {
+    return profile && typeof profile.student_id === 'string' && profile.student_id.trim() &&
+      typeof profile.display_name === 'string' && profile.display_name.trim() &&
+      Number.isInteger(Number(profile.profile_version)) && Number(profile.profile_version) > 0 &&
+      typeof profile.profile_status === 'string' &&
+      Array.isArray(profile.interests) && profile.interests.every((interest) => typeof interest === 'string') &&
+      Array.isArray(profile.skills) && profile.skills.every((skill) => skill && typeof skill.skill_id === 'string') &&
+      (profile.availability_start === null || typeof profile.availability_start === 'string') &&
+      (profile.availability_end === null || typeof profile.availability_end === 'string');
   }
 
   function isValidState(value) {
-    return (
-      value &&
-      typeof value === 'object' &&
-      value.version === SCHEMA_VERSION &&
-      ['employers', 'opportunities', 'students', 'faculty', 'applications', 'reviews'].every((key) =>
-        Array.isArray(value[key]),
-      ) &&
-      value.students.length > 0 &&
-      value.faculty.length > 0
-    );
+    return hasSharedRecords(value) && value.version === SCHEMA_VERSION &&
+      ['faculty', 'applications', 'reviews'].every((key) => Array.isArray(value[key])) &&
+      value.faculty.length > 0 &&
+      value.student_profiles.every(validProfile) &&
+      value.student_profiles.some((profile) => profile.profile_status === 'submitted') &&
+      value.published_listings.every((listing) => listing && typeof listing.opportunity_id === 'string' && typeof listing.title === 'string' && typeof listing.employer_name === 'string');
   }
 
-  /** Wraps window.localStorage; returns null if the browser blocks it (private mode, etc.). */
   function browserStorage() {
     try {
       const storage = root.localStorage;
-      const probe = '__ipp_probe__';
-      storage.setItem(probe, '1');
-      storage.removeItem(probe);
+      storage.setItem('__ipp_probe__', '1');
+      storage.removeItem('__ipp_probe__');
       return storage;
     } catch (error) {
       return null;
     }
   }
 
-  function createStore(storage) {
+  function createStore(storage, seed) {
+    // Snapshot the supplied fixture so reset never mutates the published shared contract.
+    const initial = seedState(seed);
     const listeners = new Set();
     let persistent = Boolean(storage);
     let state = load();
@@ -132,16 +107,17 @@
           if (raw) {
             const parsed = JSON.parse(raw);
             if (isValidState(parsed)) {
-              // `activity` was added after v1 first shipped; tolerate records saved without it.
+              // Preserve browser records written before the optional activity feed was added.
               if (!Array.isArray(parsed.activity)) parsed.activity = [];
+              parsed.activity = parsed.activity.slice(-ACTIVITY_LIMIT);
               return parsed;
             }
           }
         } catch (error) {
-          /* corrupted or unreadable: fall through to a fresh seed */
+          persistent = false;
         }
       }
-      return seedState();
+      return clone(initial);
     }
 
     function save() {
@@ -150,13 +126,12 @@
           storage.setItem(STORAGE_KEY, JSON.stringify(state));
           persistent = true;
         } catch (error) {
-          persistent = false; // quota or privacy mode: keep working in memory
+          persistent = false;
         }
       }
       for (const listener of listeners) listener();
     }
 
-    /** Re-read from storage, e.g. after another tab changed the records. */
     function refresh() {
       state = load();
       for (const listener of listeners) listener();
@@ -166,7 +141,6 @@
       return Object.assign({ ok: false, code, message }, extra);
     }
 
-    /** Append to the activity feed shown in the UI (newest last, capped so storage stays small). */
     function log(role, kind, text, ref) {
       state.activity.push({
         activity_id: nextId('ACT', state.activity, 'activity_id'),
@@ -180,96 +154,84 @@
     }
 
     function submitOpportunity(input, options) {
-      const hrAuthorized = Boolean(options && options.hrAuthorized);
-      if (!hrAuthorized) {
-        return fail(
-          'unauthorized',
-          'Submission blocked: only an authorized HR representative can submit opportunities. (Simulated control; real authorization is deferred.)',
-        );
+      if (!options || !options.hrAuthorized) {
+        return fail('unauthorized', 'Submission blocked: only an authorized HR representative can submit opportunities. (Simulated control; real authorization is deferred.)');
       }
-
       const values = {
-        organization_name: String(input.organization_name ?? '').trim(),
+        organization_name: String(input.organization_name ?? input.employer_name ?? '').trim(),
         title: String(input.title ?? '').trim(),
         description: String(input.description ?? '').trim(),
         location: String(input.location ?? '').trim(),
         duration: String(input.duration ?? '').trim(),
-        work_mode: WORK_MODES.includes(input.work_mode) ? input.work_mode : 'Hybrid',
       };
-
       const errors = {};
-      for (const field of REQUIRED_OPPORTUNITY_FIELDS) {
-        if (!values[field]) errors[field] = `${FIELD_LABELS[field]} is required.`;
+      for (const field of REQUIRED_FIELDS) {
+        if (!values[field]) errors[field] = FIELD_LABELS[field] + ' is required.';
       }
-      for (const field of ['organization_name', 'title', 'description', 'location', 'duration']) {
+      for (const field of Object.keys(values)) {
         if (!errors[field] && values[field].length > LIMITS[field]) {
-          errors[field] = `${FIELD_LABELS[field] || 'Duration'} must be ${LIMITS[field]} characters or fewer.`;
+          errors[field] = (FIELD_LABELS[field] || 'Duration') + ' must be ' + LIMITS[field] + ' characters or fewer.';
         }
       }
-      if (Object.keys(errors).length > 0) {
-        return fail('validation', 'Fix the highlighted fields and submit again.', { errors });
-      }
-
-      let employer = state.employers.find(
-        (candidate) => candidate.organization_name.toLowerCase() === values.organization_name.toLowerCase(),
-      );
-      if (!employer) {
-        employer = {
-          employer_id: nextId('EMP', state.employers, 'employer_id'),
-          organization_name: values.organization_name,
-          hr_user_id: nextId('HR', state.employers, 'hr_user_id'),
-          hr_authorized: true,
-        };
-        state.employers.push(employer);
-      }
-
+      if (Object.keys(errors).length) return fail('validation', 'Fix the highlighted fields and submit again.', { errors });
+      const mode = String(input.work_mode ?? 'hybrid').toLowerCase();
       const opportunity = {
-        opportunity_id: nextId('OPP', state.opportunities, 'opportunity_id'),
-        employer_id: employer.employer_id,
+        opportunity_id: nextId('OP', state.published_listings, 'opportunity_id'),
+        version: 1,
+        submission_version: 1,
+        employer_name: values.organization_name,
         title: values.title,
         description: values.description,
+        sector: '',
         location: values.location,
-        work_mode: values.work_mode,
+        work_mode: ['on-site', 'hybrid', 'remote'].includes(mode) ? mode : 'hybrid',
+        start_date: null,
+        end_date: null,
         duration: values.duration || 'Not specified',
-        approval_status: OPPORTUNITY_STATUS.PENDING,
+        required_skills: [],
+        desirable_skills: [],
+        publication_status: 'unpublished',
+        listing_status: 'open',
+        supervisor_name: null,
+        supervisor_contact: null,
         origin: 'demo',
       };
-      state.opportunities.push(opportunity);
-      log('employer', 'opportunity_submitted', `Employer HR submitted “${opportunity.title}” for review`, opportunity.opportunity_id);
+      state.published_listings.push(opportunity);
+      log('employer', 'opportunity_submitted', 'Employer HR submitted “' + opportunity.title + '” for review', opportunity.opportunity_id);
       save();
       return { ok: true, opportunity: clone(opportunity) };
     }
 
     function approveOpportunity(opportunityId) {
-      const opportunity = state.opportunities.find((candidate) => candidate.opportunity_id === opportunityId);
-      if (!opportunity) return fail('not_found', `Opportunity ${opportunityId} does not exist.`);
-      if (opportunity.approval_status === OPPORTUNITY_STATUS.APPROVED) {
-        return fail('already_approved', `${opportunityId} is already approved.`);
-      }
-      opportunity.approval_status = OPPORTUNITY_STATUS.APPROVED;
-      log('admin', 'opportunity_approved', `Administrator approved “${opportunity.title}”`, opportunity.opportunity_id);
+      const opportunity = state.published_listings.find((item) => item.opportunity_id === opportunityId);
+      if (!opportunity) return fail('not_found', 'Opportunity ' + opportunityId + ' does not exist.');
+      if (opportunity.publication_status === 'published') return fail('already_approved', opportunityId + ' is already published.');
+      opportunity.publication_status = 'published';
+      log('admin', 'opportunity_approved', 'Administrator approved “' + opportunity.title + '”', opportunity.opportunity_id);
       save();
       return { ok: true, opportunity: clone(opportunity) };
     }
 
+    function getStudent(studentId) {
+      const profile = latestSubmitted(state.student_profiles, studentId);
+      return profile ? clone(profile) : null;
+    }
+
+    function listStudents() {
+      return [...new Set(state.student_profiles.map((profile) => profile.student_id))].map(getStudent).filter(Boolean);
+    }
+
     function hasApplied(studentId, opportunityId) {
-      return state.applications.some(
-        (application) => application.student_id === studentId && application.opportunity_id === opportunityId,
-      );
+      return state.applications.some((item) => item.student_id === studentId && item.opportunity_id === opportunityId);
     }
 
     function submitApplication(studentId, opportunityId) {
-      const student = state.students.find((candidate) => candidate.student_id === studentId);
-      if (!student) return fail('not_found', `Student ${studentId} does not exist.`);
-      const opportunity = state.opportunities.find((candidate) => candidate.opportunity_id === opportunityId);
-      if (!opportunity) return fail('not_found', `Opportunity ${opportunityId} does not exist.`);
-      if (opportunity.approval_status !== OPPORTUNITY_STATUS.APPROVED) {
-        return fail('not_approved', 'Only Approved opportunities accept applications.');
-      }
-      if (hasApplied(studentId, opportunityId)) {
-        return fail('duplicate', 'You have already applied to this opportunity.');
-      }
-
+      const student = getStudent(studentId);
+      if (!student) return fail('not_found', 'A submitted student profile is required.');
+      const opportunity = state.published_listings.find((item) => item.opportunity_id === opportunityId);
+      if (!opportunity) return fail('not_found', 'Opportunity ' + opportunityId + ' does not exist.');
+      if (!isAvailable(opportunity)) return fail('not_approved', 'Only published and open listings accept applications.');
+      if (hasApplied(studentId, opportunityId)) return fail('duplicate', 'You have already applied to this opportunity.');
       const application = {
         application_id: nextId('APP', state.applications, 'application_id'),
         opportunity_id: opportunityId,
@@ -285,69 +247,53 @@
       };
       state.applications.push(application);
       state.reviews.push(review);
-      log('student', 'application_submitted', `${student.display_name} applied to “${opportunity.title}”`, application.application_id);
+      log('student', 'application_submitted', student.display_name + ' applied to “' + opportunity.title + '”', application.application_id);
       save();
       return { ok: true, application: clone(application), review: clone(review) };
     }
 
     function updateDisplayName(studentId, displayName) {
-      const student = state.students.find((candidate) => candidate.student_id === studentId);
-      if (!student) return fail('not_found', `Student ${studentId} does not exist.`);
+      const student = getStudent(studentId);
+      if (!student) return fail('not_found', 'A submitted student profile is required.');
       const name = String(displayName ?? '').trim();
-      if (!name) return fail('validation', 'Display name is required.', { errors: { display_name: 'Display name is required.' } });
-      if (name.length > LIMITS.display_name) {
-        const message = `Display name must be ${LIMITS.display_name} characters or fewer.`;
-        return fail('validation', message, { errors: { display_name: message } });
-      }
-      if (student.display_name !== name) {
-        log('student', 'profile_updated', `Student display name changed to “${name}”`, student.student_id);
-      }
-      student.display_name = name;
+      const message = !name ? 'Display name is required.' : name.length > LIMITS.display_name ? 'Display name must be ' + LIMITS.display_name + ' characters or fewer.' : '';
+      if (message) return fail('validation', message, { errors: { display_name: message } });
+      if (student.display_name === name) return { ok: true, student };
+      const version = Math.max(...state.student_profiles.filter((profile) => profile.student_id === studentId).map((profile) => Number(profile.profile_version))) + 1;
+      const corrected = Object.assign(student, { display_name: name, profile_version: version, profile_status: 'submitted' });
+      state.student_profiles.push(corrected);
+      log('student', 'profile_updated', 'Student display name changed to “' + name + '”', studentId);
       save();
-      return { ok: true, student: clone(student) };
+      return { ok: true, student: clone(corrected) };
     }
 
     function reset() {
-      state = seedState();
-      log('system', 'demo_reset', 'Demo data reset to the sample records', '');
+      state = clone(initial);
+      log('system', 'demo_reset', 'Demo data reset to the shared synthetic records', '');
       save();
     }
 
-    // ---- read-side helpers (always return copies so the UI cannot mutate shared records) ----
-
-    function employerName(employerId) {
-      const employer = state.employers.find((candidate) => candidate.employer_id === employerId);
-      return employer ? employer.organization_name : 'Unknown organization';
-    }
-
-    function withOrganization(opportunity) {
-      return Object.assign(clone(opportunity), { organization_name: employerName(opportunity.employer_id) });
-    }
-
     function listOpportunities(filter) {
-      return state.opportunities
-        .filter((opportunity) => !filter || !filter.status || opportunity.approval_status === filter.status)
-        .map(withOrganization);
+      return state.published_listings.filter((listing) => {
+        if (!filter || !filter.status) return true;
+        if (filter.status === OPPORTUNITY_STATUS.PENDING) return listing.publication_status === 'unpublished';
+        if (filter.status === OPPORTUNITY_STATUS.APPROVED) return listing.publication_status === 'published';
+        return false;
+      }).map(clone);
     }
 
-    /**
-     * Approved opportunities matching a title/organization query.
-     * options.workMode narrows to one work mode; options.sort is 'newest' or 'title'
-     * (omitted = insertion order).
-     */
     function searchApproved(query, options) {
       const opts = options || {};
       const needle = String(query ?? '').trim().toLowerCase();
-      let list = listOpportunities({ status: OPPORTUNITY_STATUS.APPROVED }).filter(
-        (opportunity) =>
-          !needle ||
-          opportunity.title.toLowerCase().includes(needle) ||
-          opportunity.organization_name.toLowerCase().includes(needle),
-      );
-      if (WORK_MODES.includes(opts.workMode)) list = list.filter((opportunity) => opportunity.work_mode === opts.workMode);
-      if (opts.sort === 'newest') list.reverse();
-      else if (opts.sort === 'title') list.sort((a, b) => a.title.localeCompare(b.title));
-      return list;
+      let listings = state.published_listings.filter((listing) => isAvailable(listing) &&
+        (!needle || listing.title.toLowerCase().includes(needle) || listing.employer_name.toLowerCase().includes(needle)));
+      const workMode = String(opts.workMode ?? '').toLowerCase();
+      if (WORK_MODES.some((mode) => mode.toLowerCase() === workMode)) {
+        listings = listings.filter((listing) => listing.work_mode.toLowerCase() === workMode);
+      }
+      if (opts.sort === 'newest') listings.reverse();
+      else if (opts.sort === 'title') listings.sort((a, b) => a.title.localeCompare(b.title));
+      return listings.map(studentListing);
     }
 
     function getFaculty() {
@@ -368,17 +314,17 @@
      * `placement_status` is reported separately because applying never implies a placement.
      */
     function getJourney() {
-      const tracked = state.opportunities.slice().reverse().find((opportunity) => opportunity.origin === 'demo') || null;
+      const tracked = state.published_listings.slice().reverse().find((opportunity) => opportunity.origin === 'demo') || null;
       const application = tracked ? state.applications.find((item) => item.opportunity_id === tracked.opportunity_id) : null;
       const reviewed = Boolean(application && state.reviews.some((review) => review.application_id === application.application_id));
       const stages = [
         { key: 'submitted', role: 'employer', label: 'Submitted by Employer HR', done: Boolean(tracked) },
-        { key: 'approved', role: 'admin', label: 'Approved by Administrator', done: Boolean(tracked && tracked.approval_status === OPPORTUNITY_STATUS.APPROVED) },
+        { key: 'approved', role: 'admin', label: 'Approved by Administrator', done: Boolean(tracked && isAvailable(tracked)) },
         { key: 'applied', role: 'student', label: 'Student applied', done: Boolean(application) },
         { key: 'visible', role: 'faculty', label: 'Visible to Employer HR and Faculty', done: reviewed },
       ];
       return {
-        opportunity: tracked ? withOrganization(tracked) : null,
+        opportunity: tracked ? studentListing(tracked) : null,
         application: application ? clone(application) : null,
         stages,
         complete: stages.every((stage) => stage.done),
@@ -386,61 +332,39 @@
       };
     }
 
-    function getStudent(studentId) {
-      const student = state.students.find((candidate) => candidate.student_id === studentId);
-      return student ? clone(student) : null;
-    }
-
     function listStudentApplications(studentId) {
-      return state.applications
-        .filter((application) => application.student_id === studentId)
-        .map((application) => {
-          const opportunity = state.opportunities.find((candidate) => candidate.opportunity_id === application.opportunity_id);
-          const review = state.reviews.find((candidate) => candidate.application_id === application.application_id);
-          return Object.assign(clone(application), {
-            opportunity: withOrganization(opportunity),
-            review: review ? clone(review) : null,
-            placement_status: PLACEMENT_STATUS,
-          });
-        });
+      return state.applications.filter((application) => application.student_id === studentId).map((application) => Object.assign(clone(application), {
+        opportunity: studentListing(state.published_listings.find((listing) => listing.opportunity_id === application.opportunity_id)),
+        review: clone(state.reviews.find((review) => review.application_id === application.application_id) || null),
+        placement_status: PLACEMENT_STATUS,
+      }));
     }
 
-    /** Faculty view: each application joined to its student, opportunity and review record. */
     function listFacultyRecords() {
-      return state.applications.map((application) => {
-        const opportunity = state.opportunities.find((candidate) => candidate.opportunity_id === application.opportunity_id);
-        const student = state.students.find((candidate) => candidate.student_id === application.student_id);
-        const review = state.reviews.find((candidate) => candidate.application_id === application.application_id);
-        return {
-          application: clone(application),
-          opportunity: withOrganization(opportunity),
-          student: clone(student),
-          review: clone(review),
-          placement_status: PLACEMENT_STATUS,
-        };
-      });
+      return state.applications.map((application) => ({
+        application: clone(application),
+        opportunity: studentListing(state.published_listings.find((listing) => listing.opportunity_id === application.opportunity_id)),
+        student: getStudent(application.student_id),
+        review: clone(state.reviews.find((review) => review.application_id === application.application_id)),
+        placement_status: PLACEMENT_STATUS,
+      }));
     }
 
-    /**
-     * Employer HR view: applications received, newest first.
-     * Deliberately a narrower projection than the faculty view: no review records, and only the
-     * student fields an employer needs to recognise an applicant (what employers may see about a
-     * student in a real system is a privacy decision that is still open).
-     */
     function listEmployerApplications() {
       return state.applications
         .slice()
         .reverse()
         .map((application) => {
-          const opportunity = state.opportunities.find((candidate) => candidate.opportunity_id === application.opportunity_id);
-          const student = state.students.find((candidate) => candidate.student_id === application.student_id);
+          const opportunity = state.published_listings.find((candidate) => candidate.opportunity_id === application.opportunity_id);
+          const student = getStudent(application.student_id);
           return {
             application: clone(application),
-            opportunity: withOrganization(opportunity),
+            opportunity: studentListing(opportunity),
             student: {
               student_id: student.student_id,
               display_name: student.display_name,
-              eligibility_status: student.eligibility_status,
+              profile_version: student.profile_version,
+              profile_status: student.profile_status,
             },
             placement_status: PLACEMENT_STATUS,
           };
@@ -458,53 +382,25 @@
 
     function counts() {
       return {
-        pending: state.opportunities.filter((o) => o.approval_status === OPPORTUNITY_STATUS.PENDING).length,
-        approved: state.opportunities.filter((o) => o.approval_status === OPPORTUNITY_STATUS.APPROVED).length,
+        pending: state.published_listings.filter((listing) => listing.publication_status === 'unpublished').length,
+        approved: state.published_listings.filter(isAvailable).length,
         applications: state.applications.length,
       };
     }
 
     return {
-      subscribe(listener) {
-        listeners.add(listener);
-        return () => listeners.delete(listener);
-      },
+      subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
       isPersistent: () => persistent,
-      refresh,
-      reset,
-      submitOpportunity,
-      approveOpportunity,
-      submitApplication,
-      updateDisplayName,
-      hasApplied,
-      listOpportunities,
-      searchApproved,
-      getFaculty,
-      listActivity,
-      getJourney,
-      getStudent,
-      listStudentApplications,
-      listFacultyRecords,
-      listEmployerApplications,
-      applicantCounts,
-      counts,
-      getApplicationFor: (studentId, opportunityId) => {
-        const found = state.applications.find((a) => a.student_id === studentId && a.opportunity_id === opportunityId);
+      getSkillsVocabulary: () => clone(state.skills_vocabulary),
+      getApplicationFor(studentId, opportunityId) {
+        const found = state.applications.find((application) => application.student_id === studentId && application.opportunity_id === opportunityId);
         return found ? clone(found) : null;
       },
+      getFaculty, listActivity, getJourney, listEmployerApplications, applicantCounts,
+      refresh, reset, submitOpportunity, approveOpportunity, submitApplication, updateDisplayName, hasApplied,
+      listOpportunities, searchApproved, getStudent, listStudents, listStudentApplications, listFacultyRecords, counts,
     };
   }
 
-  root.IPPStore = Object.freeze({
-    STORAGE_KEY,
-    OPPORTUNITY_STATUS,
-    APPLICATION_STATUS,
-    PLACEMENT_STATUS,
-    REVIEW_STATUS,
-    WORK_MODES,
-    LIMITS,
-    seedState,
-    createStore,
-    browserStorage,
-  });
+  root.IPPStore = Object.freeze({ STORAGE_KEY, OPPORTUNITY_STATUS, APPLICATION_STATUS, PLACEMENT_STATUS, REVIEW_STATUS, WORK_MODES, LIMITS, seedState, createStore, browserStorage });
 })(globalThis);

@@ -8,7 +8,7 @@ const { ICON_NAMES } = globalThis.IPPUI;
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const SOURCES = ['src/store.js', 'src/ui.js', 'src/app.js'];
 
-test('index.html loads the demo from local files only (no CDN, no network calls)', async () => {
+test('index.html loads the demo without remote script, style or media dependencies', async () => {
   const html = await read('index.html');
   const css = await read('styles.css');
   assert.deepEqual([...html.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*\b(?:src|href)="(?:https?:)?\/\/[^"]+"/g)], [], 'no external assets');
@@ -107,4 +107,11 @@ test('styles: hidden attribute always wins, motion respects reduced-motion, tile
   assert.match(css, /\[hidden\]\s*\{\s*display:\s*none\s*!important/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*animation:\s*none\s*!important/s);
   for (let i = 0; i < 6; i += 1) assert.match(css, new RegExp(`\\.tone-${i}\\b`));
+});
+
+test('the server allowlist exposes the shared JSON seed at its canonical path', async () => {
+  const server = await read('scripts/serve.mjs');
+  assert.match(server, /\['\/data\/ipp_sample_data\.json', \['data\/ipp_sample_data\.json', 'application\/json; charset=utf-8'\]\]/);
+  const app = await read('src/app.js');
+  assert.match(app, /new URL\('data\/ipp_sample_data\.json', document\.baseURI\)/);
 });

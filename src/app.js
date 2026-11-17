@@ -11,10 +11,9 @@
 
   const Store = window.IPPStore;
   const { h, icon, orgTile, avatar, timeEl, refreshRelativeTimes } = window.IPPUI;
-  const store = Store.createStore(Store.browserStorage());
+  let store;
   const { OPPORTUNITY_STATUS, PLACEMENT_STATUS, WORK_MODES, LIMITS } = Store;
 
-  const STUDENT_ID = 'STU-001'; // simulated sign-in: the demo always acts as this student
   const DEFAULT_ROUTE = 'overview'; // set to 'student' to open on the Student view instead
 
   const OVERVIEW = { id: 'overview', label: 'Overview', short: 'Overview', hint: 'Journey and live activity', icon: 'home' };
@@ -76,6 +75,7 @@
 
   const ui = {
     route: null,
+    studentId: null,
     tab: 'opportunities',
     query: '',
     workMode: 'All',
@@ -116,7 +116,25 @@
     return h('span', { class: `chip chip-${kind}` }, iconName && icon(iconName, 13), text);
   }
   const approvalChip = (status) =>
-    status === OPPORTUNITY_STATUS.APPROVED ? chip(status, 'approved', 'check') : chip(status, 'pending', 'clock');
+    status === OPPORTUNITY_STATUS.APPROVED ? chip(status, 'approved', 'check') : status === 'Closed' ? chip(status, 'neutral', 'lock') : chip(status, 'pending', 'clock');
+
+  function listingLabel(opportunity) {
+    if (opportunity.publication_status !== 'published') return OPPORTUNITY_STATUS.PENDING;
+    return opportunity.listing_status === 'open' ? OPPORTUNITY_STATUS.APPROVED : 'Closed';
+  }
+
+  function skillNames(ids) {
+    const vocabulary = store.getSkillsVocabulary();
+    return (ids || []).map((id) => vocabulary.find((skill) => skill.skill_id === id)?.label || id).join(', ') || 'Not specified';
+  }
+
+  function listingDetails(opportunity) {
+    return facts([
+      ['Dates', opportunity.start_date && opportunity.end_date ? `${opportunity.start_date} – ${opportunity.end_date}` : 'Not specified'],
+      ['Required skills', skillNames(opportunity.required_skills)],
+      ['Desirable skills', skillNames(opportunity.desirable_skills)],
+    ]);
+  }
 
   function metaChips(opportunity) {
     return h(
@@ -126,7 +144,7 @@
         ['pin', opportunity.location],
         ['monitor', opportunity.work_mode],
         ['clock', opportunity.duration],
-      ].map(([iconName, text]) => h('li', null, icon(iconName, 14), text)),
+      ].filter(([, text]) => text).map(([iconName, text]) => h('li', null, icon(iconName, 14), text)),
     );
   }
 
@@ -257,9 +275,10 @@
         ),
       );
     });
-    const record = journey.opportunity
-      ? h('p', { class: 'journey-record' }, 'Tracking ', h('strong', null, journey.opportunity.opportunity_id), ` · ${journey.opportunity.title} at ${journey.opportunity.organization_name}`)
-      : h('p', { class: 'journey-record' }, 'No submitted record yet. Submit an opportunity as Employer HR to start the journey.');
+    const visibleOpportunity = journey.opportunity && (ui.route !== 'student' || (journey.opportunity.publication_status === 'published' && journey.opportunity.listing_status === 'open'));
+    const record = visibleOpportunity
+      ? h('p', { class: 'journey-record' }, 'Tracking ', h('strong', null, journey.opportunity.opportunity_id), ` · ${journey.opportunity.title} at ${journey.opportunity.employer_name}`)
+      : h('p', { class: 'journey-record' }, ui.route === 'student' ? 'No published and open tracked listing yet.' : 'No submitted record yet. Submit an opportunity as Employer HR to start the journey.');
     return h(
       'section',
       { class: `card journey${wide ? ' journey-h' : ''}`, 'aria-labelledby': 'journey-title' },
@@ -276,7 +295,16 @@
   }
 
   function activityCard(limit) {
-    const entries = store.listActivity(limit);
+    let entries = store.listActivity();
+    if (ui.route === 'student') {
+      const visibleRefs = new Set([
+        ...store.searchApproved('').map((listing) => listing.opportunity_id),
+        ...store.listStudentApplications(ui.studentId).map((application) => application.application_id),
+        ui.studentId,
+      ]);
+      entries = entries.filter((entry) => !entry.ref || visibleRefs.has(entry.ref));
+    }
+    entries = entries.slice(0, limit);
     const keyOf = (entry) => `${entry.activity_id}@${entry.at}`;
     const list = entries.length
       ? h(
@@ -365,7 +393,7 @@
           'Required-field checks, status changes, duplicate prevention',
           'Records persist across role changes and reloads in this browser',
         ]),
-        scope('scope-simulated', 'info', 'Simulated', ['Role switching (no login)', 'HR authorization checkbox', 'A single student and faculty reviewer']),
+        scope('scope-simulated', 'info', 'Simulated', ['Role switching (no login)', 'HR authorization checkbox', 'Four selectable synthetic students and one faculty reviewer']),
         scope('scope-deferred', 'clock', 'Deferred', [
           'Real authentication and permissions',
           'Shared central storage',
@@ -411,9 +439,9 @@
   // ---------- Student view ----------
 
   function studentView() {
-    const student = store.getStudent(STUDENT_ID);
+    const student = store.getStudent(ui.studentId);
     const counts = store.counts();
-    const mine = store.listStudentApplications(STUDENT_ID);
+    const mine = store.listStudentApplications(ui.studentId);
 
     const tablist = tabBar(STUDENT_TABS, 'Student sections', { applications: mine.length });
     const panel = tabPanel;
@@ -427,6 +455,21 @@
         { key: 'applications', label: 'My applications', value: mine.length, note: 'Submitted by you', icon: 'send' },
         { key: 'placement', label: 'Placement status', value: PLACEMENT_STATUS, text: true, note: 'Decided separately from applying', icon: 'lock' },
       ]),
+      h('div', { class: 'field' },
+        h('label', { for: 'demo-student' }, 'Synthetic student profile'),
+        h('select', { id: 'demo-student', onChange: (event) => {
+          ui.studentId = event.target.value;
+          ui.nameDraft = null;
+          ui.nameError = '';
+          ui.query = '';
+          ui.workMode = 'All';
+          ui.focusId = 'demo-student';
+          clearToast();
+          render();
+        } }, store.listStudents().map((profile) => h('option', {
+          value: profile.student_id, selected: profile.student_id === ui.studentId,
+        }, `${profile.display_name} · ${profile.student_id} · v${profile.profile_version}`))),
+      ),
       tablist,
       panel('opportunities', opportunitiesPanel()),
       panel('applications', applicationsPanel(mine)),
@@ -471,7 +514,7 @@
       id: 'search',
       type: 'search',
       value: ui.query,
-      placeholder: 'e.g. Design, Northstar',
+      placeholder: 'e.g. Analytics, Emirates',
       autocomplete: 'off',
       onInput: (event) => {
         ui.query = event.target.value;
@@ -577,7 +620,7 @@
 
   function opportunityCard(opportunity) {
     const id = opportunity.opportunity_id;
-    const applied = store.getApplicationFor(STUDENT_ID, id);
+    const applied = store.getApplicationFor(ui.studentId, id);
     const isDemo = opportunity.origin === 'demo';
     return h(
       'article',
@@ -585,11 +628,12 @@
       h(
         'div',
         { class: 'opp-head' },
-        orgTile(opportunity.organization_name),
-        h('div', { class: 'opp-head-text' }, h('p', { class: 'org' }, opportunity.organization_name), h('h3', { id: `opp-title-${id}` }, opportunity.title)),
+        orgTile(opportunity.employer_name),
+        h('div', { class: 'opp-head-text' }, h('p', { class: 'org' }, opportunity.employer_name), h('h3', { id: `opp-title-${id}` }, opportunity.title)),
         isDemo ? chip('New', 'new') : h('span', { class: 'idtag' }, id),
       ),
-      h('p', { class: 'desc' }, opportunity.description),
+      h('p', { class: 'desc' }, opportunity.description || opportunity.sector),
+      listingDetails(opportunity),
       metaChips(opportunity),
       h(
         'div',
@@ -601,7 +645,7 @@
               { type: 'button', class: 'btn', onClick: (event) => openApplyDialog(opportunity, event.currentTarget) },
               icon('send', 16),
               'Apply',
-              h('span', { class: 'sr-only' }, ` to ${opportunity.title} at ${opportunity.organization_name}`),
+              h('span', { class: 'sr-only' }, ` to ${opportunity.title} at ${opportunity.employer_name}`),
             ),
         isDemo && h('span', { class: 'idtag' }, id),
       ),
@@ -632,8 +676,8 @@
               h(
                 'div',
                 { class: 'opp-head' },
-                orgTile(application.opportunity.organization_name),
-                h('div', { class: 'opp-head-text' }, h('h3', null, application.opportunity.title), h('p', { class: 'muted' }, application.opportunity.organization_name)),
+                orgTile(application.opportunity.employer_name),
+                h('div', { class: 'opp-head-text' }, h('h3', null, application.opportunity.title), h('p', { class: 'muted' }, application.opportunity.employer_name)),
                 chip(application.application_status, 'submitted'),
               ),
               facts([
@@ -678,17 +722,21 @@
       }),
       facts([
         ['Student ID', student.student_id],
-        ['Eligibility', chip(student.eligibility_status, 'approved', 'check')],
+        ['Profile version', String(student.profile_version)],
+        ['Profile status', student.profile_status],
+        ['Interests', student.interests.length ? student.interests.join(', ') : 'Missing: interests not provided'],
+        ['Availability', student.availability_start && student.availability_end ? `${student.availability_start} – ${student.availability_end}` : 'Missing: availability unknown'],
+        ['Skills', student.skills.map((skill) => `${skillNames([skill.skill_id])} (${skill.evidence_status})`).join(', ') || 'Not provided'],
       ]),
-      h('p', { class: 'note' }, 'Eligibility verification is deferred. This status is seeded demo data and is not checked against university records.'),
-      h('div', { class: 'form-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Save profile')),
+      h('p', { class: 'note' }, 'Eligibility and official approval require human review. Missing interests or availability are not inferred. Saving a correction creates a new submitted profile version.'),
+      h('div', { class: 'form-actions' }, h('button', { type: 'submit', class: 'btn' }, 'Save new profile version')),
     );
   }
 
   function onProfileSubmit(event) {
     event.preventDefault();
     const value = new FormData(event.currentTarget).get('display_name');
-    const result = act(() => store.updateDisplayName(STUDENT_ID, value));
+    const result = act(() => store.updateDisplayName(ui.studentId, value));
     ui.focusId = 'profile-display-name';
     if (!result.ok) {
       ui.nameDraft = String(value);
@@ -706,11 +754,11 @@
 
   function openApplyDialog(opportunity) {
     ui.pendingApply = opportunity.opportunity_id;
-    const student = store.getStudent(STUDENT_ID);
+    const student = store.getStudent(ui.studentId);
     $('#apply-facts').replaceChildren(
       ...[
         ['Opportunity', `${opportunity.title} (${opportunity.opportunity_id})`],
-        ['Organization', opportunity.organization_name],
+        ['Organization', opportunity.employer_name],
         ['Applicant', `${student.display_name} (${student.student_id})`],
       ].map(([label, value]) => h('div', null, h('dt', null, label), h('dd', null, value))),
     );
@@ -722,7 +770,7 @@
 
   function confirmApply() {
     const opportunityId = ui.pendingApply;
-    const result = act(() => store.submitApplication(STUDENT_ID, opportunityId));
+    const result = act(() => store.submitApplication(ui.studentId, opportunityId));
     if (!result.ok) {
       const error = $('#apply-error');
       error.textContent = result.message;
@@ -734,9 +782,9 @@
     ui.dialogFocusId = `applied-${opportunityId}`;
     ui.fresh = new Set([opportunityId, result.application.application_id]);
     $('#apply-dialog').close();
-    const opportunity = store.listOpportunities().find((item) => item.opportunity_id === opportunityId);
+    const opportunity = store.searchApproved('').find((item) => item.opportunity_id === opportunityId);
     showToast(
-      `${result.application.application_id} submitted for ${opportunity.title} at ${opportunity.organization_name}. Application status: Submitted. Placement status: ${PLACEMENT_STATUS}. Employer HR and Faculty Reviewer can now view it.`,
+      `${result.application.application_id} submitted for ${opportunity.title} at ${opportunity.employer_name}. Application status: Submitted. Placement status: ${PLACEMENT_STATUS}. Employer HR and Faculty Reviewer can now view it.`,
       { link: { href: '#employer/applicants', text: 'Next: see it as Employer HR' } },
     );
     render();
@@ -836,18 +884,18 @@
           h(
             'li',
             { class: `status-row${ui.fresh.has(opportunity.opportunity_id) ? ' is-new' : ''}` },
-            orgTile(opportunity.organization_name, 'sm'),
+            orgTile(opportunity.employer_name, 'sm'),
             h(
               'div',
               { class: 'body' },
-              h('div', { class: 'row-head' }, h('p', { class: 'row-title' }, opportunity.title), approvalChip(opportunity.approval_status)),
-              h('p', { class: 'muted' }, `${opportunity.organization_name} · ${opportunity.opportunity_id}${opportunity.origin === 'demo' ? ' · submitted in this demo' : ''}`),
+              h('div', { class: 'row-head' }, h('p', { class: 'row-title' }, opportunity.title), approvalChip(listingLabel(opportunity))),
+              h('p', { class: 'muted' }, `${opportunity.employer_name} · ${opportunity.opportunity_id}${opportunity.origin === 'demo' ? ' · submitted in this demo' : ''}`),
               h(
                 'p',
                 { class: 'muted' },
-                opportunity.approval_status === OPPORTUNITY_STATUS.PENDING
+                listingLabel(opportunity) === OPPORTUNITY_STATUS.PENDING
                   ? 'Waiting for university approval. Students cannot see it yet.'
-                  : 'Approved. Visible to students.',
+                  : opportunity.listing_status === 'open' ? 'Published and open. Visible to students.' : 'Closed. Not visible to students.',
               ),
               applicantCounts[opportunity.opportunity_id] > 0 &&
                 h(
@@ -908,7 +956,7 @@
                 'div',
                 { class: 'opp-head-text' },
                 h('h3', null, entry.student.display_name),
-                h('p', { class: 'muted' }, `Applied to ${entry.opportunity.title} · ${entry.opportunity.organization_name}`),
+                h('p', { class: 'muted' }, `Applied to ${entry.opportunity.title} · ${entry.opportunity.employer_name}`),
               ),
               chip(entry.application.application_status, 'submitted'),
             ),
@@ -916,7 +964,8 @@
               ['Application ID', entry.application.application_id],
               ['Student ID', entry.student.student_id],
               ['Opportunity ID', entry.opportunity.opportunity_id],
-              ['Eligibility', chip(entry.student.eligibility_status, 'approved', 'check')],
+              ['Profile version', String(entry.student.profile_version)],
+              ['Profile status', entry.student.profile_status],
               ['Application status', entry.application.application_status],
               ['Placement status', chip(entry.placement_status, 'neutral')],
               ['Submitted', h('span', null, formatTime(entry.application.submitted_at), ' (', timeEl(entry.application.submitted_at), ')')],
@@ -973,7 +1022,7 @@
     ui.formMessage = '';
     ui.focusId = 'status-heading';
     ui.fresh = new Set([created.opportunity_id]);
-    showToast(`${created.opportunity_id} “${created.title}” submitted. Status: ${created.approval_status}.`, {
+    showToast(`${created.opportunity_id} “${created.title}” submitted. Status: ${listingLabel(created)}.`, {
       link: { href: '#admin', text: 'Next: review it as University Administrator' },
     });
     render();
@@ -989,8 +1038,8 @@
       h(
         'div',
         { class: 'opp-head' },
-        orgTile(opportunity.organization_name),
-        h('div', { class: 'opp-head-text' }, h('p', { class: 'org' }, opportunity.organization_name), h('h3', null, opportunity.title)),
+        orgTile(opportunity.employer_name),
+        h('div', { class: 'opp-head-text' }, h('p', { class: 'org' }, opportunity.employer_name), h('h3', null, opportunity.title)),
         h('span', { class: 'idtag' }, opportunity.opportunity_id),
       );
 
@@ -1003,12 +1052,12 @@
               'article',
               { class: 'card opp' },
               head(opportunity),
-              h('p', { class: 'desc' }, opportunity.description),
+              h('p', { class: 'desc' }, opportunity.description || opportunity.sector),
               metaChips(opportunity),
               h(
                 'div',
                 { class: 'opp-foot' },
-                approvalChip(opportunity.approval_status),
+                approvalChip(listingLabel(opportunity)),
                 h(
                   'button',
                   { type: 'button', class: 'btn', onClick: () => approve(opportunity) },
@@ -1035,7 +1084,7 @@
                 { class: `card opp${ui.fresh.has(opportunity.opportunity_id) ? ' is-new' : ''}` },
                 head(opportunity),
                 metaChips(opportunity),
-                h('div', { class: 'opp-foot' }, approvalChip(opportunity.approval_status)),
+                h('div', { class: 'opp-foot' }, approvalChip(listingLabel(opportunity))),
               ),
             ),
         )
@@ -1048,13 +1097,13 @@
       stats(
         [
           { key: 'pending', label: 'Pending review', value: pending.length, note: 'Waiting for your decision', icon: 'clock' },
-          { key: 'approved', label: 'Approved', value: approved.length, note: 'Visible to students', icon: 'checkCircle' },
+          { key: 'published', label: 'Published', value: approved.length, note: 'Includes closed listings; only open listings reach students', icon: 'checkCircle' },
         ],
         'two',
       ),
       h('div', { class: 'section-head' }, h('h2', { id: 'queue-heading', tabindex: '-1' }, 'Review queue')),
       queue,
-      h('div', { class: 'section-head' }, h('h2', null, 'Approved opportunities')),
+      h('div', { class: 'section-head' }, h('h2', null, 'Published opportunities')),
       approvedList,
     );
   }
@@ -1094,7 +1143,7 @@
                   'div',
                   { class: 'opp-head' },
                   avatar(record.student.display_name),
-                  h('div', { class: 'opp-head-text' }, h('h3', null, record.student.display_name), h('p', { class: 'muted' }, `${record.opportunity.title} · ${record.opportunity.organization_name}`)),
+                  h('div', { class: 'opp-head-text' }, h('h3', null, record.student.display_name), h('p', { class: 'muted' }, `${record.opportunity.title} · ${record.opportunity.employer_name}`)),
                   chip(record.application.application_status, 'submitted'),
                 ),
                 facts([
@@ -1133,7 +1182,7 @@
       case 'admin':
         return { name: 'Placement Office', detail: 'Sample administrator' };
       case 'student': {
-        const student = store.getStudent(STUDENT_ID);
+        const student = store.getStudent(ui.studentId);
         return { name: student.display_name, detail: `${student.student_id} · Student` };
       }
       case 'faculty': {
@@ -1247,6 +1296,7 @@
       ui.hrAuthorized = true;
       ui.sampleIndex = 0;
       ui.seenActivity.clear();
+      ui.studentId = store.listStudents()[0].student_id;
       ui.dialogFocusId = 'page-title';
       resetDialog.close();
       act(() => store.reset());
@@ -1279,5 +1329,21 @@
     route(true);
   }
 
-  init();
+  async function start() {
+    try {
+      const response = await fetch(new URL('data/ipp_sample_data.json', document.baseURI), { cache: 'no-store' });
+      if (!response.ok) throw new Error('Seed request failed: ' + response.status);
+      store = Store.createStore(Store.browserStorage(), await response.json());
+      ui.studentId = store.listStudents()[0].student_id;
+      init();
+    } catch (error) {
+      $('#view').replaceChildren(h('div', { class: 'card', role: 'alert' },
+        h('h1', null, 'Unable to load synthetic demo data'),
+        h('p', null, 'Check your connection and try again.'),
+        h('button', { type: 'button', class: 'btn', onClick: start }, 'Retry loading data'),
+      ));
+    }
+  }
+
+  start();
 })();
