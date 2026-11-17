@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import db
@@ -145,6 +146,15 @@ def correction_dict(conn, row) -> dict:
 @app.get("/")
 def index():
     return FileResponse(Path(__file__).parent / "static" / "index.html")
+
+
+STUDENT_PREVIEW = Path(__file__).parent / "static" / "student-preview"
+app.mount("/student-preview/assets", StaticFiles(directory=STUDENT_PREVIEW / "assets"), name="student-preview-assets")
+
+
+@app.get("/student-preview", include_in_schema=False)
+def student_preview():
+    return FileResponse(STUDENT_PREVIEW / "index.html")
 
 
 @app.get("/api/skills")
