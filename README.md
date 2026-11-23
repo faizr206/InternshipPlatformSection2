@@ -36,6 +36,15 @@ uv run uvicorn app.main:app --reload
 Open http://127.0.0.1:8000. The API docs are at http://127.0.0.1:8000/docs.
 To reset the demo data, stop the server and delete `app.db`.
 
+### Student design preview
+
+Open http://127.0.0.1:8000/student-preview for the redesigned catalogue. It includes the
+example employers, employer badges, listing photos, advanced filters, and the draggable
+career assistant. All preview actions and chat input stay in the browser for the current
+page session. The preview does not call an AI service or write to SQLite. The original
+four-role app remains available at the root URL.
+
+
 ### Public demo (ngrok)
 
 ```bash
