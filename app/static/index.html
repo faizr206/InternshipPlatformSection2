@@ -96,6 +96,22 @@
   .chip.s-review { background: var(--warn-soft); color: var(--warn); }
   .chip.s-shortlisted { background: var(--ok-soft); color: var(--ok); }
   .chip.s-declined { background: var(--bad-soft); color: var(--bad); }
+  .chip.s-offered { background: var(--ai-soft); color: var(--ai); font-weight: 600; }
+  .chip.s-accepted { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+  .chip.s-offerdeclined, .chip.s-withdrawn { background: #eef0f3; color: #4b5563; }
+  .chip.p-awaiting { background: var(--warn-soft); color: var(--warn); }
+  .chip.p-confirmed { background: var(--ok); color: #fff; font-weight: 600; }
+  ol.timeline { list-style: none; margin: 10px 0 0; padding: 0 0 0 18px; border-left: 2px solid var(--border); }
+  ol.timeline li { position: relative; margin: 0 0 10px; }
+  ol.timeline li::before { content: ""; position: absolute; left: -24px; top: 5px; width: 10px; height: 10px;
+    border-radius: 50%; background: var(--blue); border: 2px solid var(--surface); }
+  ol.timeline li.last::before { background: var(--gold); }
+  .gap-list { list-style: none; padding: 0; margin: 0; }
+  .gap-list li { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .p06 { border: 1px dashed var(--border); border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 8px; }
+  .inline-form label { font-size: 12.5px; }
+  .inline-form input, .inline-form select { display: block; margin-top: 4px; }
 
   .tabs { max-width: 100%; overflow-x: auto; display: inline-flex; gap: 2px; margin-bottom: 16px; padding: 4px; background: #e8edf3; border-radius: 12px; }
   .tabs button { white-space: nowrap; font: inherit; font-weight: 500; background: none; border: 0; padding: 7px 16px; cursor: pointer;
@@ -227,18 +243,18 @@
     <div class="brand">
       <div class="logo" aria-hidden="true">IPP</div>
       <div><h1>Coop Platform</h1>
-      <div class="sub">P04 Applications · P05 Matching · Sprint 2</div></div>
+      <div class="sub">P04 Applications · P05 Matching · Sprint 3</div></div>
     </div>
     <div class="nav-label">Simulated roles</div>
     <nav class="nav" aria-label="Simulated roles">
       <button type="button" data-role="student" aria-current="true"><span class="ico">🎓</span>Student
-        <small>Recommendations · catalogue · drafts &amp; applications</small></button>
+        <small>Recommendations · skill gaps · applications &amp; offers</small></button>
       <button type="button" data-role="employer" aria-current="false"><span class="ico">🏢</span>Employer reviewer
-        <small>Review · shortlist · decline</small></button>
+        <small>Review · shortlist · offer · decline</small></button>
       <button type="button" data-role="coordinator" aria-current="false"><span class="ico">🏛️</span>Coordinator
-        <small>Correction requests · matching runs</small></button>
+        <small>Placements · P07 handoff · corrections</small></button>
       <button type="button" data-role="faculty" aria-current="false"><span class="ico">📋</span>Faculty reviewer
-        <small>Read-only application records</small></button>
+        <small>Skill evidence review · applications</small></button>
     </nav>
     <div class="side-note">Simulated role switching — there is no login. Real access control is a deferred task and is recorded as a gap.</div>
   </aside>
@@ -307,7 +323,7 @@
       <section class="view" id="view-employer" hidden>
         <p class="view-intro">Simulated employer reviewer. Submitted applications are reviewed here; each decision
           records the actor, time and a next action for the student. A decline requires a reason.
-          Offers are a Sprint 3 story and can never follow a decline.</p>
+          A shortlisted application can receive an offer; an offer can never follow a decline.</p>
         <span class="msg" id="employerMsg"></span>
         <div id="queue"></div>
       </section>
@@ -318,6 +334,14 @@
           coordinator sees the reason, affected field and the input versions used, records a correction
           request for the owning module (P01 / P03) and, for profile corrections, applies it as a new
           input version that can be rematched. The original recommendation stays traceable.</p>
+        <h2 class="stack-title">Accepted offers awaiting confirmation</h2>
+        <p class="muted">Only the coordinator turns an accepted offer into a placement. Confirming creates one
+          placement ID and one handoff to P07 (mock outbox); confirming again creates neither.</p>
+        <span class="msg" id="plMsg"></span>
+        <div id="awaiting"></div>
+        <h2 class="stack-title">Confirmed placements · P07 handoff (mock)</h2>
+        <div id="placements"></div>
+
         <span class="msg" id="crMsg"></span>
         <h2 class="stack-title">Correction requests</h2>
         <div id="corrections"></div>
@@ -336,9 +360,21 @@
 
       <!-- ================= FACULTY ================= -->
       <section class="view" id="view-faculty" hidden>
-        <p class="view-intro"><b>Read-only view.</b> Viewing an application never implies an approved placement —
-          application status and placement status are shown separately. Placement confirmation is a
-          Sprint 3 story (P04-06).</p>
+        <p class="view-intro">Simulated faculty reviewer (FAC-01). Reviewing a student's skill evidence creates a
+          <b>new profile version</b> and re-runs matching against it; earlier recommendations keep their original
+          versions and reasons. Applications are read-only here, and viewing one never implies a placement.</p>
+        <h2 class="stack-title">Review skill evidence</h2>
+        <div class="card">
+          <div class="inline-form">
+            <label>Student <select id="evStudent"></select></label>
+            <label>Skill <select id="evSkill"></select></label>
+            <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
+            <button class="btn" id="evReview">Mark reviewed &amp; rematch</button>
+          </div>
+          <p class="msg" id="evMsg"></p>
+          <div id="evVersions"></div>
+        </div>
+        <h2 class="stack-title">Applications (read-only)</h2>
         <div id="facultyApps"></div>
       </section>
 
@@ -379,6 +415,31 @@
   </div>
 </dialog>
 
+<!-- Withdraw dialog (student) -->
+<dialog id="withdrawDialog">
+  <h2>Withdraw application?</h2>
+  <p class="muted" id="withdrawContext"></p>
+  <label>Reason <span class="muted">(optional, kept in the history)</span>
+    <textarea id="withdrawReason" rows="2" placeholder="e.g. accepted a different placement"></textarea>
+  </label>
+  <p class="msg" id="withdrawMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn danger" id="withdrawYes">Withdraw</button>
+    <button type="button" class="btn secondary" id="withdrawNo">Cancel (keep application)</button>
+  </div>
+</dialog>
+
+<!-- Skill gap → P06 dialog (student) -->
+<dialog id="gapDialog">
+  <h2 id="gapTitle">Prepare for this gap</h2>
+  <div id="gapBody"></div>
+  <p class="msg" id="gapMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn" id="gapDone" hidden>Mark activity done</button>
+    <button type="button" class="btn secondary" id="gapClose">Close</button>
+  </div>
+</dialog>
+
 <!-- Flag dialog (student) -->
 <dialog id="flagDialog">
   <h2>Flag this result</h2>
@@ -416,7 +477,9 @@ const state = {
 };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
-const ACTIVE = ["Submitted", "Under review", "Shortlisted"];
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted"];
+const json = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 const ROLES = {
   student: { title: "Student view", chip: "Student · simulated" },
@@ -464,8 +527,9 @@ async function switchRole(role) {
   $("studentPicker").hidden = role !== "student";
   if (role === "student" && state.student) await refreshLists();
   if (role === "employer" || role === "faculty") await loadAllApps();
+  if (role === "faculty") await loadEvidence();
   if (role === "coordinator") {
-    try { await loadCorrections(); await loadRuns(); }
+    try { await loadPlacements(); await loadCorrections(); await loadRuns(); }
     catch (err) { setMsg("crMsg", err.message, "error"); }
   }
 }
@@ -501,8 +565,26 @@ function renderProfile(s) {
           ? `<span class="chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
           : `<span class="chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
       : `<span class="chip warn">None listed</span>`}</div>
-    <p class="muted" style="margin-top:14px">Read-only P01 record (fixture, plus any accepted coordinator
-      corrections as new versions). ✓ means reviewed evidence; self-declared skills are not treated as verified.</p>`;
+    <details class="hist" style="margin-top:14px"><summary>Update my availability</summary>
+      <div class="inline-form">
+        <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
+        <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
+        <button class="btn small" id="avSave">Save &amp; rematch</button>
+      </div>
+      <p class="muted">Creates profile v${esc((s.profile_version || 0) + 1)} (simulated P01 update) and a new matching
+        run; earlier runs keep their versions.</p>
+      <p class="msg" id="avMsg"></p>
+    </details>
+    <p class="muted" style="margin-top:14px">P01 record (fixture, plus corrections and updates stored as new
+      versions). ✓ means reviewed evidence; self-declared skills are not treated as verified.</p>`;
+  $("avSave").onclick = async () => {
+    try {
+      const r = await api(`/api/students/${s.student_id}/profile-updates`, json({ kind: "availability",
+        actor_role: "student", availability_start: $("avStart").value, availability_end: $("avEnd").value }));
+      await onStudentChange();
+      setMsg("recMsg", `Availability saved as profile v${r.new_profile_version}; matching re-ran against it.`, "success");
+    } catch (err) { setMsg("avMsg", err.message, "error"); }
+  };
 }
 
 // ================= Skill chips relative to the student =================
@@ -528,9 +610,15 @@ function oppSummary(o) {
 
 function statusChip(status) {
   const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
-                Shortlisted: "s-shortlisted", Declined: "s-declined" }[status] || "";
+                Shortlisted: "s-shortlisted", Declined: "s-declined", Offered: "s-offered",
+                "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
   return `<span class="chip ${cls}">${esc(status)}</span>`;
 }
+function placementChip(p) {
+  const cls = { "Awaiting university confirmation": "p-awaiting", Confirmed: "p-confirmed" }[p] || "";
+  return `<span class="chip ${cls}">${p === "Confirmed" ? "✓ " : ""}${esc(p)}</span>`;
+}
+const gapSkill = g => (g.match(/\((SK-[A-Z]+)\)$/) || [])[1];
 
 function applyButton(o) {
   const active = state.apps.find(a => a.opportunity_id === o.opportunity_id && ACTIVE.includes(a.application_status));
@@ -632,7 +720,9 @@ async function renderRecs(recs) {
       <div class="why">
         <div><h4>Why it matches · rules ${esc(r.method_version)}</h4>${list(r.reasons, "No matching interests or skills")}</div>
         <div>
-          <h4>Gaps</h4>${list(r.gaps, "No missing required skills")}
+          <h4>Gaps</h4>${r.gaps.length ? `<ul class="gap-list">${r.gaps.map(g => `<li><span>${esc(g)}</span>
+            ${gapSkill(g) ? `<button class="btn small secondary" data-gap="${esc(r.recommendation_id)}" data-skill="${esc(gapSkill(g))}">Prepare →</button>` : ""}</li>`).join("")}</ul>`
+            : `<div class="muted">No missing required skills</div>`}
           <h4 style="margin-top:10px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
         </div>
       </div>
@@ -758,13 +848,23 @@ function renderRules(rules) {
 }
 
 // ================= My applications (drafts, decisions, history) =================
-function historyHtml(a) {
+function historyHtml(a, open = false) {
   if (!a.history?.length) return "";
-  const items = a.history.map(e => `
-    <li><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}, simulated) at ${esc(e.created_at)}
+  const n = a.history.length;
+  const items = a.history.map((e, i) => `
+    <li class="${i === n - 1 ? "last" : ""}"><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}, simulated) at ${esc(e.created_at)}
       ${e.reason ? `<div class="reason">Reason: ${esc(e.reason)}</div>` : ""}
       <div class="muted">Next action: ${esc(e.next_action)}</div></li>`).join("");
-  return `<details class="hist"><summary>History (${a.history.length})</summary><ul>${items}</ul></details>`;
+  return `<details class="hist"${open ? " open" : ""}><summary>History (${n})</summary><ol class="timeline">${items}</ol></details>`;
+}
+
+function studentActions(a) {
+  const id = esc(a.application_id);
+  if (a.application_status === "Draft") return `<button class="btn small gold" data-editdraft="${id}">Edit &amp; submit</button>`;
+  if (a.application_status === "Offered") return `<button class="btn small" data-offer="accept" data-app="${id}">Accept offer</button>
+    <button class="btn small danger" data-offer="decline" data-app="${id}">Decline offer</button>`;
+  if (WITHDRAWABLE.includes(a.application_status)) return `<button class="btn small danger" data-withdraw="${id}">Withdraw…</button>`;
+  return "";
 }
 
 async function loadApps() {
@@ -779,14 +879,15 @@ async function loadApps() {
       <td>${esc(opps[i].title)}<div class="muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
       <td>v${esc(a.profile_version)}</td>
       <td>${statusChip(a.application_status)}</td>
-      <td><span class="chip">${esc(a.placement_status)}</span></td>
+      <td>${placementChip(a.placement_status)}</td>
       <td class="muted" style="max-width:260px">${esc((a.statement || "").slice(0, 120)) || "—"}</td>
       <td class="muted">${esc(a.submitted_at)}</td>
-      <td>${a.application_status === "Draft"
-        ? `<button class="btn small gold" data-editdraft="${esc(a.application_id)}">Edit &amp; submit</button>`
-        : ""}</td></tr>
+      <td><div class="actions" style="margin:0">${studentActions(a)}</div></td></tr>
       <tr><td colspan="8" style="border-bottom:1px solid var(--border)">${historyHtml(a)}</td></tr>`).join("")}
-  </table></div>`;
+  </table></div>
+  <p class="muted">Accepting an offer is not a placement: it waits for university confirmation. You can withdraw
+    while an application is Submitted, Under review or Shortlisted; an offer is declined instead.</p>
+  <span class="msg" id="appsMsg"></span>`;
 }
 
 // ================= Apply / draft dialog =================
@@ -891,6 +992,78 @@ $("applySubmit").onclick = async () => {
   }
 };
 
+// ================= Offer response & withdrawal (P04-05, P04-07) =================
+let withdrawCtx = null;
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.offer) {
+    try {
+      const a = await api(`/api/applications/${d.app}/offer-response`, json({ response: d.offer, actor_role: "student" }));
+      await refreshLists();
+      showTab("apps");
+      setMsg("appsMsg", d.offer === "accept"
+        ? `${a.application_id}: offer accepted — placement is now “${a.placement_status}”. The coordinator confirms it.`
+        : `${a.application_id}: offer declined.`, "success");
+    } catch (err) { setMsg("appsMsg", err.message, "error"); }
+  }
+  if (d.withdraw) {
+    const a = state.apps.find(x => x.application_id === d.withdraw);
+    withdrawCtx = d.withdraw;
+    $("withdrawContext").textContent = a
+      ? `${a.application_id} · ${a.opportunity_title} (${a.application_status}). Withdrawing is final; the history is kept.`
+      : d.withdraw;
+    $("withdrawReason").value = "";
+    setMsg("withdrawMsg", "");
+    $("withdrawDialog").showModal();
+  }
+});
+$("withdrawNo").onclick = () => { withdrawCtx = null; $("withdrawDialog").close(); };  // no request: record unchanged
+$("withdrawYes").onclick = async () => {
+  if (!withdrawCtx) return;
+  try {
+    const a = await api(`/api/applications/${withdrawCtx}/withdraw`,
+      json({ actor_role: "student", reason: $("withdrawReason").value }));
+    $("withdrawDialog").close();
+    withdrawCtx = null;
+    await refreshLists();
+    showTab("apps");
+    setMsg("appsMsg", `${a.application_id} withdrawn. Earlier history is kept below.`, "success");
+  } catch (err) { setMsg("withdrawMsg", err.message, "error"); }
+};
+
+// ================= Skill gap → P06 (P05-06) =================
+let gapCtx = null;
+function renderGap(g) {
+  gapCtx = g;
+  $("gapTitle").textContent = `Prepare: ${g.skill_name} (${g.gap_id})`;
+  const act = g.activity;
+  $("gapBody").innerHTML = `
+    <p class="muted">Sent to P06 with: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
+      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}).</p>
+    ${act ? `<div class="p06"><span class="chip accent">P06 fixture</span>
+        <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
+        <div class="muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
+        <p><b>Evidence needed:</b> ${esc(act.evidence_needed)}</p></div>`
+      : `<div class="p06"><span class="chip warn">No P06 activity</span></div>`}
+    <p class="${act ? "muted" : "msg"}" style="margin-top:10px"><b>Next action:</b> ${esc(g.next_action)}</p>
+    ${g.completed_at ? `<p class="msg success">Activity marked done at ${esc(g.completed_at)}. Your recommendation is unchanged until a faculty reviewer reviews the evidence.</p>` : ""}`;
+  $("gapDone").hidden = !act || !!g.completed_at;
+}
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.gap) return;
+  try {
+    renderGap(await api(`/api/recommendations/${d.gap}/gaps/${d.skill}/handoff`, json({ actor_role: "student" })));
+    setMsg("gapMsg", "");
+    $("gapDialog").showModal();
+  } catch (err) { setMsg("recMsg", err.message, "error"); }
+});
+$("gapClose").onclick = () => { gapCtx = null; $("gapDialog").close(); };
+$("gapDone").onclick = async () => {
+  try { renderGap(await api(`/api/skill-gaps/${gapCtx.gap_id}/complete`, json({ actor_role: "student" }))); }
+  catch (err) { setMsg("gapMsg", err.message, "error"); }
+};
+
 // ================= Flag dialog (student → coordinator) =================
 let flagCtx = null;
 document.addEventListener("click", e => {
@@ -933,9 +1106,11 @@ function employerCard(a) {
     "Submitted": `<button class="btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
     "Under review": `<button class="btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
                      <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
-    "Shortlisted": `<button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>
-                    <span class="muted">Offer step arrives in Sprint 3 (P04-05); an offer can never follow a decline.</span>`,
-    "Declined": `<span class="muted">Final for this sprint — no further transitions.</span>`,
+    "Shortlisted": `<button class="btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+                    <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Offered": `<span class="muted">Waiting for the student to accept or decline.</span>`,
+    "Offer accepted": `<span class="muted">Student accepted — the university coordinator confirms the placement.</span>`,
+    "Declined": `<span class="muted">Final — an offer can never follow a decline.</span>`,
   }[a.application_status] || "";
   return `
   <article class="card">
@@ -945,7 +1120,7 @@ function employerCard(a) {
         <div class="muted">${esc(a.application_id)} · ${esc(a.student_id)} → ${esc(a.opportunity_id)} v${esc(a.opportunity_version)}
           · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
       </div>
-      <div class="chips">${statusChip(a.application_status)}<span class="chip">${esc(a.placement_status)}</span></div>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
     </div>
     <p class="muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
     ${historyHtml(a)}
@@ -954,12 +1129,13 @@ function employerCard(a) {
 }
 
 function renderEmployer() {
-  const groups = [["Submitted", "Awaiting first review"], ["Under review", "In review"],
-                  ["Shortlisted", "Shortlisted"], ["Declined", "Decided"]];
-  $("queue").innerHTML = groups.map(([status, label]) => {
-    const rows = state.allApps.filter(a => a.application_status === status);
+  const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
+                  [["Shortlisted"], "Shortlisted"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
+  $("queue").innerHTML = groups.map(([statuses, label]) => {
+    const rows = state.allApps.filter(a => statuses.includes(a.application_status));
     return `<h3 class="stack-title">${label} (${rows.length})</h3>` +
-      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">No ${status.toLowerCase()} applications.</div>`);
+      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">Nothing here.</div>`);
   }).join("");
 }
 
@@ -1010,6 +1186,44 @@ document.addEventListener("click", async e => {
 });
 
 // ================= Coordinator view =================
+async function loadPlacements() {
+  const [apps, placements] = await Promise.all([api("/api/applications"), api("/api/placements")]);
+  const awaiting = apps.filter(a => a.application_status === "Offer accepted" && a.placement_status !== "Confirmed");
+  $("awaiting").innerHTML = awaiting.length ? awaiting.map(a => `
+    <article class="card">
+      <div class="card-head"><div>
+        <div class="title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div><div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      ${historyHtml(a)}
+      <div class="actions"><button class="btn" data-confirm="${esc(a.application_id)}">Confirm placement &amp; hand to P07</button></div>
+    </article>`).join("") : `<div class="empty">No accepted offers waiting. An employer makes an offer, then the student accepts it.</div>`;
+  $("placements").innerHTML = placements.length ? `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Placement</th><th>Student</th><th>Opportunity</th><th>Application</th><th>Confirmed</th><th>P07 handoff</th></tr>
+    ${placements.map(p => `<tr>
+      <td><b>${esc(p.placement_id)}</b></td>
+      <td>${esc(p.student_name)}<div class="muted">${esc(p.student_id)} · profile v${esc(p.profile_version)}</div></td>
+      <td>${esc(p.opportunity_title)}<div class="muted">${esc(p.opportunity_id)} v${esc(p.opportunity_version)}</div></td>
+      <td>${esc(p.application_id)}</td>
+      <td class="muted">${esc(p.confirmed_by)}<div>${esc(p.confirmed_at)}</div></td>
+      <td>${p.p07_handoff ? `<span class="chip ok">${esc(p.p07_handoff.handoff_id)} · ${esc(p.p07_handoff.receipt_status)}</span>
+        <details class="hist"><summary>Payload sent to P07</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(JSON.stringify(p.p07_handoff.payload, null, 2))}</pre></details>` : "—"}</td>
+    </tr>`).join("")}</table></div>
+    <p class="muted">P07 is not live yet: handoffs go to a labelled mock outbox (<code>/api/p07/handoffs</code>). Supervisor contact goes to P07 only, never to the student.</p>`
+    : `<div class="empty">No confirmed placements yet.</div>`;
+}
+document.addEventListener("click", async e => {
+  const id = e.target.dataset?.confirm;
+  if (!id) return;
+  try {
+    const p = await api(`/api/applications/${id}/confirm-placement`,
+      json({ actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }));
+    setMsg("plMsg", p.already_confirmed
+      ? `${id} was already confirmed as ${p.placement_id}; no second placement or handoff was created.`
+      : `Confirmed ${p.placement_id} for ${id} and handed it to P07 (${p.p07_handoff.handoff_id}).`, "success");
+    await loadPlacements();
+  } catch (err) { setMsg("plMsg", err.message, "error"); }
+});
 async function loadCorrections() {
   state.corrections = await api("/api/corrections");
   renderCorrections();
@@ -1135,7 +1349,30 @@ $("rerun").onclick = async () => {
   }
 };
 
-// ================= Faculty view (read-only) =================
+// ================= Faculty view: evidence review (P05-07) =================
+async function loadEvidence() {
+  const id = $("evStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  const versions = await api(`/api/students/${id}/profile-versions`);
+  $("evVersions").innerHTML = `<h3 style="margin-top:14px">Profile versions</h3><div style="overflow-x:auto"><table>
+    <tr><th>Version</th><th>Source</th><th>Created</th><th>Reviewed skills</th><th>Availability</th></tr>
+    ${versions.map(v => `<tr><td>v${esc(v.profile_version)}</td><td>${esc(v.source)}</td><td class="muted">${esc(v.created_at || "—")}</td>
+      <td>${(v.profile.skills || []).filter(s => s.evidence_status === "reviewed").map(s => `<span class="chip ok">✓ ${esc(skillName(s.skill_id))}</span>`).join(" ") || "—"}</td>
+      <td class="muted">${esc(v.profile.availability_start || "?")} → ${esc(v.profile.availability_end || "?")}</td></tr>`).join("")}
+  </table></div>`;
+}
+$("evStudent").onchange = () => { setMsg("evMsg", ""); loadEvidence(); };
+$("evReview").onclick = async () => {
+  const id = $("evStudent").value;
+  try {
+    const r = await api(`/api/students/${id}/profile-updates`, json({ kind: "skill_evidence", actor_role: "faculty",
+      actor_name: "FAC-01 (simulated faculty reviewer)", skill_id: $("evSkill").value, evidence_id: $("evId").value }));
+    setMsg("evMsg", `${skillName($("evSkill").value)} marked reviewed for ${id} → profile v${r.new_profile_version}; matching re-ran (${r.recommendations.length} results). Earlier runs keep their versions.`, "success");
+    await loadEvidence();
+  } catch (err) { setMsg("evMsg", err.message, "error"); }
+};
+
+// ================= Faculty view (read-only applications) =================
 function renderFaculty() {
   const rows = state.allApps;
   $("facultyApps").innerHTML = rows.length ? `<div class="card" style="overflow-x:auto"><table>
@@ -1147,7 +1384,7 @@ function renderFaculty() {
         <td>${esc(a.student_name)}<div class="muted">${esc(a.student_id)}</div></td>
         <td>${esc(a.opportunity_title)}<div class="muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
         <td>${statusChip(a.application_status)}</td>
-        <td><span class="chip">${esc(a.placement_status)}</span></td>
+        <td>${placementChip(a.placement_status)}</td>
         <td class="muted">${last ? `${esc(last.action)} by ${esc(last.actor_name)} at ${esc(last.created_at)}` : "—"}</td>
         <td class="muted">${esc(a.submitted_at)}</td></tr>`;
     }).join("")}
@@ -1189,6 +1426,8 @@ $("q").onkeydown = e => { if (e.key === "Enter") searchOpps(); };
   const options = state.students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
   $("student").innerHTML = options;
   $("runsStudent").innerHTML = options;
+  $("evStudent").innerHTML = options;
+  $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
   await onStudentChange();
 })();
 </script>

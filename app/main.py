@@ -14,23 +14,40 @@ from app.ai import AI_METHOD_VERSION, insights, relevance_scores, statement_draf
 from app.matching import RULES, is_eligible_listing, recommend
 
 # Active = an application that blocks a duplicate for the same student+opportunity
-# (agreed active statuses, see docs/data-dictionary.md). Drafts and Declined are not active.
-ACTIVE_STATUSES = ("Submitted", "Under review", "Shortlisted")
+# (agreed active statuses, see docs/data-dictionary.md). Drafts, Declined, Offer declined
+# and Withdrawn are not active.
+ACTIVE_STATUSES = ("Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted")
 
-# P04-04 transition matrix. Declined is terminal this sprint; offers arrive in
-# Sprint 3 (P04-05) and can never follow a Declined application (P04-04 AC2).
+# Employer transition matrix (P04-04, extended for offers in P04-05). Declined is
+# terminal and can never be followed by an offer (P04-04 AC2).
 DECISION_TRANSITIONS = {
     "Submitted": {"Under review"},
     "Under review": {"Shortlisted", "Declined"},
-    "Shortlisted": {"Declined"},
+    "Shortlisted": {"Offered", "Declined"},
 }
+EMPLOYER_ACTIONS = {"Under review": "Under review", "Shortlisted": "Shortlisted",
+                    "Declined": "Declined", "Offer": "Offered"}
+
+# P04-07: the agreed withdrawable states.
+WITHDRAWABLE = ("Submitted", "Under review", "Shortlisted")
+
 NEXT_ACTIONS = {
     "Draft": "Finish the statement and submit while the listing is open",
     "Submitted": "Await employer review",
     "Under review": "Await employer decision (shortlist or decline)",
     "Shortlisted": "Await employer offer",
     "Declined": "Browse other opportunities or address the decline reason",
+    "Offered": "Accept or decline the offer",
+    "Offer accepted": "Await university confirmation (this is not yet a placement)",
+    "Offer declined": "Browse other opportunities",
+    "Withdrawn": "No further action; apply again while the listing is open",
+    "Placement confirmed": "Placement handed to P07 to start the learning record",
 }
+
+# Placement status is shown separately from the application status.
+PLACEMENT_NOT_PLACED = "Not placed"
+PLACEMENT_AWAITING = "Awaiting university confirmation"
+PLACEMENT_CONFIRMED = "Confirmed"
 
 # P05-05 correction fields, mapped to the module that owns the record.
 P01_FIELDS = ("availability", "interests", "skills")
@@ -136,6 +153,20 @@ def application_dict(conn, row) -> dict:
     return d
 
 
+def _new_profile_version(conn, new_profile: dict, source: str) -> int:
+    """Store a changed profile as the next version. Earlier versions (and the P01
+    fixture row) are never edited, so older recommendations keep their inputs."""
+    current = get_student(conn, new_profile["student_id"])
+    new_version = current["profile_version"] + 1
+    new_profile["profile_version"] = new_version
+    conn.execute(
+        "INSERT INTO profile_revisions (student_id, profile_version, data, source, created_at) "
+        "VALUES (?,?,?,?,?)",
+        (new_profile["student_id"], new_version, json.dumps(new_profile), source, now()),
+    )
+    return new_version
+
+
 def correction_dict(conn, row) -> dict:
     d = dict(row)
     d["source_version"] = json.loads(d["source_version"])
@@ -144,18 +175,26 @@ def correction_dict(conn, row) -> dict:
     return d
 
 
-@app.get("/")
-def index():
-    return FileResponse(Path(__file__).parent / "static" / "index.html")
-
-
 STUDENT_PREVIEW = Path(__file__).parent / "static" / "student-preview"
 app.mount("/student-preview/assets", StaticFiles(directory=STUDENT_PREVIEW / "assets"), name="student-preview-assets")
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    """Main app: the Coop design (student view plus simulated employer, coordinator and
+    faculty views), backed by the real API."""
+    return FileResponse(STUDENT_PREVIEW / "index.html")
 
 
 @app.get("/student-preview", include_in_schema=False)
 def student_preview():
     return FileResponse(STUDENT_PREVIEW / "index.html")
+
+
+@app.get("/classic", include_in_schema=False)
+def classic():
+    """The earlier four-role layout, kept for traceability views."""
+    return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 
 @app.get("/api/skills")
@@ -214,35 +253,40 @@ def run_recommendations(student_id: str):
         student = get_student(conn, student_id)
         if not student:
             raise HTTPException(404, "Student not found")
-        opps = all_opportunities(conn)
-        skills = db.skill_names()
-        results = recommend(student, opps, skills)
-        opps_by_id = {o["opportunity_id"]: o for o in opps}
-        open_opps = [o for o in opps if is_eligible_listing(o)]
-        relevance = relevance_scores(student, open_opps, skills)
-        run_id, created_at = uuid.uuid4().hex[:8], now()
-        for r in results:
-            # Bounded AI assistance runs alongside the rules result and never
-            # changes eligibility, score, gaps or unknowns (P05-04 AC2).
-            r["ai_method_version"] = AI_METHOD_VERSION
-            o = opps_by_id[r["opportunity_id"]]
-            r["ai_matches"] = term_matches(student, o, skills)
-            r["ai_insights"] = insights(student, o, r, r["ai_matches"], open_opps, skills,
-                                        RULES["weights"], relevance[r["opportunity_id"]])
-            r["recommendation_id"] = f"REC-{uuid.uuid4().hex[:8]}"
-            r["run_id"], r["created_at"] = run_id, created_at
-            conn.execute(
-                "INSERT INTO recommendations "
-                "(recommendation_id, run_id, student_id, profile_version, opportunity_id, opportunity_version, "
-                "method_version, score, compatible, reasons, gaps, unknowns, created_at, eligibility, "
-                "ai_method_version, ai_matches, ai_insights) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (r["recommendation_id"], run_id, r["student_id"], r["profile_version"],
-                 r["opportunity_id"], r["opportunity_version"], r["method_version"], r["score"],
-                 int(r["compatible"]), json.dumps(r["reasons"]), json.dumps(r["gaps"]),
-                 json.dumps(r["unknowns"]), created_at, r["eligibility"],
-                 r["ai_method_version"], json.dumps(r["ai_matches"]), json.dumps(r["ai_insights"])),
-            )
+        return _run_matching(conn, student)
+
+
+def _run_matching(conn, student: dict) -> list[dict]:
+    """Store a new run against the student's current profile version (P05-02, P05-07)."""
+    opps = all_opportunities(conn)
+    skills = db.skill_names()
+    results = recommend(student, opps, skills)
+    opps_by_id = {o["opportunity_id"]: o for o in opps}
+    open_opps = [o for o in opps if is_eligible_listing(o)]
+    relevance = relevance_scores(student, open_opps, skills)
+    run_id, created_at = uuid.uuid4().hex[:8], now()
+    for r in results:
+        # Bounded AI assistance runs alongside the rules result and never
+        # changes eligibility, score, gaps or unknowns (P05-04 AC2).
+        r["ai_method_version"] = AI_METHOD_VERSION
+        o = opps_by_id[r["opportunity_id"]]
+        r["ai_matches"] = term_matches(student, o, skills)
+        r["ai_insights"] = insights(student, o, r, r["ai_matches"], open_opps, skills,
+                                    RULES["weights"], relevance[r["opportunity_id"]])
+        r["recommendation_id"] = f"REC-{uuid.uuid4().hex[:8]}"
+        r["run_id"], r["created_at"] = run_id, created_at
+        conn.execute(
+            "INSERT INTO recommendations "
+            "(recommendation_id, run_id, student_id, profile_version, opportunity_id, opportunity_version, "
+            "method_version, score, compatible, reasons, gaps, unknowns, created_at, eligibility, "
+            "ai_method_version, ai_matches, ai_insights) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (r["recommendation_id"], run_id, r["student_id"], r["profile_version"],
+             r["opportunity_id"], r["opportunity_version"], r["method_version"], r["score"],
+             int(r["compatible"]), json.dumps(r["reasons"]), json.dumps(r["gaps"]),
+             json.dumps(r["unknowns"]), created_at, r["eligibility"],
+             r["ai_method_version"], json.dumps(r["ai_matches"]), json.dumps(r["ai_insights"])),
+        )
     return results
 
 
@@ -473,34 +517,202 @@ class DecisionIn(BaseModel):
     reason: str | None = None
 
 
+def _load_application(conn, application_id: str):
+    row = conn.execute("SELECT * FROM applications WHERE application_id = ?", (application_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Application not found")
+    return row
+
+
+def _set_status(conn, application_id: str, status: str, placement_status: str | None = None) -> str:
+    ts = now()
+    if placement_status:
+        conn.execute("UPDATE applications SET application_status = ?, placement_status = ?, updated_at = ? "
+                     "WHERE application_id = ?", (status, placement_status, ts, application_id))
+    else:
+        conn.execute("UPDATE applications SET application_status = ?, updated_at = ? WHERE application_id = ?",
+                     (status, ts, application_id))
+    return ts
+
+
 @app.post("/api/applications/{application_id}/decisions", status_code=201)
 def decide(application_id: str, body: DecisionIn):
     require_role(body.actor_role, "employer", "decide on an application")
-    if body.action == "Offer":
-        raise HTTPException(422, "Offers are not part of this sprint (P04-05, Sprint 3) — and an offer "
-                                 "can never follow a Declined application.")
-    if body.action not in ("Under review", "Shortlisted", "Declined"):
+    if body.action not in EMPLOYER_ACTIONS:
         raise HTTPException(422, f"Unknown action '{body.action}'. "
-                                 f"Allowed: Under review, Shortlisted, Declined.")
+                                 f"Allowed: {', '.join(EMPLOYER_ACTIONS)}.")
+    target = EMPLOYER_ACTIONS[body.action]
     with db.connect() as conn:
-        row = conn.execute("SELECT * FROM applications WHERE application_id = ?", (application_id,)).fetchone()
-        if not row:
-            raise HTTPException(404, "Application not found")
+        row = _load_application(conn, application_id)
         current = row["application_status"]
+        if target == "Offered" and current == "Declined":
+            raise HTTPException(409, "An offer can never follow a Declined application.")
         allowed = DECISION_TRANSITIONS.get(current, set())
-        if body.action not in allowed:
-            options = ", ".join(sorted(allowed)) or "none (this status is final)"
-            raise HTTPException(409, f"Cannot move {current} → {body.action}. Allowed next steps: {options}.")
-        if body.action == "Declined" and not (body.reason or "").strip():
+        if target not in allowed:
+            options = ", ".join(sorted(allowed)) or "none (this status is final for the employer)"
+            raise HTTPException(409, f"Cannot move {current} → {target}. Allowed next steps: {options}.")
+        if target == "Declined" and not (body.reason or "").strip():
             raise HTTPException(422, "A reason is required when declining, so the student knows what to do next.")
-        ts = now()
-        conn.execute("UPDATE applications SET application_status = ?, updated_at = ? WHERE application_id = ?",
-                     (body.action, ts, application_id))
-        _add_event(conn, application_id, body.action, "employer",
+        ts = _set_status(conn, application_id, target)
+        _add_event(conn, application_id, target, "employer",
                    (body.actor_name or "Employer reviewer (simulated)").strip() or "Employer reviewer (simulated)",
                    (body.reason or "").strip() or None, ts)
-        fresh = conn.execute("SELECT * FROM applications WHERE application_id = ?", (application_id,)).fetchone()
-        return application_dict(conn, fresh)
+        return application_dict(conn, _load_application(conn, application_id))
+
+
+# --- Offer response (P04-05) ---
+class OfferResponseIn(BaseModel):
+    response: str  # "accept" | "decline"
+    actor_role: str
+    reason: str | None = None
+
+
+@app.post("/api/applications/{application_id}/offer-response", status_code=201)
+def respond_to_offer(application_id: str, body: OfferResponseIn):
+    """Accepting records the student's answer only: placement becomes *Awaiting university
+    confirmation*, never Confirmed (P04-05 AC2). Only the coordinator confirms (P04-06)."""
+    require_role(body.actor_role, "student", "respond to an offer")
+    if body.response not in ("accept", "decline"):
+        raise HTTPException(422, "Response must be 'accept' or 'decline'.")
+    with db.connect() as conn:
+        row = _load_application(conn, application_id)
+        current = row["application_status"]
+        if current != "Offered":
+            if current == "Offer declined":
+                detail = "This offer was already declined, so it can no longer be accepted."
+            elif current == "Offer accepted":
+                detail = "This offer was already accepted; it is awaiting university confirmation."
+            else:
+                detail = f"There is no open offer on this application (status: {current})."
+            raise HTTPException(409, detail)
+        student = get_student(conn, row["student_id"])
+        if body.response == "accept":
+            status, placement = "Offer accepted", PLACEMENT_AWAITING
+        else:
+            status, placement = "Offer declined", PLACEMENT_NOT_PLACED
+        ts = _set_status(conn, application_id, status, placement)
+        _add_event(conn, application_id, status, "student", student["display_name"],
+                   (body.reason or "").strip() or None, ts)
+        return application_dict(conn, _load_application(conn, application_id))
+
+
+# --- Withdrawal (P04-07) ---
+class WithdrawIn(BaseModel):
+    actor_role: str
+    reason: str | None = None
+
+
+@app.post("/api/applications/{application_id}/withdraw", status_code=201)
+def withdraw(application_id: str, body: WithdrawIn):
+    """Withdraw from an agreed withdrawable state. Prior events are kept (P04-07 AC1).
+    Cancelling in the UI makes no call, so the record is unchanged (AC2)."""
+    require_role(body.actor_role, "student", "withdraw an application")
+    with db.connect() as conn:
+        row = _load_application(conn, application_id)
+        current = row["application_status"]
+        if row["placement_status"] == PLACEMENT_CONFIRMED:
+            raise HTTPException(409, "This placement is already confirmed by the university, so it cannot be "
+                                     "withdrawn here. Contact your coordinator.")
+        if current not in WITHDRAWABLE:
+            hint = {
+                "Offered": " Decline the offer instead.",
+                "Offer accepted": " You accepted the offer; contact your coordinator before confirmation.",
+                "Draft": " A draft was never submitted, so there is nothing to withdraw.",
+            }.get(current, "")
+            raise HTTPException(409, f"Cannot withdraw an application that is {current}. "
+                                     f"Withdrawable: {', '.join(WITHDRAWABLE)}.{hint}")
+        student = get_student(conn, row["student_id"])
+        ts = _set_status(conn, application_id, "Withdrawn")
+        _add_event(conn, application_id, "Withdrawn", "student", student["display_name"],
+                   (body.reason or "").strip() or None, ts)
+        return application_dict(conn, _load_application(conn, application_id))
+
+
+# --- Placement confirmation and P07 handoff (P04-06) ---
+class ConfirmPlacementIn(BaseModel):
+    actor_role: str
+    actor_name: str | None = None
+
+
+def placement_dict(conn, row) -> dict:
+    d = dict(row)
+    h = conn.execute("SELECT * FROM p07_handoffs WHERE placement_id = ?", (d["placement_id"],)).fetchone()
+    d["p07_handoff"] = ({**dict(h), "payload": json.loads(h["payload"])} if h else None)
+    student = get_student(conn, d["student_id"])
+    opp = get_opportunity(conn, d["opportunity_id"])
+    d["student_name"] = student["display_name"] if student else d["student_id"]
+    d["opportunity_title"] = opp["title"] if opp else d["opportunity_id"]
+    d["employer_name"] = opp.get("employer_name") if opp else None
+    return d
+
+
+@app.post("/api/applications/{application_id}/confirm-placement")
+def confirm_placement(application_id: str, body: ConfirmPlacementIn):
+    """Create one placement per accepted offer and hand it to P07 (mock outbox).
+    Repeating the call returns the existing placement: no second placement and no
+    duplicate handoff (P04-06 AC2)."""
+    require_role(body.actor_role, "coordinator", "confirm a placement")
+    with db.connect() as conn:
+        row = _load_application(conn, application_id)
+        existing = conn.execute("SELECT * FROM placements WHERE application_id = ?", (application_id,)).fetchone()
+        if existing:
+            return {**placement_dict(conn, existing), "already_confirmed": True}
+        if row["application_status"] != "Offer accepted":
+            raise HTTPException(409, f"Only an offer the student has accepted can be confirmed "
+                                     f"(this application is {row['application_status']}).")
+        opp = get_opportunity(conn, row["opportunity_id"]) or {}
+        count = conn.execute("SELECT COUNT(*) FROM placements").fetchone()[0]
+        placement_id = f"PL-{count + 1:04d}"
+        confirmed_by = (body.actor_name or "COORD-01 (simulated coordinator)").strip()
+        ts = now()
+        conn.execute(
+            "INSERT INTO placements (placement_id, application_id, student_id, opportunity_id, "
+            "opportunity_version, profile_version, confirmed_by, confirmed_at) VALUES (?,?,?,?,?,?,?,?)",
+            (placement_id, application_id, row["student_id"], row["opportunity_id"],
+             row["opportunity_version"], row["profile_version"], confirmed_by, ts),
+        )
+        # Fields agreed with P07 at Scrum of Scrums (10 Nov): only university-confirmed
+        # placements, with application_id, confirmed_by and confirmed_at; supervisor
+        # contact from P03 goes to P07 and is never shown to students.
+        payload = {
+            "placement_id": placement_id,
+            "placement_status": "university_confirmed",
+            "application_id": application_id,
+            "student_id": row["student_id"],
+            "opportunity_id": row["opportunity_id"],
+            "opportunity_version": row["opportunity_version"],
+            "employer_name": opp.get("employer_name"),
+            "start_date": opp.get("start_date"),
+            "end_date": opp.get("end_date"),
+            "supervisor_name": opp.get("supervisor_name"),
+            "supervisor_contact": opp.get("supervisor_contact"),
+            "confirmed_by": confirmed_by,
+            "confirmed_at": ts,
+        }
+        conn.execute(
+            "INSERT INTO p07_handoffs (handoff_id, placement_id, payload, sent_at, receipt_status) "
+            "VALUES (?,?,?,?, 'mock-received')",
+            (f"H07-{count + 1:04d}", placement_id, json.dumps(payload), ts),
+        )
+        _set_status(conn, application_id, "Offer accepted", PLACEMENT_CONFIRMED)
+        _add_event(conn, application_id, "Placement confirmed", "coordinator", confirmed_by, None, ts)
+        placement = conn.execute("SELECT * FROM placements WHERE placement_id = ?", (placement_id,)).fetchone()
+        return {**placement_dict(conn, placement), "already_confirmed": False}
+
+
+@app.get("/api/placements")
+def list_placements():
+    with db.connect() as conn:
+        rows = conn.execute("SELECT * FROM placements ORDER BY placement_id").fetchall()
+        return [placement_dict(conn, r) for r in rows]
+
+
+@app.get("/api/p07/handoffs")
+def list_p07_handoffs():
+    """Mock P07 outbox: what the learning-record module would receive."""
+    with db.connect() as conn:
+        rows = conn.execute("SELECT * FROM p07_handoffs ORDER BY handoff_id").fetchall()
+        return [{**dict(r), "payload": json.loads(r["payload"])} for r in rows]
 
 
 # --- Correction requests (P05-05) ---
@@ -622,14 +834,7 @@ def accept_correction(correction_id: str, body: AcceptCorrectionIn):
         else:  # skills
             raise HTTPException(422, "Skill-evidence corrections are reviewed by P01/P06 with evidence; "
                                      "applying one here is deferred (recorded only).")
-        new_version = student["profile_version"] + 1
-        new_profile["profile_version"] = new_version
-        conn.execute(
-            "INSERT INTO profile_revisions (student_id, profile_version, data, source, created_at) "
-            "VALUES (?,?,?,?,?)",
-            (row["student_id"], new_version, json.dumps(new_profile),
-             f"correction:{correction_id}", now()),
-        )
+        new_version = _new_profile_version(conn, new_profile, f"correction:{correction_id}")
         conn.execute(
             "UPDATE correction_requests SET status = 'accepted', decided_at = ? WHERE correction_id = ?",
             (now(), correction_id),
@@ -642,3 +847,159 @@ def accept_correction(correction_id: str, body: AcceptCorrectionIn):
             "new_profile_version": new_version,
             "decided_at": now(),
         }
+
+
+# --- Skill gap → P06 preparation (P05-06) ---
+GAP_NO_MODULE_ACTION = ("No P06 preparation activity is available for this skill yet. Next step: ask your "
+                        "coordinator for a preparation route, or check the P06 plan again later.")
+GAP_EVIDENCE_NOTE = ("Completing an activity does not by itself show the skill. A faculty reviewer must "
+                     "review your evidence before matching treats it as reviewed.")
+
+
+class GapHandoffIn(BaseModel):
+    actor_role: str
+
+
+class GapCompleteIn(BaseModel):
+    actor_role: str
+
+
+def gap_dict(conn, row) -> dict:
+    d = dict(row)
+    activity = db.p06_activities().get(d["skill_id"]) if d["activity_id"] else None
+    d["skill_name"] = db.skill_names().get(d["skill_id"], d["skill_id"])
+    d["activity"] = activity
+    d["source"] = "P06 fixture (labelled; live P06 module not connected)"
+    d["next_action"] = (GAP_EVIDENCE_NOTE if activity else GAP_NO_MODULE_ACTION)
+    d["p06_payload"] = {k: d[k] for k in ("student_id", "skill_id", "opportunity_id",
+                                          "opportunity_version", "recommendation_id", "profile_version")}
+    return d
+
+
+@app.post("/api/recommendations/{recommendation_id}/gaps/{skill_id}/handoff", status_code=201)
+def handoff_gap(recommendation_id: str, skill_id: str, body: GapHandoffIn):
+    """Pass a named gap to P06 with its source IDs and versions (P05-06 AC1). Repeating
+    it for the same recommendation and skill returns the same record."""
+    require_role(body.actor_role, "student", "send a skill gap to preparation")
+    with db.connect() as conn:
+        rec = conn.execute("SELECT * FROM recommendations WHERE recommendation_id = ?",
+                           (recommendation_id,)).fetchone()
+        if not rec:
+            raise HTTPException(404, "Recommendation not found")
+        if not any(g.endswith(f"({skill_id})") for g in json.loads(rec["gaps"])):
+            raise HTTPException(422, f"{skill_id} is not a gap in this recommendation.")
+        existing = conn.execute("SELECT * FROM skill_gap_handoffs WHERE recommendation_id = ? AND skill_id = ?",
+                                (recommendation_id, skill_id)).fetchone()
+        if existing:
+            return gap_dict(conn, existing)
+        activity = db.p06_activities().get(skill_id)
+        count = conn.execute("SELECT COUNT(*) FROM skill_gap_handoffs").fetchone()[0]
+        gap_id = f"GAP-{count + 1:04d}"
+        conn.execute(
+            "INSERT INTO skill_gap_handoffs (gap_id, student_id, skill_id, opportunity_id, opportunity_version, "
+            "recommendation_id, profile_version, activity_id, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            (gap_id, rec["student_id"], skill_id, rec["opportunity_id"], rec["opportunity_version"],
+             recommendation_id, rec["profile_version"], activity["activity_id"] if activity else None, now()),
+        )
+        row = conn.execute("SELECT * FROM skill_gap_handoffs WHERE gap_id = ?", (gap_id,)).fetchone()
+        return gap_dict(conn, row)
+
+
+@app.post("/api/skill-gaps/{gap_id}/complete")
+def complete_gap_activity(gap_id: str, body: GapCompleteIn):
+    """Record that the student finished the P06 activity. This never changes a
+    recommendation or marks the skill as reviewed (P05-06 AC2)."""
+    require_role(body.actor_role, "student", "mark a preparation activity done")
+    with db.connect() as conn:
+        row = conn.execute("SELECT * FROM skill_gap_handoffs WHERE gap_id = ?", (gap_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, "Skill gap not found")
+        if not row["activity_id"]:
+            raise HTTPException(409, GAP_NO_MODULE_ACTION)
+        conn.execute("UPDATE skill_gap_handoffs SET completed_at = COALESCE(completed_at, ?) WHERE gap_id = ?",
+                     (now(), gap_id))
+        return gap_dict(conn, conn.execute("SELECT * FROM skill_gap_handoffs WHERE gap_id = ?",
+                                           (gap_id,)).fetchone())
+
+
+@app.get("/api/students/{student_id}/skill-gaps")
+def list_skill_gaps(student_id: str):
+    with db.connect() as conn:
+        rows = conn.execute("SELECT * FROM skill_gap_handoffs WHERE student_id = ? ORDER BY gap_id",
+                            (student_id,)).fetchall()
+        return [gap_dict(conn, r) for r in rows]
+
+
+@app.get("/api/p06/activities")
+def list_p06_activities():
+    return list(db.p06_activities().values())
+
+
+# --- Profile updates and rematching (P05-07; simulated P01 update) ---
+class ProfileUpdateIn(BaseModel):
+    kind: str  # "availability" (student) | "skill_evidence" (faculty reviewer)
+    actor_role: str
+    actor_name: str | None = None
+    availability_start: str | None = None
+    availability_end: str | None = None
+    skill_id: str | None = None
+    evidence_id: str | None = None
+    rematch: bool = True
+
+
+@app.post("/api/students/{student_id}/profile-updates", status_code=201)
+def update_profile(student_id: str, body: ProfileUpdateIn):
+    """A profile change creates a new profile version and (by default) a new run tied to it.
+    Older runs keep their original versions and reasons (P05-07 AC2)."""
+    if body.kind == "availability":
+        require_role(body.actor_role, "student", "change availability")
+    elif body.kind == "skill_evidence":
+        require_role(body.actor_role, "faculty", "review skill evidence")
+    else:
+        raise HTTPException(422, "kind must be 'availability' or 'skill_evidence'.")
+    with db.connect() as conn:
+        student = get_student(conn, student_id)
+        if not student:
+            raise HTTPException(404, "Student not found")
+        new_profile = json.loads(json.dumps(student))
+        if body.kind == "availability":
+            start, end = (body.availability_start or "").strip(), (body.availability_end or "").strip()
+            if not (start and end):
+                raise HTTPException(422, "Provide both availability_start and availability_end.")
+            if start > end:
+                raise HTTPException(422, "Availability start must be on or before the end date.")
+            new_profile["availability_start"], new_profile["availability_end"] = start, end
+            source = "profile-update:availability"
+        else:
+            skills = db.skill_names()
+            if body.skill_id not in skills:
+                raise HTTPException(422, f"Unknown skill '{body.skill_id}'. Use a shared skill ID.")
+            if not (body.evidence_id or "").strip():
+                raise HTTPException(422, "An evidence_id is required: a reviewed skill must cite its evidence.")
+            reviewer = (body.actor_name or "FAC-01 (simulated faculty reviewer)").strip()
+            entry = {"skill_id": body.skill_id, "evidence_status": "reviewed", "reviewed_by": reviewer,
+                     "reviewed_at": now(), "evidence_id": body.evidence_id.strip()}
+            new_profile["skills"] = [s for s in new_profile.get("skills", []) if s["skill_id"] != body.skill_id]
+            new_profile["skills"].append(entry)
+            source = f"profile-update:skill_evidence:{body.skill_id}"
+        new_version = _new_profile_version(conn, new_profile, source)
+        results = _run_matching(conn, get_student(conn, student_id)) if body.rematch else None
+        return {"student_id": student_id, "new_profile_version": new_version, "source": source,
+                "rematched": body.rematch, "recommendations": results}
+
+
+@app.get("/api/students/{student_id}/profile-versions")
+def profile_versions(student_id: str):
+    """The P01 version plus every later revision, oldest first."""
+    with db.connect() as conn:
+        base = conn.execute("SELECT data FROM students WHERE student_id = ?", (student_id,)).fetchone()
+        if not base:
+            raise HTTPException(404, "Student not found")
+        base = json.loads(base["data"])
+        out = [{"profile_version": base["profile_version"], "source": "P01 fixture", "created_at": None,
+                "profile": base}]
+        for r in conn.execute("SELECT * FROM profile_revisions WHERE student_id = ? ORDER BY profile_version",
+                              (student_id,)):
+            out.append({"profile_version": r["profile_version"], "source": r["source"],
+                        "created_at": r["created_at"], "profile": json.loads(r["data"])})
+        return out

@@ -1,4 +1,4 @@
-# Data dictionary v2 (P04 / P05, Sprint 2)
+# Data dictionary v3 (P04 / P05, Sprint 3)
 
 All records are synthetic. P04 owns applications; P05 owns recommendations. P01 profiles and
 P03 listings are **fixtures** until the interfaces with those teams are agreed.
@@ -7,7 +7,7 @@ Roles are **simulated** in the UI sidebar (Student, Employer reviewer, Coordinat
 reviewer). Mutating endpoints take an `actor_role` field and reject other roles with `403`.
 There is no login; real access control is a recorded, deferred gap.
 
-## Student profile (owner: P01; fixture `app/fixtures/students.json` + correction revisions)
+## Student profile (owner: P01; fixture `app/fixtures/students.json` + revisions)
 | Field | Type | Meaning |
 |---|---|---|
 | student_id | string | e.g. `COOP-B001` (Layla Hassan) |
@@ -17,9 +17,12 @@ There is no login; real access control is a recorded, deferred gap.
 | availability_start / availability_end | date or null | null = unknown, never assumed |
 | skills | `{skill_id, evidence_status, reviewed_by, reviewed_at, evidence_id}`[] | `evidence_status`: `self_declared` or `reviewed`; the last three are null when `self_declared` (agreed with P01, 10 Nov) |
 
-The effective profile is the **latest accepted correction revision** (`profile_revisions`)
-if there is one, else the fixture. P05 never edits the fixture table — an accepted
-correction is stored as a *new version* with source `correction:<CR-id>` (P05-05 AC2).
+The effective profile is the **latest revision** (`profile_revisions`) if there is one, else
+the fixture. P05 never edits the fixture table — every change is stored as a *new version*:
+`correction:<CR-id>` (accepted correction, P05-05), `profile-update:availability` (student
+changes availability, P05-07) or `profile-update:skill_evidence:<skill_id>` (faculty reviewer
+marks a skill reviewed with `reviewed_by`, `reviewed_at`, `evidence_id`, P05-07). A profile
+update re-runs matching against the new version; earlier runs keep their versions.
 
 ## Published listing (owner: P03; fixture `app/fixtures/opportunities.json`)
 | Field | Type | Meaning |
@@ -76,26 +79,64 @@ every run with its input versions, even after a correction and rematch.
 | application_id | `APP-0001`, … |
 | student_id, profile_version | Profile version at submission |
 | opportunity_id, opportunity_version | Listing version at submission |
-| application_status | `Draft` → `Submitted` → `Under review` → `Shortlisted` \| `Declined` (Sprint 2) |
-| placement_status | Always `Not placed` this sprint (shown separately; confirmation is P04-06, Sprint 3) |
+| application_status | `Draft` → `Submitted` → `Under review` → `Shortlisted` → `Offered` → `Offer accepted` \| `Offer declined`; also `Declined` (employer) and `Withdrawn` (student) |
+| placement_status | `Not placed` → `Awaiting university confirmation` (student accepted the offer) → `Confirmed` (coordinator only). Shown separately from the application status |
 | submitted_at | UTC timestamp (row creation for drafts; set again at submission) |
 | statement | Short motivation text; may be empty while Draft, **required** at submission (422 otherwise, draft preserved) |
 | updated_at | Last draft save / status change |
 
-**Active statuses** (duplicate check): `Submitted`, `Under review`, `Shortlisted`.
-`Draft` and `Declined` are not active. One draft per student+opportunity (saving again
+**Active statuses** (duplicate check): `Submitted`, `Under review`, `Shortlisted`, `Offered`,
+`Offer accepted`. `Draft`, `Declined`, `Offer declined` and `Withdrawn` are not active. One draft per student+opportunity (saving again
 updates it). A direct submission converts an existing draft — no orphan drafts.
 
-**Decision transitions (P04-04):** `Submitted → Under review`; `Under review → Shortlisted |
-Declined`; `Shortlisted → Declined`. Anything else is blocked with `409`, including every
-action from `Declined` (terminal this sprint — offers are P04-05, Sprint 3, and can never
-follow a decline). `Offer` is explicitly rejected with `422`. Declining requires a `reason`.
+**Employer transitions (P04-04, P04-05):** `Submitted → Under review`; `Under review →
+Shortlisted | Declined`; `Shortlisted → Offered (action "Offer") | Declined`. Anything else is
+blocked with `409`, including every action from `Declined` (an offer can never follow a
+decline). Declining requires a `reason`.
+
+**Student offer response (P04-05):** `Offered → Offer accepted` (placement becomes
+`Awaiting university confirmation`, never `Confirmed`) or `Offered → Offer declined`
+(terminal). Responding with no open offer, or accepting an already declined offer, gives `409`.
+
+**Withdrawal (P04-07):** from `Submitted`, `Under review` or `Shortlisted` → `Withdrawn`
+(terminal; reason optional). Blocked with an explanation (`409`) after placement confirmation
+and from any other state (an offer is declined instead). Cancelling in the UI makes no call.
+
+**Placement confirmation (P04-06):** coordinator only, from `Offer accepted`; see Placement.
 
 ## Application events (owner: P04; table `application_events`)
 Every status change records `action`, `actor_role` (`student` / `employer` / …),
 `actor_name`, `reason` (required for `Declined`), `next_action` and `created_at`. The
-student sees this history (P04-04 AC1). Actions: `Draft saved`, `Submitted`,
-`Under review`, `Shortlisted`, `Declined`.
+student sees this history (P04-04 AC1, P04-07). Actions: `Draft saved`, `Submitted`,
+`Under review`, `Shortlisted`, `Declined`, `Offered`, `Offer accepted`, `Offer declined`,
+`Withdrawn`, `Placement confirmed`.
+
+## Placement (owner: P04; table `placements`)
+| Field | Meaning |
+|---|---|
+| placement_id | `PL-0001`, … (format still open with P07: `PL-0001` vs `EG-DXB-028`) |
+| application_id | Unique — one placement per application |
+| student_id, profile_version, opportunity_id, opportunity_version | Copied from the application |
+| confirmed_by, confirmed_at | Coordinator and UTC time |
+
+Repeating confirmation returns the existing placement (`already_confirmed: true`) and creates
+neither a second placement nor a second handoff (P04-06 AC2).
+
+## P07 handoff (owner: P04; table `p07_handoffs`, mock outbox)
+One row per placement (`placement_id` unique): `handoff_id` (`H07-0001`), `sent_at`,
+`receipt_status` (`mock-received` until P07 is live) and `payload`:
+`{placement_id, placement_status: "university_confirmed", application_id, student_id,
+opportunity_id, opportunity_version, employer_name, start_date, end_date, supervisor_name,
+supervisor_contact, confirmed_by, confirmed_at}` — fields agreed with P07 at Scrum of Scrums
+(10 Nov). Supervisor contact goes to P07 only, never to the student.
+
+## Skill gap handoff (owner: P05; table `skill_gap_handoffs`)
+| Field | Meaning |
+|---|---|
+| gap_id | `GAP-0001`, … (unique per recommendation + skill) |
+| student_id, skill_id, opportunity_id, opportunity_version, recommendation_id, profile_version | Payload passed to P06 (P05-06 AC1; `profile_version` and `recommendation_id` were requested at SoS) |
+| activity_id | P06 activity from `app/fixtures/p06_activities.json` (labelled fixture), or null when none exists — the student then sees a clear next action |
+| created_at, completed_at | Completing an activity is recorded but **never** changes a recommendation or marks the skill reviewed (P05-06 AC2) |
 
 ## Correction request (owner: P05; table `correction_requests`)
 | Field | Meaning |
@@ -134,3 +175,12 @@ corrections stay *recorded* — applying them needs the live owning module (defe
 | GET `/api/corrections` | Coordinator queue | |
 | POST `/api/corrections/{id}/record` `{note, actor_role}` | Record request for owning module | 403 non-coordinator; 409 wrong status |
 | POST `/api/corrections/{id}/accept` `{actor_role, availability…/interests…}` | Apply as new input version | 403; 409 not recorded; 422 P03/skills deferred or missing values |
+| POST `/api/applications/{id}/offer-response` `{response: accept\|decline, actor_role}` | Student answers an offer | 403 non-student; 409 no open offer / already declined; 422 bad response |
+| POST `/api/applications/{id}/withdraw` `{actor_role, reason?}` | Student withdraws | 403; 409 not withdrawable / placement confirmed |
+| POST `/api/applications/{id}/confirm-placement` `{actor_role, actor_name?}` | Coordinator confirms → placement + P07 handoff (idempotent) | 403 non-coordinator; 409 offer not accepted |
+| GET `/api/placements`, `/api/p07/handoffs` | Confirmed placements; mock P07 outbox | |
+| POST `/api/recommendations/{id}/gaps/{skill_id}/handoff` `{actor_role}` | Pass a gap to P06 | 403; 404; 422 not a gap in that recommendation |
+| POST `/api/skill-gaps/{gap_id}/complete` `{actor_role}` | Record the P06 activity as done | 403; 404; 409 no activity |
+| GET `/api/students/{id}/skill-gaps`, `/api/p06/activities` | Gap handoffs; P06 fixture activities | |
+| POST `/api/students/{id}/profile-updates` `{kind, actor_role, …, rematch?}` | `availability` (student) or `skill_evidence` (faculty) → new profile version + rematch | 403; 404; 422 missing/invalid values |
+| GET `/api/students/{id}/profile-versions` | Every profile version with its source | 404 |

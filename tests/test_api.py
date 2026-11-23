@@ -332,9 +332,8 @@ def test_invalid_transitions_and_unauthorised_roles_are_blocked(client):
     assert decide(client, app_id, "Shortlisted").status_code == 409
     # Unknown action
     assert decide(client, app_id, "Teleport").status_code == 422
-    # An offer can never be issued this sprint — and never after a decline (AC2)
-    offer = decide(client, app_id, "Offer")
-    assert offer.status_code == 422 and "never" in offer.json()["detail"].lower()
+    # An offer needs a shortlisted application (Sprint 3, P04-05)
+    assert decide(client, app_id, "Offer").status_code == 409
     # Wrong roles are blocked with a clear message (AC2)
     for role in ("student", "coordinator", "faculty"):
         denied = decide(client, app_id, "Under review", actor_role=role)
@@ -346,6 +345,9 @@ def test_invalid_transitions_and_unauthorised_roles_are_blocked(client):
     # Declined is terminal: no resurrection, no review, no shortlist
     for action in ("Under review", "Shortlisted", "Declined"):
         assert decide(client, app_id, action, reason="try again").status_code == 409
+    # ...and an offer can never follow a decline (AC2)
+    offer = decide(client, app_id, "Offer")
+    assert offer.status_code == 409 and "never" in offer.json()["detail"].lower()
 
 
 def test_all_applications_endpoint_shows_everything_with_history(client):

@@ -1,0 +1,17 @@
+[
+  {"activity_id": "P06-ACT-JIRA-01", "skill_id": "SK-JIRA", "title": "Jira fundamentals: boards, issues and sprints",
+   "provider": "P06 preparation plan (fixture)", "estimated_hours": 6,
+   "evidence_needed": "Upload a screenshot of a Jira board you set up and ask a faculty reviewer to review it."},
+  {"activity_id": "P06-ACT-SQL-01", "skill_id": "SK-SQL", "title": "SQL queries for analysts",
+   "provider": "P06 preparation plan (fixture)", "estimated_hours": 8,
+   "evidence_needed": "Submit a short query exercise for faculty review."},
+  {"activity_id": "P06-ACT-EXCEL-01", "skill_id": "SK-EXCEL", "title": "Excel for business reporting",
+   "provider": "P06 preparation plan (fixture)", "estimated_hours": 5,
+   "evidence_needed": "Submit a workbook with a pivot table for faculty review."},
+  {"activity_id": "P06-ACT-VIZ-01", "skill_id": "SK-VIZ", "title": "Dashboards with Tableau",
+   "provider": "P06 preparation plan (fixture)", "estimated_hours": 6,
+   "evidence_needed": "Share a published dashboard for faculty review."},
+  {"activity_id": "P06-ACT-FIGMA-01", "skill_id": "SK-FIGMA", "title": "Figma prototyping basics",
+   "provider": "P06 preparation plan (fixture)", "estimated_hours": 4,
+   "evidence_needed": "Share a clickable prototype for faculty review."}
+]

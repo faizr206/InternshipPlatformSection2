@@ -20,9 +20,18 @@ and Faculty reviewer.
 > recommendation, record a **correction request** for the owning module (P01/P03)
 > and apply profile corrections as a **new input version**, then rematch — the
 > original recommendation stays traceable.
+>
+> **Sprint 3 (exceptions, offers and handoffs):** the employer makes Layla an **offer**; she
+> accepts it (placement *Awaiting university confirmation*, not a placement yet) or declines.
+> Only the **coordinator** confirms it, creating one placement (PL-0001) and one **P07 handoff**
+> (mock outbox). She can **withdraw** an active application and see its full history. Her Jira
+> **gap** links to a **P06** preparation activity (labelled fixture), and when a **faculty
+> reviewer** marks Jira reviewed, matching **reruns** against the new profile version while the
+> old run stays traceable.
 
 Stories: Sprint 1 — P05-01, P05-02, P05-03, P04-01, P04-03.
 Sprint 2 — P05-04, P05-05, P04-02, P04-04.
+Sprint 3 — P04-05, P04-06, P04-07, P05-06, P05-07.
 
 ## Run
 
@@ -36,14 +45,12 @@ uv run uvicorn app.main:app --reload
 Open http://127.0.0.1:8000. The API docs are at http://127.0.0.1:8000/docs.
 To reset the demo data, stop the server and delete `app.db`.
 
-### Student design preview
-
-Open http://127.0.0.1:8000/student-preview for the redesigned catalogue. It includes the
-example employers, employer badges, listing photos, advanced filters, and the draggable
-career assistant. All preview actions and chat input stay in the browser for the current
-page session. The preview does not call an AI service or write to SQLite. The original
-four-role app remains available at the root URL.
-
+### The interface
+The main page (`/`) is the Coop design from Abdullah's student catalogue, now backed by the real
+API and SQLite. Use **Demo as** in the header to switch between the simulated roles (no login):
+Student (Layla), Employer reviewer, University coordinator and Faculty reviewer. The extra
+example roles in Explore (OP-101 to OP-108, e.g. Microsoft, Google) are catalogue samples only:
+they can be browsed and saved, not applied to. The earlier four-role layout is still at `/classic`.
 
 ### Public demo (ngrok)
 
@@ -71,10 +78,12 @@ uv run pytest
 | `app/matching.py` | Rules baseline engine (`rules-v2`) |
 | `app/ai.py` | Bounded AI: skill-term matching (`ai-termmatch-v1`) and recommendation insights (`ai-insights-v1`) |
 | `app/rules.json` | Editable rules: mandatory conditions and preference weights |
-| `docs/data-dictionary.md` | Records, statuses, transitions and API contract (v2) |
-| `docs/acceptance.md` | Sprint 1 + 2 acceptance results per story |
-| `app/main.py` | FastAPI routes incl. drafts, decisions, corrections, role guards |
-| `app/static/index.html` | UI: sidebar with the four simulated role views |
+| `docs/data-dictionary.md` | Records, statuses, transitions and API contract (v3) |
+| `docs/acceptance.md` | Sprint 1–3 acceptance results per story |
+| `app/main.py` | FastAPI routes incl. drafts, decisions, offers, withdrawal, placements, gaps, profile updates, role guards |
+| `app/fixtures/p06_activities.json` | P06 preparation activities per skill (labelled fixture) |
+| `app/static/student-preview/index.html` | Main UI (`/`): Coop design with a Demo-as role switcher |
+| `app/static/index.html` | Earlier four-role layout (`/classic`) |
 
 ## Matching rules (rules-v2)
 - Only `published` + `open` listings can be recommended.
@@ -112,14 +121,25 @@ deterministic, labelled, never changes the rules result or ranking):
   dialog. It cites only skills already on the profile and saves or submits nothing.
 
 ## Application lifecycle (P04)
-`Draft → Submitted → Under review → Shortlisted | Declined`
-- Drafts keep the entered statement; the statement is required at submission (a missing one
-  gives a useful error and preserves the draft).
-- Active statuses (duplicate check): Submitted, Under review, Shortlisted.
+`Draft → Submitted → Under review → Shortlisted → Offered → Offer accepted | Offer declined`,
+plus `Declined` (employer, from Under review / Shortlisted) and `Withdrawn` (student, from
+Submitted / Under review / Shortlisted).
+- Drafts keep the entered statement; the statement is required at submission.
+- Active statuses (duplicate check): Submitted, Under review, Shortlisted, Offered, Offer accepted.
 - Every change stores an event with actor, reason (required for declines) and next action.
-- `Declined` is terminal this sprint; offers (P04-05) arrive in Sprint 3 and never follow a decline.
-- Placement status is shown separately and stays **Not placed** until a coordinator confirms
-  (P04-06, Sprint 3).
+- An offer needs a shortlisted application and can never follow a decline.
+- Placement status is shown separately: `Not placed → Awaiting university confirmation`
+  (student accepted) `→ Confirmed` (coordinator only, P04-06). Confirming creates one placement
+  and one P07 handoff; confirming again creates neither. A confirmed placement cannot be withdrawn.
+
+## Skill gaps and rematching (P05-06, P05-07)
+- Each gap on a recommendation has **Prepare →**: it passes student, skill, opportunity/version,
+  recommendation and profile version to P06 and shows the matching activity (labelled fixture)
+  or, when there is none, a clear next action. Marking the activity done never changes the
+  recommendation.
+- A student can change availability, and the faculty reviewer can mark a skill reviewed (with an
+  evidence ID). Each creates a new profile version and reruns matching; earlier runs keep their
+  versions. Same inputs + method versions give the same rules result (the AI is deterministic too).
 
 ## Corrections (P05-05)
 A student flags a recommendation (reason + affected field). The coordinator sees the input
@@ -137,7 +157,9 @@ never overwritten). A rematch then stores a new run; earlier runs stay queryable
 - **Simulated:** role switching (no login — labelled in the sidebar), employer/coordinator
   actors, AI assistance (deterministic, labelled). Profiles and listings come from fixtures,
   not live P01/P03 modules.
-- **Deferred:** authentication, offers and acceptance (P04-05), placement confirmation and the
-  P07 handoff (P04-06), withdrawal (P04-07), skill-gap → P06 (P05-06), rematching after any
-  profile change (P05-07), evaluation against the baseline (P05-08), applying P03/P01-owned
-  corrections, deployment.
+- **Also real (Sprint 3):** offers and responses, withdrawal, placement confirmation with a single
+  handoff record, gap handoff records, profile updates as new versions with rematching.
+- **Simulated (Sprint 3):** P06 activities (fixture), P07 receipt (mock outbox).
+- **Deferred:** authentication, live P01/P03/P06/P07 interfaces, evaluation against the baseline
+  (P05-08) and joint handoff verification (P04-08) in Sprint 4, applying P03-owned corrections,
+  deployment.

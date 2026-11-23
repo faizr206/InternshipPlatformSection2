@@ -311,7 +311,7 @@
 #coop-preview .advisor-controls {margin-top:0}
 @media(max-width:630px) {
  #coop-preview .public-header {grid-template-columns:1fr auto;gap:5px 12px;padding:9px 13px 5px}
- #coop-preview .avatar-button {grid-column:2;grid-row:1}
+ #coop-preview .header-end {grid-column:2;grid-row:1}
  #coop-preview .public-links {grid-column:1/-1;grid-row:2;justify-content:flex-start;gap:7px 13px;flex-wrap:wrap}
  #coop-preview .public-links button {font-size:12px}
  #coop-preview .feature,#coop-preview .feature-secondary {grid-template-columns:1fr;margin-bottom:20px;min-height:0}
@@ -545,6 +545,27 @@
 #coop-preview .listing-company strong {color:var(--navy);font-size:13px}
 #coop-preview .employer-mark {width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #dacdb3;border-radius:9px;background:white;color:var(--blue);font-size:10px;font-weight:750}
 #coop-preview .employer-mark img {object-fit:contain;display:block}
+#coop-preview .cp-chip.s-offered {background:#ece9fb;color:#4b3db8;font-weight:650}
+#coop-preview .cp-chip.s-accepted {background:var(--ok-soft);color:var(--ok);font-weight:650}
+#coop-preview .cp-chip.s-offerdeclined, #coop-preview .cp-chip.s-withdrawn {background:#eef0f3;color:#4b5563}
+#coop-preview .cp-chip.p-awaiting {background:var(--warn-soft);color:var(--warn)}
+#coop-preview .cp-chip.p-confirmed {background:var(--ok);color:#fff;font-weight:650}
+#coop-preview ol.timeline {list-style:none;margin:10px 0 0;padding:0 0 0 18px;border-left:2px solid var(--border)}
+#coop-preview ol.timeline li {position:relative;margin:0 0 10px}
+#coop-preview ol.timeline li::before {content:"";position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--surface)}
+#coop-preview ol.timeline li.last::before {background:var(--gold)}
+#coop-preview .gap-list {list-style:none;padding:0;margin:0}
+#coop-preview .gap-list li {display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
+#coop-preview .p06 {border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:12px}
+#coop-preview .inline-form {display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:8px}
+#coop-preview .inline-form label {font-size:13px;color:var(--muted)}
+#coop-preview .inline-form input, #coop-preview .inline-form select {display:block;margin-top:4px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font:inherit;background:#fff}
+#coop-preview .header-end {display:flex;align-items:center;gap:12px;justify-self:end}
+#coop-preview .demo-role {display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+#coop-preview .demo-role select {padding:5px 8px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:12.5px;background:#fff;color:var(--text)}
+#coop-preview .stack-title {margin:26px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+#coop-preview .role-banner {margin:0 0 14px;padding:8px 12px;border-radius:10px;background:var(--blue-soft);color:var(--blue);font-size:13px}
+#coop-preview .ai-summary {margin:6px 0;font-weight:500}
 </style>
 <div id="coop-preview">
 
@@ -560,7 +581,16 @@
         <button type="button" data-tab="apps">Applications <span id="appCount"></span></button>
         <button type="button" data-tab="guide">Career guide</button>
       </nav>
+      <div class="header-end">
+      <label class="demo-role">Demo as
+        <select id="demoRole" aria-label="Simulated role (no login)">
+          <option value="student">Student · Layla</option>
+          <option value="employer">Employer reviewer</option>
+          <option value="coordinator">University coordinator</option>
+          <option value="faculty">Faculty reviewer</option>
+        </select></label>
       <button type="button" class="avatar-button" data-tab="profile" aria-label="Open Layla Hassan’s profile"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""></button>
+      </div>
     </header>
 <div class="assistant-layer">
   <button type="button" id="robotLauncher" class="robot-launcher" aria-label="Open career assistant" aria-describedby="robotHelp" aria-haspopup="dialog" aria-controls="careerChat">
@@ -691,19 +721,22 @@
 
       <!-- ================= EMPLOYER ================= -->
       <section inert class="view" id="view-employer" hidden><h2 class="page-title">Application review</h2>
-        <p class="cp-muted">Simulated employer reviewer. Submitted applications are reviewed here; each decision
-          records the actor, time and a next action for the student. A decline requires a reason.
-          Offers are a Sprint 3 story and can never follow a decline.</p>
+        <p class="role-banner">Simulated role — no login. Each decision records the actor, time and a next action for
+          the student. A decline needs a reason; a shortlisted application can get an offer, never after a decline.</p>
         <span class="msg" aria-live="polite" id="employerMsg"></span>
         <div id="queue"></div>
       </section>
 
       <!-- ================= COORDINATOR ================= -->
-      <section inert class="view" id="view-coordinator" hidden><h2 class="page-title">Corrections &amp; matching</h2>
-        <p class="cp-muted">Simulated university coordinator (COORD-01). A student flags a recommendation; the
-          coordinator sees the reason, affected field and the input versions used, records a correction
-          request for the owning module (P01 / P03) and, for profile corrections, applies it as a new
-          input version that can be rematched. The original recommendation stays traceable.</p>
+      <section inert class="view" id="view-coordinator" hidden><h2 class="page-title">Placements, corrections &amp; matching</h2>
+        <p class="role-banner">Simulated university coordinator (COORD-01) — no login. Only the coordinator turns an
+          accepted offer into a placement; confirming creates one placement and one P07 handoff, and confirming again
+          creates neither.</p>
+        <h2 class="stack-title">Accepted offers awaiting confirmation</h2>
+        <span class="msg" aria-live="polite" id="plMsg"></span>
+        <div id="awaiting"></div>
+        <h2 class="stack-title">Confirmed placements · P07 handoff (mock)</h2>
+        <div id="placements"></div>
         <span class="msg" aria-live="polite" id="crMsg"></span>
         <h2 class="stack-title">Correction requests</h2>
         <div id="corrections"></div>
@@ -721,10 +754,21 @@
       </section>
 
       <!-- ================= FACULTY ================= -->
-      <section inert class="view" id="view-faculty" hidden><h2 class="page-title">Application records</h2>
-        <p class="cp-muted"><b>Read-only view.</b> Viewing an application never implies an approved placement —
-          application status and placement status are shown separately. Placement confirmation is a
-          Sprint 3 story (P04-06).</p>
+      <section inert class="view" id="view-faculty" hidden><h2 class="page-title">Skill evidence &amp; application records</h2>
+        <p class="role-banner">Simulated faculty reviewer (FAC-01) — no login. Reviewing a skill creates a new profile
+          version and reruns matching; earlier recommendations keep their versions. Applications are read-only here.</p>
+        <h2 class="stack-title">Review skill evidence</h2>
+        <div class="cp-card">
+          <div class="inline-form">
+            <label>Student <select id="evStudent"></select></label>
+            <label>Skill <select id="evSkill"></select></label>
+            <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
+            <button class="cp-btn" id="evReview" type="button">Mark reviewed &amp; rematch</button>
+          </div>
+          <p class="msg" id="evMsg"></p>
+          <div id="evVersions"></div>
+        </div>
+        <h2 class="stack-title">Applications (read-only)</h2>
         <div id="facultyApps"></div>
       </section>
 
@@ -758,6 +802,31 @@
   <div class="actions">
     <button type="button" class="cp-btn danger" id="declineYes">Decline</button>
     <button type="button" class="cp-btn secondary" id="declineNo">Cancel</button>
+  </div>
+</dialog>
+
+<!-- Withdraw dialog (student) -->
+<dialog id="withdrawDialog" aria-labelledby="withdrawTitle">
+  <h2 id="withdrawTitle">Withdraw application?</h2>
+  <p class="cp-muted" id="withdrawContext"></p>
+  <label>Reason (optional, kept in the history)
+    <textarea id="withdrawReason" rows="2" placeholder="e.g. accepted a different placement"></textarea>
+  </label>
+  <p class="msg" id="withdrawMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn danger" id="withdrawYes">Withdraw</button>
+    <button type="button" class="cp-btn secondary" id="withdrawNo">Cancel (keep application)</button>
+  </div>
+</dialog>
+
+<!-- Skill gap → P06 dialog (student) -->
+<dialog id="gapDialog" aria-labelledby="gapTitle">
+  <h2 id="gapTitle">Prepare for this gap</h2>
+  <div id="gapBody"></div>
+  <p class="msg" id="gapMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn" id="gapDone" hidden>Mark activity done</button>
+    <button type="button" class="cp-btn secondary" id="gapClose">Close</button>
   </div>
 </dialog>
 
@@ -808,179 +877,25 @@ function employerPhoto(o) {
   return `<img class="employer-photo" loading="lazy" src="${url}" alt="${label}">`;
 }
 
-const demo = {"students": [{"student_id": "COOP-B001", "profile_version": 1, "display_name": "Layla Hassan", "interests": ["aviation", "analytics"], "availability_start": "2027-01-01", "availability_end": "2027-06-30", "skills": [{"skill_id": "SK-SQL", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}, {"skill_id": "SK-EXCEL", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0001"}, {"skill_id": "SK-VIZ", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}]}, {"student_id": "COOP-B002", "profile_version": 1, "display_name": "Omar Saleh", "interests": ["software"], "availability_start": "2027-01-01", "availability_end": "2027-04-30", "skills": [{"skill_id": "SK-PY", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0002"}, {"skill_id": "SK-JIRA", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}]}, {"student_id": "COOP-B003", "profile_version": 2, "display_name": "Mei Chen", "interests": ["design"], "availability_start": null, "availability_end": null, "skills": [{"skill_id": "SK-FIGMA", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0003"}]}, {"student_id": "COOP-B004", "profile_version": 1, "display_name": "Daniel Okafor", "interests": ["marketing", "retail"], "availability_start": "2027-07-01", "availability_end": "2027-12-31", "skills": [{"skill_id": "SK-DMKT", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}, {"skill_id": "SK-COMM", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0004"}]}, {"student_id": "COOP-B005", "profile_version": 1, "display_name": "Sara Novak", "interests": ["analytics", "finance"], "availability_start": "2027-01-01", "availability_end": "2027-12-31", "skills": [{"skill_id": "SK-PY", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}, {"skill_id": "SK-SQL", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0005"}, {"skill_id": "SK-JIRA", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0006"}]}, {"student_id": "COOP-B006", "profile_version": 1, "display_name": "Ravi Patel", "interests": [], "availability_start": "2027-02-01", "availability_end": "2027-05-31", "skills": []}], "opportunities": [{"opportunity_id": "OP-028", "version": 2, "submission_version": 2, "employer_name": "Emirates Group", "title": "Aviation Analytics Intern", "sector": "aviation", "location": "Dubai", "work_mode": "on-site", "description": "Support network planning with SQL reporting, Tableau dashboards and weekly performance trackers; day-to-day work is tracked on an agile board.", "start_date": "2027-02-01", "end_date": "2027-05-31", "required_skills": ["SK-SQL", "SK-JIRA"], "desirable_skills": ["SK-VIZ"], "publication_status": "published", "listing_status": "open"}, {"opportunity_id": "OP-031", "version": 1, "submission_version": 1, "employer_name": "Northstar Analytics", "title": "Data Analytics Intern", "sector": "analytics", "location": "Remote", "work_mode": "remote", "description": "Build Excel models and SQL analyses for client dashboards, then present the findings to stakeholders.", "start_date": "2027-01-15", "end_date": "2027-04-15", "required_skills": ["SK-EXCEL"], "desirable_skills": ["SK-SQL", "SK-PY"], "publication_status": "published", "listing_status": "open"}, {"opportunity_id": "OP-032", "version": 1, "submission_version": 1, "employer_name": "Evergreen Labs", "title": "Product Design Intern", "sector": "design", "location": "Dubai", "work_mode": "hybrid", "description": "Turn research into wireframes and clickable prototypes in Figma; clear communication with engineering is essential.", "start_date": null, "end_date": null, "required_skills": ["SK-FIGMA"], "desirable_skills": ["SK-COMM"], "publication_status": "published", "listing_status": "open"}, {"opportunity_id": "OP-033", "version": 1, "submission_version": 1, "employer_name": "Gulf Software House", "title": "Junior Developer Intern", "sector": "software", "location": "Abu Dhabi", "work_mode": "on-site", "description": "Write Python scripts and automated checks alongside the scrum team; work items live on the agile board.", "start_date": "2027-08-01", "end_date": "2027-11-30", "required_skills": ["SK-PY"], "desirable_skills": ["SK-JIRA"], "publication_status": "published", "listing_status": "open"}, {"opportunity_id": "OP-034", "version": 3, "submission_version": 3, "employer_name": "Desert Retail Co.", "title": "Marketing Intern", "sector": "marketing", "location": "Sharjah", "work_mode": "on-site", "description": "Plan digital marketing campaigns and social media content for seasonal retail promotions.", "start_date": "2027-03-01", "end_date": "2027-06-30", "required_skills": ["SK-DMKT"], "desirable_skills": [], "publication_status": "published", "listing_status": "closed"}, {"opportunity_id": "OP-035", "version": 1, "submission_version": 1, "employer_name": "Falcon Finance", "title": "Finance Analyst Intern", "sector": "finance", "location": "Dubai", "work_mode": "hybrid", "description": "Financial modelling in Excel with SQL data extracts; dashboard reporting for the finance committee.", "start_date": "2027-02-01", "end_date": "2027-06-30", "required_skills": ["SK-EXCEL", "SK-SQL"], "desirable_skills": [], "publication_status": "unpublished", "listing_status": "open"}, {"opportunity_id": "OP-101", "version": 1, "employer_name": "Microsoft", "title": "Applied AI Research Intern", "sector": "AI research", "location": "Cambridge", "country_code": "GB", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["masters", "doctorate"], "description": "Evaluate retrieval and reasoning in language models and document experimental results.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-102", "version": 1, "employer_name": "Amazon Web Services", "title": "Cloud Data Engineering Intern", "sector": "cloud engineering", "location": "Dubai", "country_code": "AE", "work_mode": "on-site", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Build data pipelines and validate data quality for analytics workflows.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-103", "version": 1, "employer_name": "Google", "title": "Machine Learning Engineer, Early Career", "sector": "machine learning", "location": "London", "country_code": "GB", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Build evaluation pipelines and monitor how machine learning models perform in production.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-104", "version": 1, "employer_name": "G42", "title": "Computer Vision Engineer, Graduate", "sector": "computer vision", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Prototype image models and measure their performance across varied environments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-105", "version": 1, "employer_name": "Presight", "title": "Data Science Intern", "sector": "analytics", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Analyze time-series data and communicate model results through dashboards.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-106", "version": 1, "employer_name": "Careem", "title": "Product Analytics Associate", "sector": "analytics", "location": "Dubai", "country_code": "AE", "work_mode": "hybrid", "job_type": "part-time", "degree_levels": ["bachelors", "masters"], "description": "Analyze product experiments and summarize user behavior for a product team.", "required_skills": ["SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-107", "version": 1, "employer_name": "Technology Innovation Institute", "title": "Research Assistant, Arabic NLP", "sector": "AI research", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "part-time", "degree_levels": ["masters", "doctorate"], "description": "Help evaluate Arabic language datasets and reproduce multilingual model experiments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-108", "version": 1, "employer_name": "e&", "title": "Responsible AI Analyst, Graduate", "sector": "AI governance", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["bachelors", "masters"], "description": "Document model risks, review test results, and help maintain evaluation records.", "required_skills": ["SK-EXCEL"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-032"}], "skills": {"SK-JIRA": "Jira", "SK-SQL": "SQL", "SK-PY": "Python", "SK-EXCEL": "Excel", "SK-VIZ": "Data visualisation (e.g. Tableau)", "SK-FIGMA": "Figma", "SK-COMM": "Communication", "SK-DMKT": "Digital marketing"}, "aliases": {"_note": "P05-owned alias map for the bounded AI term-matching feature (ai-termmatch-v1). Extending the shared skill vocabulary itself (skills.json) needs Scrum of Scrums agreement with P01/P03/P06; this local map is the labelled fallback. Lowercase terms; matched case-insensitively on word boundaries.", "SK-JIRA": ["jira", "agile board", "scrum"], "SK-SQL": ["sql", "database", "query"], "SK-PY": ["python", "scripting"], "SK-EXCEL": ["excel", "spreadsheet"], "SK-VIZ": ["tableau", "dashboard", "data visualisation"], "SK-FIGMA": ["figma", "wireframe", "prototype"], "SK-COMM": ["stakeholder", "communication", "presentation"], "SK-DMKT": ["digital marketing", "campaign", "social media"]}, "rules": {"version": "rules-v2", "mandatory": {"availability_covers_dates": true}, "weights": {"interest": 3, "required_skill": 2, "desirable_skill": 1}}};
-const {students, opportunities, skills, aliases, rules} = demo;
-const open = opportunities.filter(o => o.publication_status === "published" && o.listing_status === "open");
-const records = { apps: [], corrections: [], runs: {}, saved: {} };
-const stamp = () => new Date().toISOString();
-const recordId = (prefix, rows) => prefix + String(rows.length + 1).padStart(4, "0");
-const aiVersion = "ai-termmatch-v1";
-function matchRun(s) {
-  const created_at = stamp();
-  const runs = records.runs[s.student_id] ||= [];
-  const run_id = recordId("RUN-", runs);
-  const held = Object.fromEntries(s.skills.map(sk => [sk.skill_id, sk.evidence_status]));
-  const name = key => skills[key] || key;
-  const evidence = key => held[key] === "reviewed" ? "reviewed" : "self-declared";
-  const results = open.map(o => {
-    const datesKnown = s.availability_start && s.availability_end && o.start_date && o.end_date;
-    const covers = s.availability_start <= o.start_date && s.availability_end >= o.end_date;
-    const eligibility = rules.mandatory.availability_covers_dates === false || (datesKnown && covers)
-      ? "eligible" : datesKnown ? "ineligible" : "unknown";
-    const reasons = [], gaps = [], unknowns = [], ai_matches = [];
-    let score = 0;
-    if (rules.mandatory.availability_covers_dates !== false) {
-      const dates = `${s.availability_start}..${s.availability_end}`;
-      const term = `${o.start_date}..${o.end_date}`;
-      if (!datesKnown) unknowns.push("Availability: Needs checking (dates missing)");
-      else reasons.push(covers ? `Availability ${dates} covers ${term}` : `Mandatory conflict: availability ${dates} does not cover ${term}`);
-    }
-    if (!s.interests.length) unknowns.push("Interests: not provided");
-    else if (s.interests.includes(o.sector)) {
-      score += rules.weights.interest;
-      reasons.push(`Interest '${o.sector}' matches opportunity sector`);
-    }
-    for (const [kind, ids] of [["required", o.required_skills], ["desirable", o.desirable_skills]]) {
-      for (const key of ids) {
-        if (held[key]) {
-          score += rules.weights[kind + "_skill"];
-          reasons.push(`Has ${kind} skill ${name(key)} (${key}, ${evidence(key)})`);
-        } else if (kind === "required") gaps.push(`Missing required skill ${name(key)} (${key})`);
-      }
-    }
-    for (const key of Object.keys(held).sort()) {
-      for (const term of aliases[key] || []) {
-        const literal = Array.from(term).map(c => "^$.*+?()[]{}|\\".includes(c) ? "\\" + c : c).join("");
-        const re = new RegExp("\\b" + literal + "s?\\b", "i");
-        const field = ["title", "description"].find(f => re.test(o[f] || ""));
-        if (!field) continue;
-        ai_matches.push({term, field, skill_id: key, skill_name: name(key), evidence_status: evidence(key)});
-        break;
-      }
-    }
-    return {
-      recommendation_id: `REC-${s.student_id}-${run_id}-${o.opportunity_id}`, run_id, created_at,
-      opportunity_id: o.opportunity_id, opportunity_version: o.version, student_id: s.student_id,
-      profile_version: s.profile_version, method_version: rules.version, ai_method_version: aiVersion,
-      score, eligibility, compatible: eligibility === "eligible", reasons, gaps, unknowns, ai_matches
-    };
-  });
-  const rank = {eligible: 0, unknown: 1, ineligible: 2};
-  results.sort((a,b) => rank[a.eligibility] - rank[b.eligibility] || b.score - a.score || a.opportunity_id.localeCompare(b.opportunity_id));
-  runs.push({run_id, created_at, profile_version:s.profile_version, method_version:rules.version,
-    ai_method_version:aiVersion, results:results.length, eligible:results.filter(r=>r.compatible).length, recommendations:results});
-  return results;
+const demo = {"opportunities": [{"opportunity_id": "OP-101", "version": 1, "employer_name": "Microsoft", "title": "Applied AI Research Intern", "sector": "AI research", "location": "Cambridge", "country_code": "GB", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["masters", "doctorate"], "description": "Evaluate retrieval and reasoning in language models and document experimental results.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-102", "version": 1, "employer_name": "Amazon Web Services", "title": "Cloud Data Engineering Intern", "sector": "cloud engineering", "location": "Dubai", "country_code": "AE", "work_mode": "on-site", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Build data pipelines and validate data quality for analytics workflows.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-103", "version": 1, "employer_name": "Google", "title": "Machine Learning Engineer, Early Career", "sector": "machine learning", "location": "London", "country_code": "GB", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Build evaluation pipelines and monitor how machine learning models perform in production.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-104", "version": 1, "employer_name": "G42", "title": "Computer Vision Engineer, Graduate", "sector": "computer vision", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Prototype image models and measure their performance across varied environments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-105", "version": 1, "employer_name": "Presight", "title": "Data Science Intern", "sector": "analytics", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Analyze time-series data and communicate model results through dashboards.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-106", "version": 1, "employer_name": "Careem", "title": "Product Analytics Associate", "sector": "analytics", "location": "Dubai", "country_code": "AE", "work_mode": "hybrid", "job_type": "part-time", "degree_levels": ["bachelors", "masters"], "description": "Analyze product experiments and summarize user behavior for a product team.", "required_skills": ["SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-107", "version": 1, "employer_name": "Technology Innovation Institute", "title": "Research Assistant, Arabic NLP", "sector": "AI research", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "part-time", "degree_levels": ["masters", "doctorate"], "description": "Help evaluate Arabic language datasets and reproduce multilingual model experiments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-108", "version": 1, "employer_name": "e&", "title": "Responsible AI Analyst, Graduate", "sector": "AI governance", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["bachelors", "masters"], "description": "Document model risks, review test results, and help maintain evaluation records.", "required_skills": ["SK-EXCEL"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-032"}]};  // catalogue-only example roles
+// Example roles (OP-101…) are catalogue-only samples: they are not P03 listings in the
+// backend, so they can be browsed and saved but not applied to. Everything else comes
+// from the real API (SQLite), including matching, applications, offers and placements.
+const exampleRoles = demo.opportunities.filter(o => o.example);
+let open = [...exampleRoles];
+const records = { saved: {} };
+async function api(path, opts = {}) {
+  // ngrok's free tier answers browser requests with an HTML warning page unless this header is present.
+  const headers = { "ngrok-skip-browser-warning": "1", ...(opts.headers || {}) };
+  const res = await fetch(path, { ...opts, headers });
+  const text = await res.text();
+  let body;
+  try { body = text ? JSON.parse(text) : null; }
+  catch { throw new Error(`Server returned a non-JSON response for ${path} (HTTP ${res.status}). Is the backend running?`); }
+  if (!res.ok) throw new Error((body && body.detail) || res.statusText);
+  return body;
 }
-function requireDemoRole(body, role) {
-  if (body.actor_role !== role) throw Error("Switch to the " + role + " role for this action.");
-}
-function updateApplication(id, action, method, body) {
-  let a = records.apps.find(row => row.application_id === id);
-  if (id && id !== "draft" && !a) throw Error("Application not found.");
-  if (action === "decisions") {
-    requireDemoRole(body, "employer");
-    const transitions = {"Submitted":["Under review"], "Under review":["Shortlisted","Declined"], "Shortlisted":["Declined"]};
-    if (!(transitions[a.application_status] || []).includes(body.action)) throw Error("This decision is unavailable for the current status.");
-    if (body.action === "Declined" && !body.reason?.trim()) throw Error("Enter a reason for declining.");
-    a.application_status = body.action;
-    const next_action = {"Under review":"Wait for the employer’s decision.", Shortlisted:"Await further instructions.", Declined:"Consider other open opportunities."}[body.action];
-    a.history.push({ action:body.action, actor_name:body.actor_name, actor_role:"employer", created_at:stamp(), reason:body.reason?.trim(), next_action });
-    return a;
-  }
-  requireDemoRole(body, "student");
-  const s = students.find(row => row.student_id === (a?.student_id || body.student_id));
-  const o = open.find(row => row.opportunity_id === (a?.opportunity_id || body.opportunity_id));
-  if (!s || !o) throw Error("Select a student and an open opportunity.");
-  if (a && a.application_status !== "Draft") throw Error("Only drafts can be edited or submitted.");
-  const existing = records.apps.filter(row => row.student_id === s.student_id && row.opportunity_id === o.opportunity_id);
-  if (existing.some(row => ACTIVE.includes(row.application_status))) throw Error("An active application already exists.");
-  a ||= existing.find(row => row.application_status === "Draft");
-  const draft = id === "draft" || method === "PUT";
-  const statement = body.statement ?? a?.statement ?? "";
-  if (!draft && !statement.trim()) throw Error("Write a statement before submitting. Your text is preserved.");
-  if (!a) {
-    a = {application_id:recordId("APP-", records.apps), student_id:s.student_id, student_name:s.display_name,
-      opportunity_id:o.opportunity_id, opportunity_title:o.title, employer_name:o.employer_name,
-      opportunity_version:o.version, profile_version:s.profile_version, placement_status:"Not placed", history:[]};
-    records.apps.push(a);
-  }
-  a.statement = draft ? statement : statement.trim();
-  a.application_status = draft ? "Draft" : "Submitted";
-  a.submitted_at = stamp();
-  if (!draft) {
-    a.profile_version = s.profile_version;
-    a.history.push({action:"Submitted", actor_name:s.display_name, actor_role:"student", created_at:a.submitted_at, next_action:"Wait for the employer to review your application."});
-  }
-  return a;
-}
-async function api(path, opts) {
-  const [pathname, query] = path.split("?");
-  const [, , table, id, action] = pathname.split("/");
-  const method = opts?.method || "GET";
-  const body = opts?.body ? JSON.parse(opts.body) : {};
-  if (table === "skills") return skills;
-  if (table === "rules") return rules;
-  if (table === "opportunities") {
-    if (id) return opportunities.find(o => o.opportunity_id === id);
-    const params = new URLSearchParams(query);
-    const q = (params.get("q") || "").toLowerCase();
-    const mode = params.get("work_mode");
-    return open.filter(o => (!mode || o.work_mode === mode) &&
-      (o.title.toLowerCase().includes(q) || o.employer_name.toLowerCase().includes(q)));
-  }
-  if (table === "students") {
-    if (!id) return students;
-    const s = students.find(row => row.student_id === id);
-    const runs = records.runs[id] || [];
-    if (action === "recommendations") return method === "POST" ? matchRun(s) : runs.at(-1)?.recommendations || [];
-    if (action === "recommendation-runs") return runs;
-    if (action === "applications") return records.apps.filter(a => a.student_id === id);
-    return s;
-  }
-  if (table === "applications") return method === "GET"
-    ? records.apps : updateApplication(id, action, method, body);
-  if (table === "recommendations" && action === "flags") {
-    requireDemoRole(body, "student");
-    if (!body.reason.trim()) throw Error("Enter a reason so the coordinator knows what to check.");
-    const r = Object.values(records.runs).flat().flatMap(run => run.recommendations).find(rec => rec.recommendation_id === id);
-    if (!r) throw Error("Recommendation not found.");
-    const {profile_version, opportunity_id, opportunity_version, method_version} = r;
-    const cr = {correction_id:recordId("CR-", records.corrections), student_id:r.student_id,
-      student_name:students.find(s => s.student_id === r.student_id).display_name,
-      recommendation_id:id, reason:body.reason.trim(), affected_field:body.affected_field,
-      source_module:["availability","interests","skills"].includes(body.affected_field) ? "P01" : "P03",
-      source_version:{profile_version, opportunity_id, opportunity_version, method_version}, status:"flagged", created_at:stamp()};
-    records.corrections.push(cr);
-    return cr;
-  }
-  if (table === "corrections") {
-    if (!id) return records.corrections;
-    requireDemoRole(body, "coordinator");
-    const cr = records.corrections.find(row => row.correction_id === id);
-    if (action === "record" && cr.status === "flagged") {
-      Object.assign(cr, {status:"recorded", coordinator:body.actor_name, note:body.note.trim(), decided_at:stamp()});
-      return cr;
-    }
-    if (action === "accept" && cr.status === "recorded") {
-      const index = students.findIndex(s => s.student_id === cr.student_id);
-      const s = {...students[index]};
-      if (cr.affected_field === "availability") {
-        if (!body.availability_start || !body.availability_end) throw Error("Enter both availability dates.");
-        s.availability_start = body.availability_start;
-        s.availability_end = body.availability_end;
-      } else if (cr.affected_field === "interests") {
-        if (!body.interests?.length) throw Error("Enter at least one interest.");
-        s.interests = body.interests;
-      } else throw Error("This correction stays recorded for the owning module.");
-      s.profile_version++;
-      students[index] = s;
-      cr.status = "accepted";
-      cr.decided_at = stamp();
-      return {correction_id:id, student_id:s.student_id, new_profile_version:s.profile_version};
-    }
-  }
-  throw Error("This action is unavailable in the preview.");
-}
+const json = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 const $ = id => root.querySelector("#" + CSS.escape(id));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1049,9 +964,12 @@ const state = {
 };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
-const ACTIVE = ["Submitted", "Under review", "Shortlisted"];
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted"];
 
 async function opp(id) {
+  const example = exampleRoles.find(o => o.opportunity_id === id);
+  if (example) return state.opps[id] = example;
   if (!state.opps[id]) state.opps[id] = await api(`/api/opportunities/${id}`);
   return state.opps[id];
 }
@@ -1084,7 +1002,23 @@ function renderProfile(s) {
           ? `<span class="cp-chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
           : `<span class="cp-chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
       : `<span class="cp-chip warn">None listed</span>`}</div>
-    <p class="cp-muted">A check mark indicates reviewed skill evidence.</p>`;
+    <p class="cp-muted">A check mark indicates reviewed skill evidence. Profile v${esc(s.profile_version)}.</p>
+    <h3>Update availability</h3>
+    <div class="inline-form">
+      <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
+      <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
+      <button class="cp-btn small" type="button" id="avSave">Save &amp; refresh matches</button>
+    </div>
+    <p class="cp-muted">Saving creates profile v${esc((s.profile_version || 0) + 1)} and a new matching run; earlier runs keep their versions.</p>
+    <p class="msg" id="avMsg"></p>`;
+  $("avSave").onclick = async () => {
+    try {
+      const r = await api(`/api/students/${s.student_id}/profile-updates`, json({ kind: "availability",
+        actor_role: "student", availability_start: $("avStart").value, availability_end: $("avEnd").value }));
+      await onStudentChange();
+      setMsg("avMsg", `Saved as profile v${r.new_profile_version}; your matches were refreshed.`, "success");
+    } catch (err) { setMsg("avMsg", err.message, "error"); }
+  };
 }
 
 // ================= Skill chips relative to the student =================
@@ -1130,11 +1064,18 @@ function listingFacts(o) {
 
 function statusChip(status) {
   const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
-                Shortlisted: "s-shortlisted", Declined: "s-declined" }[status] || "";
+                Shortlisted: "s-shortlisted", Declined: "s-declined", Offered: "s-offered",
+                "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
   return `<span class="cp-chip ${cls}">${esc(status)}</span>`;
 }
+function placementChip(p) {
+  const cls = { "Awaiting university confirmation": "p-awaiting", Confirmed: "p-confirmed" }[p] || "";
+  return `<span class="cp-chip ${cls}">${p === "Confirmed" ? "✓ " : ""}${esc(p)}</span>`;
+}
+const gapSkill = g => (g.match(/\((SK-[A-Z]+)\)$/) || [])[1];
 
 function applyButton(o) {
+  if (o.example) return `<span class="cp-chip">Example role · not open for applications</span>`;
   const active = state.apps.find(a => a.opportunity_id === o.opportunity_id && ACTIVE.includes(a.application_status));
   if (active) return `<span class="cp-chip ok">Applied · ${esc(active.application_id)}</span>`;
   const draft = state.apps.find(a => a.opportunity_id === o.opportunity_id && a.application_status === "Draft");
@@ -1148,6 +1089,7 @@ function aiBox(r) {
     `<li>“${esc(m.term)}” in the ${esc(m.field)} ≈ your skill <b>${esc(m.skill_name)}</b> (${esc(m.skill_id)}, ${esc(m.evidence_status)})</li>`).join("");
   return `
   <div class="ai">
+    ${r.ai_insights?.summary ? `<p class="ai-summary">${esc(r.ai_insights.summary)}</p>` : ""}
     <h4>Skill terms found in the listing</h4>
     ${items ? `<ul>${items}</ul>` : `<div>No equivalent skill terms found for this opportunity.</div>`}
     <p>Simulated term matching. Eligibility and scores use the published rules.</p>
@@ -1196,7 +1138,9 @@ async function renderRecs(recs) {
       <div class="why">
         <div><h4>Why it matches</h4>${list(r.reasons, "No matching interests or skills")}</div>
         <div>
-          <h4>Gaps</h4>${list(r.gaps, "No missing required skills")}
+          <h4>Gaps</h4>${r.gaps.length ? `<ul class="gap-list">${r.gaps.map(g => `<li><span>${esc(g)}</span>
+            ${gapSkill(g) ? `<button class="cp-btn small secondary" type="button" data-gap="${esc(r.recommendation_id)}" data-skill="${esc(gapSkill(g))}">Prepare →</button>` : ""}</li>`).join("")}</ul>`
+            : `<div class="cp-muted">No missing required skills</div>`}
           <h4 style="margin-top:8px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
         </div>
       </div>
@@ -1335,13 +1279,23 @@ function renderRules(rules) {
 }
 
 // ================= My applications (drafts, decisions, history) =================
-function historyHtml(a) {
+function historyHtml(a, open = false) {
   if (!a.history?.length) return "";
-  const items = a.history.map(e => `
-    <li><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}) at ${esc(e.created_at)}
+  const n = a.history.length;
+  const items = a.history.map((e, i) => `
+    <li class="${i === n - 1 ? "last" : ""}"><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}) at ${esc(e.created_at)}
       ${e.reason ? `<div class="reason">Reason: ${esc(e.reason)}</div>` : ""}
       <div class="cp-muted">Next action: ${esc(e.next_action)}</div></li>`).join("");
-  return `<details class="hist"><summary>History (${a.history.length})</summary><ul>${items}</ul></details>`;
+  return `<details class="hist"${open ? " open" : ""}><summary>History (${n})</summary><ol class="timeline">${items}</ol></details>`;
+}
+
+function studentActions(a) {
+  const id = esc(a.application_id);
+  if (a.application_status === "Draft") return `<button class="cp-btn gold" type="button" data-editdraft="${id}">Edit draft</button>`;
+  if (a.application_status === "Offered") return `<button class="cp-btn" type="button" data-offer="accept" data-app="${id}">Accept offer</button>
+    <button class="cp-btn danger" type="button" data-offer="decline" data-app="${id}">Decline offer</button>`;
+  if (WITHDRAWABLE.includes(a.application_status)) return `<button class="cp-btn secondary" type="button" data-withdraw="${id}">Withdraw…</button>`;
+  return "";
 }
 
 async function loadApps() {
@@ -1353,14 +1307,17 @@ async function loadApps() {
     <article class="cp-card">
       <div class="card-head"><div><div class="cp-title"><b>${esc(opps[i].title)}</b></div>
         <div class="cp-muted company">${esc(opps[i].employer_name)}</div></div>
-      <div class="chips">${statusChip(a.application_status)}<span class="cp-chip">${esc(a.placement_status)}</span></div></div>
-      <details class="fit-details"><summary>Application details</summary>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      <p class="cp-muted" style="margin:6px 0 0">Next: ${esc(a.history?.at(-1)?.next_action || "")}</p>
+      ${studentActions(a) ? `<div class="actions">${studentActions(a)}</div>` : ""}
+      <details class="fit-details"><summary>Application details &amp; history</summary>
         <p class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.submitted_at)}</p>
         <p>${esc(a.statement || "No statement yet")}</p>
-        ${historyHtml(a)}
+        ${historyHtml(a, true)}
       </details>
-      ${a.application_status === "Draft" ? `<div class="actions"><button class="cp-btn gold" data-editdraft="${esc(a.application_id)}">Edit draft</button></div>` : ""}
-    </article>`).join("");
+    </article>`).join("") + `<p class="cp-muted">Accepting an offer is not a placement yet: the university confirms it.
+      You can withdraw while an application is Submitted, Under review or Shortlisted; an offer is declined instead.</p>
+      <span class="msg" id="appsMsg" aria-live="polite"></span>`;
 }
 
 // ================= Apply / draft dialog =================
@@ -1443,6 +1400,76 @@ $("applySubmit").onclick = async () => {
   }
 };
 
+// ================= Offer response & withdrawal (P04-05, P04-07) =================
+let withdrawCtx = null;
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.offer) {
+    try {
+      const a = await api(`/api/applications/${d.app}/offer-response`, json({ response: d.offer, actor_role: "student" }));
+      await refreshLists();
+      showTab("apps");
+      setMsg("appsMsg", d.offer === "accept"
+        ? `Offer accepted — placement is now “${a.placement_status}”. The university coordinator confirms it.`
+        : "Offer declined.", "success");
+    } catch (err) { setMsg("appsMsg", err.message, "error"); }
+  }
+  if (d.withdraw) {
+    const a = state.apps.find(x => x.application_id === d.withdraw);
+    withdrawCtx = d.withdraw;
+    $("withdrawContext").textContent = a
+      ? `${a.opportunity_title} (${a.application_status}). Withdrawing is final; the history is kept.` : d.withdraw;
+    $("withdrawReason").value = "";
+    setMsg("withdrawMsg", "");
+    $("withdrawDialog").showModal();
+  }
+});
+$("withdrawNo").onclick = () => { withdrawCtx = null; $("withdrawDialog").close(); };  // no request: record unchanged
+$("withdrawYes").onclick = async () => {
+  if (!withdrawCtx) return;
+  try {
+    const a = await api(`/api/applications/${withdrawCtx}/withdraw`, json({ actor_role: "student", reason: $("withdrawReason").value }));
+    $("withdrawDialog").close();
+    withdrawCtx = null;
+    await refreshLists();
+    showTab("apps");
+    setMsg("appsMsg", `${a.opportunity_title}: withdrawn. The earlier history is kept.`, "success");
+  } catch (err) { setMsg("withdrawMsg", err.message, "error"); }
+};
+
+// ================= Skill gap → P06 (P05-06) =================
+let gapCtx = null;
+function renderGap(g) {
+  gapCtx = g;
+  $("gapTitle").textContent = `Prepare: ${g.skill_name}`;
+  const act = g.activity;
+  $("gapBody").innerHTML = `
+    <p class="cp-muted">Sent to P06: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
+      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}) · ${esc(g.gap_id)}</p>
+    ${act ? `<div class="p06"><span class="cp-chip accent">P06 fixture</span>
+        <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
+        <div class="cp-muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
+        <p><b>Evidence needed:</b> ${esc(act.evidence_needed)}</p></div>`
+      : `<div class="p06"><span class="cp-chip warn">No P06 activity yet</span></div>`}
+    <p style="margin-top:10px"><b>Next action:</b> ${esc(g.next_action)}</p>
+    ${g.completed_at ? `<p class="msg success">Activity marked done. Your match is unchanged until a faculty reviewer reviews the evidence.</p>` : ""}`;
+  $("gapDone").hidden = !act || !!g.completed_at;
+}
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.gap) return;
+  try {
+    renderGap(await api(`/api/recommendations/${d.gap}/gaps/${d.skill}/handoff`, json({ actor_role: "student" })));
+    setMsg("gapMsg", "");
+    $("gapDialog").showModal();
+  } catch (err) { setMsg("recMsg", err.message, "error"); }
+});
+$("gapClose").onclick = () => { gapCtx = null; $("gapDialog").close(); };
+$("gapDone").onclick = async () => {
+  try { renderGap(await api(`/api/skill-gaps/${gapCtx.gap_id}/complete`, json({ actor_role: "student" }))); }
+  catch (err) { setMsg("gapMsg", err.message, "error"); }
+};
+
 // ================= Flag dialog (student → coordinator) =================
 let flagCtx = null;
 root.addEventListener("click", e => {
@@ -1485,9 +1512,11 @@ function employerCard(a) {
     "Submitted": `<button class="cp-btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
     "Under review": `<button class="cp-btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
                      <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
-    "Shortlisted": `<button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>
-                    <span class="cp-muted">Offer step arrives in Sprint 3 (P04-05); an offer can never follow a decline.</span>`,
-    "Declined": `<span class="cp-muted">Final for this sprint — no further transitions.</span>`,
+    "Shortlisted": `<button class="cp-btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+                    <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Offered": `<span class="cp-muted">Waiting for the student to accept or decline.</span>`,
+    "Offer accepted": `<span class="cp-muted">Accepted — the university coordinator confirms the placement.</span>`,
+    "Declined": `<span class="cp-muted">Final — an offer can never follow a decline.</span>`,
   }[a.application_status] || "";
   return `
   <article class="cp-card">
@@ -1497,7 +1526,7 @@ function employerCard(a) {
         <div class="cp-muted">${esc(a.application_id)} · ${esc(a.student_id)} → ${esc(a.opportunity_id)} v${esc(a.opportunity_version)}
           · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
       </div>
-      <div class="chips">${statusChip(a.application_status)}<span class="cp-chip">${esc(a.placement_status)}</span></div>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
     </div>
     <p class="cp-muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
     ${historyHtml(a)}
@@ -1506,12 +1535,13 @@ function employerCard(a) {
 }
 
 function renderEmployer() {
-  const groups = [["Submitted", "Awaiting first review"], ["Under review", "In review"],
-                  ["Shortlisted", "Shortlisted"], ["Declined", "Decided"]];
-  $("queue").innerHTML = groups.map(([status, label]) => {
-    const rows = state.allApps.filter(a => a.application_status === status);
+  const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
+                  [["Shortlisted"], "Shortlisted"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
+  $("queue").innerHTML = groups.map(([statuses, label]) => {
+    const rows = state.allApps.filter(a => statuses.includes(a.application_status));
     return `<h3 class="stack-title">${label} (${rows.length})</h3>` +
-      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">No ${status.toLowerCase()} applications.</div>`);
+      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">Nothing here.</div>`);
   }).join("");
 }
 
@@ -1560,6 +1590,90 @@ root.addEventListener("click", async e => {
     setMsg("employerMsg", err.message, "error");
   }
 });
+
+// ================= Role switching (simulated, no login) =================
+const ROLE_VIEWS = ["student", "employer", "coordinator", "faculty"];
+async function switchRole(role) {
+  state.role = role;
+  $("demoRole").value = role;
+  for (const r of ROLE_VIEWS) {
+    const view = $(`view-${r}`);
+    view.hidden = r !== role;
+    view.inert = r !== role;
+  }
+  if (role !== "student") root.querySelectorAll(".public-links [data-tab]").forEach(t => t.removeAttribute("aria-current"));
+  try {
+    if (role === "student") { await onStudentChange(); showTab("apps"); }
+    if (role === "employer" || role === "faculty") await loadAllApps();
+    if (role === "faculty") await loadEvidence();
+    if (role === "coordinator") { await loadPlacements(); await loadCorrections(); await loadRuns(); }
+  } catch (err) { setMsg(role === "coordinator" ? "crMsg" : "recMsg", err.message, "error"); }
+  root.scrollIntoView({ block: "start" });
+}
+$("demoRole").onchange = () => switchRole($("demoRole").value);
+
+// ================= Coordinator: placements and P07 handoff (P04-06) =================
+async function loadPlacements() {
+  const [apps, placements] = await Promise.all([api("/api/applications"), api("/api/placements")]);
+  const awaiting = apps.filter(a => a.application_status === "Offer accepted" && a.placement_status !== "Confirmed");
+  $("awaiting").innerHTML = awaiting.length ? awaiting.map(a => `
+    <article class="cp-card">
+      <div class="card-head"><div>
+        <div class="cp-title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div><div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      ${historyHtml(a)}
+      <div class="actions"><button class="cp-btn" type="button" data-confirm="${esc(a.application_id)}">Confirm placement &amp; hand to P07</button></div>
+    </article>`).join("") : `<div class="empty">No accepted offers waiting. An employer makes an offer, then the student accepts it.</div>`;
+  $("placements").innerHTML = placements.length ? `<div class="cp-card" style="overflow-x:auto"><table>
+    <tr><th>Placement</th><th>Student</th><th>Opportunity</th><th>Application</th><th>Confirmed</th><th>P07 handoff</th></tr>
+    ${placements.map(p => `<tr>
+      <td><b>${esc(p.placement_id)}</b></td>
+      <td>${esc(p.student_name)}<div class="cp-muted">${esc(p.student_id)} · profile v${esc(p.profile_version)}</div></td>
+      <td>${esc(p.opportunity_title)}<div class="cp-muted">${esc(p.opportunity_id)} v${esc(p.opportunity_version)}</div></td>
+      <td>${esc(p.application_id)}</td>
+      <td class="cp-muted">${esc(p.confirmed_by)}<div>${esc(p.confirmed_at)}</div></td>
+      <td>${p.p07_handoff ? `<span class="cp-chip ok">${esc(p.p07_handoff.handoff_id)} · ${esc(p.p07_handoff.receipt_status)}</span>
+        <details class="hist"><summary>Payload sent to P07</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(JSON.stringify(p.p07_handoff.payload, null, 2))}</pre></details>` : "—"}</td>
+    </tr>`).join("")}</table></div>
+    <p class="cp-muted">P07 is not live yet: handoffs go to a labelled mock outbox. Supervisor contact goes to P07 only, never to the student.</p>`
+    : `<div class="empty">No confirmed placements yet.</div>`;
+}
+root.addEventListener("click", async e => {
+  const id = e.target.dataset?.confirm;
+  if (!id) return;
+  try {
+    const p = await api(`/api/applications/${id}/confirm-placement`,
+      json({ actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }));
+    setMsg("plMsg", p.already_confirmed
+      ? `${id} was already confirmed as ${p.placement_id}; no second placement or handoff was created.`
+      : `Confirmed ${p.placement_id} for ${id} and handed it to P07 (${p.p07_handoff.handoff_id}).`, "success");
+    await loadPlacements();
+  } catch (err) { setMsg("plMsg", err.message, "error"); }
+});
+
+// ================= Faculty: skill evidence review (P05-07) =================
+async function loadEvidence() {
+  const id = $("evStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  const versions = await api(`/api/students/${id}/profile-versions`);
+  $("evVersions").innerHTML = `<h3 style="margin-top:14px">Profile versions</h3><div style="overflow-x:auto"><table>
+    <tr><th>Version</th><th>Source</th><th>Created</th><th>Reviewed skills</th><th>Availability</th></tr>
+    ${versions.map(v => `<tr><td>v${esc(v.profile_version)}</td><td>${esc(v.source)}</td><td class="cp-muted">${esc(v.created_at || "—")}</td>
+      <td>${(v.profile.skills || []).filter(s => s.evidence_status === "reviewed").map(s => `<span class="cp-chip ok">✓ ${esc(skillName(s.skill_id))}</span>`).join(" ") || "—"}</td>
+      <td class="cp-muted">${esc(v.profile.availability_start || "?")} → ${esc(v.profile.availability_end || "?")}</td></tr>`).join("")}
+  </table></div>`;
+}
+$("evStudent").onchange = () => { setMsg("evMsg", ""); loadEvidence(); };
+$("evReview").onclick = async () => {
+  const id = $("evStudent").value;
+  try {
+    const r = await api(`/api/students/${id}/profile-updates`, json({ kind: "skill_evidence", actor_role: "faculty",
+      actor_name: "FAC-01 (simulated faculty reviewer)", skill_id: $("evSkill").value, evidence_id: $("evId").value }));
+    setMsg("evMsg", `${skillName($("evSkill").value)} marked reviewed → profile v${r.new_profile_version}; matching reran (${r.recommendations.length} results). Earlier runs keep their versions.`, "success");
+    await loadEvidence();
+  } catch (err) { setMsg("evMsg", err.message, "error"); }
+};
 
 // ================= Coordinator view =================
 async function loadCorrections() {
@@ -1699,7 +1813,7 @@ function renderFaculty() {
         <td>${esc(a.student_name)}<div class="cp-muted">${esc(a.student_id)}</div></td>
         <td>${esc(a.opportunity_title)}<div class="cp-muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
         <td>${statusChip(a.application_status)}</td>
-        <td><span class="cp-chip">${esc(a.placement_status)}</span></td>
+        <td>${placementChip(a.placement_status)}</td>
         <td class="cp-muted">${last ? `${esc(last.action)} by ${esc(last.actor_name)} at ${esc(last.created_at)}` : "—"}</td>
         <td class="cp-muted">${esc(a.submitted_at)}</td></tr>`;
     }).join("")}
@@ -1709,7 +1823,9 @@ function renderFaculty() {
 // ================= Wiring =================
 async function refreshLists() {
   await loadApps();
-  await renderRecs(await api(`/api/students/${studentId()}/recommendations`));
+  let recs = await api(`/api/students/${studentId()}/recommendations`);
+  if (!recs.length) recs = await api(`/api/students/${studentId()}/recommendations`, { method: "POST" });
+  await renderRecs(recs);
   await searchOpps();
   renderSaved();
   renderGuide();
@@ -1724,7 +1840,10 @@ async function onStudentChange() {
 
 
 for (const button of root.querySelectorAll("[data-tab]")) {
-  button.onclick = () => showTab(button.dataset.tab);
+  button.onclick = async () => {
+    if (state.role !== "student") await switchRole("student");
+    showTab(button.dataset.tab);
+  };
 }
 root.addEventListener("click", e => {
   const d = e.target.dataset || {};
@@ -1933,13 +2052,15 @@ window.addEventListener("resize",()=>{
 
 (async () => {
   state.skills = await api("/api/skills");
+  open = [...(await api("/api/opportunities")), ...exampleRoles];
   makeSearchOptions();
   renderRules(await api("/api/rules"));
   state.students = await api("/api/students");
   const options = state.students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
   $("student").innerHTML = options;
   $("runsStudent").innerHTML = options;
-  matchRun(students[0]);
+  $("evStudent").innerHTML = options;
+  $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
   await onStudentChange();
   showTab("recs");
 })().catch(err => setMsg("recMsg", err.message, "error"));

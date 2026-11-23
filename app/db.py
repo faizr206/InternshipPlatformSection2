@@ -9,6 +9,12 @@ Sprint 2 additions:
 - profile_revisions: new profile versions created by accepted corrections. The P01
   fixture table is never overwritten (P05 does not silently edit P01/P03 records);
   a corrected profile is stored as a new version here and read as the effective one.
+
+Sprint 3 additions (all new tables, so Sprint 1-2 databases upgrade in place):
+- placements: one per confirmed accepted offer (P04-06), PL-0001 style IDs.
+- p07_handoffs: the mock outbox to P07; one handoff per placement, never duplicated.
+- skill_gap_handoffs: a named skill gap passed to P06 with its source versions (P05-06).
+- profile_revisions also stores profile updates (availability, reviewed evidence) (P05-07).
 """
 import json
 import logging
@@ -93,6 +99,36 @@ CREATE TABLE IF NOT EXISTS profile_revisions (
     created_at TEXT NOT NULL,
     PRIMARY KEY (student_id, profile_version)
 );
+CREATE TABLE IF NOT EXISTS placements (
+    placement_id TEXT PRIMARY KEY,
+    application_id TEXT NOT NULL UNIQUE,
+    student_id TEXT NOT NULL,
+    opportunity_id TEXT NOT NULL,
+    opportunity_version INTEGER NOT NULL,
+    profile_version INTEGER NOT NULL,
+    confirmed_by TEXT NOT NULL,
+    confirmed_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_handoffs (
+    handoff_id TEXT PRIMARY KEY,
+    placement_id TEXT NOT NULL UNIQUE,
+    payload TEXT NOT NULL,
+    sent_at TEXT NOT NULL,
+    receipt_status TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS skill_gap_handoffs (
+    gap_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    opportunity_id TEXT NOT NULL,
+    opportunity_version INTEGER NOT NULL,
+    recommendation_id TEXT NOT NULL,
+    profile_version INTEGER NOT NULL,
+    activity_id TEXT,
+    created_at TEXT NOT NULL,
+    completed_at TEXT,
+    UNIQUE (recommendation_id, skill_id)
+);
 """
 
 
@@ -167,6 +203,11 @@ def _load(conn, filename, table, id_field, version_field) -> None:
             f"INSERT OR REPLACE INTO {table} VALUES (?, ?, ?)",
             (record[id_field], record[version_field], json.dumps(record)),
         )
+
+
+def p06_activities() -> dict[str, dict]:
+    """P06 preparation activities by skill (labelled fixture until the live P06 module exists)."""
+    return {a["skill_id"]: a for a in json.loads((FIXTURES / "p06_activities.json").read_text())}
 
 
 def skill_names() -> dict[str, str]:
