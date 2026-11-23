@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS recommendations (
     created_at TEXT NOT NULL,
     eligibility TEXT NOT NULL CHECK (eligibility IN ('eligible', 'unknown', 'ineligible')),
     ai_method_version TEXT,
-    ai_matches TEXT
+    ai_matches TEXT,
+    ai_insights TEXT
 );
 CREATE TABLE IF NOT EXISTS applications (
     application_id TEXT PRIMARY KEY,
@@ -148,6 +149,9 @@ def _migrate_sprint2_columns(conn: sqlite3.Connection) -> None:
     if "ai_method_version" not in recommendation_columns:
         conn.execute("ALTER TABLE recommendations ADD COLUMN ai_method_version TEXT")
         conn.execute("ALTER TABLE recommendations ADD COLUMN ai_matches TEXT")
+        recommendation_columns.add("ai_matches")
+    if "ai_insights" not in recommendation_columns:
+        conn.execute("ALTER TABLE recommendations ADD COLUMN ai_insights TEXT")
     application_columns = {row["name"] for row in conn.execute("PRAGMA table_info(applications)")}
     if "statement" not in application_columns:
         conn.execute("ALTER TABLE applications ADD COLUMN statement TEXT")

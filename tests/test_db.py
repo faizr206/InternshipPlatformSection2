@@ -59,6 +59,7 @@ def test_sprint2_columns_migrate_on_sprint1_databases(tmp_path, monkeypatch):
         recs = client.get("/api/students/COOP-B001/recommendations").json()
         assert [r["recommendation_id"] for r in recs] == ["REC-old"]
         assert recs[0]["ai_matches"] == [] and recs[0]["ai_method_version"] is None
+        assert recs[0]["ai_insights"] is None  # older runs have no stored insights
         assert recs[0]["method_version"] == "rules-v2" and recs[0]["reasons"] == ["Saved reason"]
 
         # The legacy application survives without a statement and gains an empty history

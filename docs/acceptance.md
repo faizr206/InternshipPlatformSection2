@@ -9,7 +9,7 @@ AI term-matching feature runs alongside the unchanged rules baseline, and a coor
 inspect a flagged recommendation, record a correction and rematch against a new input
 version with the original recommendation still traceable.
 
-Automated evidence: `uv run pytest` gives **58 passed** (35 Sprint 1 tests kept green, 23 added).
+Automated evidence: `uv run pytest` gives **66 passed** (35 Sprint 1 tests kept green, 31 added).
 Live smoke check of the full thread (draft → submit → decline → flag → accept → rematch) at
 `127.0.0.1:8000`.
 
@@ -23,6 +23,7 @@ Live smoke check of the full thread (draft → submit → decline → flag → a
 | | AC2 Cannot override a mandatory conflict or invent a qualification; labelled simulated; rules baseline still usable | Met | AI matches only map terms to held skills; eligibility/score/gaps byte-identical to the rules engine; "AI assistance — simulated, deterministic" box; `test_ai_never_changes_the_rules_result`, `test_ai_finds_nothing_when_the_student_has_no_relevant_skills` |
 | **P05-05** Challenge and correct inputs | AC1 Student flags a result; coordinator sees reason, affected field and source version; records a correction request for the owning module | Met | `test_flag_correction_accept_and_rematch_stays_traceable`, `test_p03_and_skill_corrections_are_recorded_only`; Coordinator view |
 | | AC2 Accepted correction uses a new input version and can be rematched; original recommendation stays traceable; P01/P03 records never silently overwritten | Met | correction acceptance → `profile_revisions` v+1 (fixture table untouched); rematch stores a new run; `recommendation-runs` endpoint lists both; guards in `test_correction_flow_guards` |
+| **P05-04 extension** AI recommendation insights | Relevance %, summary, next steps, similar listings and a statement starter, stored as `ai-insights-v1` beside the rules result; never change eligibility, score, gaps, unknowns or the rules ranking; the statement starter cites only skills on the profile and saves nothing | Met | tests/test_ai_insights.py (8 tests: `test_insights_never_change_the_rules_result_or_order`, `test_statement_draft_only_cites_skills_on_the_profile`, …); AI assistant panel, "AI relevance" view-only sort, "Draft with AI" in the apply dialog |
 
 ### Shared completion checks (Sprint 2)
 - **Simulated, labelled in the UI:** role switching (Student / Employer reviewer / Coordinator /

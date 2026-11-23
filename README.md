@@ -60,7 +60,7 @@ uv run pytest
 | `app/fixtures/*.json` | Synthetic profiles (stand-in for P01), listings incl. descriptions (stand-in for P03), the shared skill vocabulary and the P05 alias map |
 | `app/db.py` | SQLite schema + additive migrations; loads fixtures when the DB is empty/started |
 | `app/matching.py` | Rules baseline engine (`rules-v2`) |
-| `app/ai.py` | Bounded AI skill-term matching (`ai-termmatch-v1`) |
+| `app/ai.py` | Bounded AI: skill-term matching (`ai-termmatch-v1`) and recommendation insights (`ai-insights-v1`) |
 | `app/rules.json` | Editable rules: mandatory conditions and preference weights |
 | `docs/data-dictionary.md` | Records, statuses, transitions and API contract (v2) |
 | `docs/acceptance.md` | Sprint 1 + 2 acceptance results per story |
@@ -88,6 +88,19 @@ uv run pytest
 - It **never** changes eligibility, score, gaps or unknowns, and never invents qualifications —
   it can only map terms to skills already on the profile. Labelled "simulated AI" in the UI;
   the rules baseline stays usable on its own.
+
+## AI recommendation insights (ai-insights-v1)
+Stored with each run in `recommendations.ai_insights`, under the same bounds (offline,
+deterministic, labelled, never changes the rules result or ranking):
+- **AI relevance (0–100%)** — TF-IDF cosine similarity between the profile text (interests,
+  skills and their aliases) and the listing text, with the top contributing terms. The UI can
+  order cards by it as a *view-only* option; the stored rules ranking is unchanged.
+- **Summary** — a plain-language restatement of the rules result (a mandatory conflict is never softened).
+- **Next steps** — missing skills ranked by the points the rules would add (and how many other
+  open listings require them); self-declared required skills get a "get it reviewed" step.
+- **Similar open listings** — Jaccard similarity on skills + sector.
+- **Draft with AI** — `POST /api/ai/statement-draft` returns a starter statement for the apply
+  dialog. It cites only skills already on the profile and saves or submits nothing.
 
 ## Application lifecycle (P04)
 `Draft → Submitted → Under review → Shortlisted | Declined`

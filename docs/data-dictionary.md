@@ -64,6 +64,7 @@ Scrums agreement; this local map is the labelled fallback.
 | reasons / gaps / unknowns | Explanation lists tied to named fields and skills |
 | ai_method_version | Bounded AI method that ran alongside the rules, e.g. `ai-termmatch-v1` (null for rows saved before Sprint 2) |
 | ai_matches | JSON list of `{term, field, skill_id, skill_name, evidence_status}` — terms in the listing text equivalent to skills the student already holds. **Never** changes eligibility, score, gaps or unknowns, and never invents skills (P05-04 AC2). |
+| ai_insights | JSON `{version: "ai-insights-v1", relevance (0–100), top_terms, summary, next_steps[{kind, skill_id, skill_name, score_gain, unlocks, tip}], similar[{opportunity_id, title, employer_name, similarity}]}`; null for runs stored before Sprint 2's insights. Assistance only — never changes the rules result or ranking. |
 | created_at | UTC timestamp |
 
 Earlier runs stay stored and traceable: `GET /api/students/{id}/recommendation-runs` lists

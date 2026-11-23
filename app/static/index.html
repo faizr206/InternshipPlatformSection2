@@ -4,137 +4,220 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Coop Platform · P04 / P05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --navy: #0C2840; --blue: #144673; --gold: #D9BA82; --cream: #F2D9BB; --paper: #F2F2F2;
-    --surface: #ffffff; --border: #d9dee5; --text: #1d2a38; --muted: #5d6b7a;
-    --blue-soft: #e7eef6;
-    --ok: #1e6b45; --ok-soft: #e2f3ea; --warn: #7a5200; --warn-soft: #fbeed3;
-    --bad: #b02318; --bad-soft: #fde7e4;
+    --navy: #0C2840; --navy-2: #12355a; --blue: #144673; --gold: #D9BA82; --gold-2: #c9a564; --cream: #F7EBDB;
+    --paper: #F4F6F9; --surface: #ffffff; --border: #e3e8ef; --border-2: #d2dae4;
+    --text: #172434; --muted: #627285; --blue-soft: #eaf1f8;
+    --ok: #17734a; --ok-soft: #e3f4ea; --warn: #8a5a00; --warn-soft: #fdf1d8;
+    --bad: #b42318; --bad-soft: #fde8e6;
+    --ai: #5b4bd6; --ai-2: #8a5cf6; --ai-soft: #f1efff; --ai-border: #d9d3ff;
+    --radius: 14px; --shadow: 0 1px 2px rgba(16, 32, 56, .05), 0 4px 14px rgba(16, 32, 56, .06);
+    --shadow-lg: 0 2px 4px rgba(16, 32, 56, .06), 0 12px 32px rgba(16, 32, 56, .12);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--paper); color: var(--text); }
+  [hidden] { display: none !important; }
+  body { margin: 0; font: 14.5px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--paper); color: var(--text); -webkit-font-smoothing: antialiased; }
+  code { font-size: 12.5px; background: var(--blue-soft); padding: 1px 5px; border-radius: 4px; }
 
-  .shell { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
-  @media (max-width: 920px) { .shell { grid-template-columns: 1fr; } .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; } .nav { display: flex; flex-wrap: wrap; flex: 1; padding: 6px; } .nav button { width: auto; border-left: 0; border-bottom: 3px solid transparent; } .nav button[aria-current="true"] { border-left: 0; border-bottom-color: var(--gold); } .side-note { display: none; } }
+  .shell { display: grid; grid-template-columns: 264px 1fr; min-height: 100vh; }
+  @media (max-width: 920px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static !important; height: auto !important; flex-direction: row; flex-wrap: wrap; align-items: center; }
+    .nav { display: flex; flex-wrap: wrap; flex: 1; padding: 6px; gap: 4px; }
+    .nav button { width: auto; } .nav small, .side-note { display: none; }
+  }
 
   /* ---------- Sidebar (role switcher) ---------- */
-  .sidebar { background: var(--navy); color: #d7e1ec; display: flex; flex-direction: column; }
-  .brand { padding: 18px 18px 14px; border-bottom: 1px solid rgba(217, 186, 130, .35); }
-  .brand h1 { color: #fff; font-size: 17px; margin: 0 0 2px; }
-  .brand .sub { color: var(--gold); font-size: 12px; }
-  .nav { padding: 10px 0; flex: 1; }
-  .nav button { display: block; width: 100%; text-align: left; padding: 11px 16px; background: none;
-    border: 0; border-left: 3px solid transparent; color: #c4d1e0; font: inherit; cursor: pointer; }
-  .nav button:hover { background: rgba(242, 217, 187, .09); color: #fff; }
-  .nav button[aria-current="true"] { background: var(--blue); border-left-color: var(--gold); color: #fff; font-weight: 600; }
+  .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0a2136 100%); color: #d7e1ec;
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+  .brand { padding: 22px 20px 18px; display: flex; gap: 12px; align-items: center; }
+  .logo { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, var(--gold), #f0d8a8);
+    color: var(--navy); display: grid; place-items: center; font-weight: 800; font-size: 15px; flex: none; }
+  .brand h1 { color: #fff; font-size: 16px; margin: 0; letter-spacing: -.01em; }
+  .brand .sub { color: var(--gold); font-size: 11.5px; }
+  .nav-label { padding: 6px 22px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #7f96ad; }
+  .nav { padding: 4px 12px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .nav button { display: block; width: 100%; text-align: left; padding: 10px 12px; background: none;
+    border: 0; border-radius: 10px; color: #c4d1e0; font: inherit; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; }
+  .nav button:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+  .nav button[aria-current="true"] { background: rgba(217, 186, 130, .16); color: #fff; box-shadow: inset 0 0 0 1px rgba(217, 186, 130, .35); }
   .nav .ico { margin-right: 9px; }
-  .nav small { display: block; color: #9db1c6; font-weight: 400; font-size: 11.5px; margin-left: 27px; }
-  .side-note { padding: 14px 16px; font-size: 12px; color: #9db1c6; border-top: 1px solid rgba(217, 186, 130, .25); }
+  .nav small { display: block; color: #8fa5bb; font-weight: 400; font-size: 11.5px; margin: 2px 0 0 27px; }
+  .side-note { margin: 12px; padding: 12px 14px; font-size: 11.5px; color: #9db1c6; border-radius: 10px;
+    background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08); }
 
   /* ---------- Top bar & banner ---------- */
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px;
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .topbar h2 { margin: 0; font-size: 18px; color: var(--navy); }
-  .role-chip { background: var(--gold); color: var(--navy); font-size: 11.5px; font-weight: 700;
-    padding: 3px 11px; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
+  .main-col { min-width: 0; }
+  .topbar { position: sticky; top: 0; z-index: 5; background: rgba(255, 255, 255, .88); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .topbar h2 { margin: 0; font-size: 19px; color: var(--navy); letter-spacing: -.01em; }
+  .role-chip { background: var(--cream); color: var(--navy); font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
   .topbar label { margin-left: auto; font-size: 13px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
-  .topbar select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); }
-  .banner { background: var(--cream); color: var(--navy); padding: 8px 22px; font-size: 13px; border-bottom: 1px solid #e6cbA4; }
-  .banner b { font-weight: 700; }
+  select, input[type="text"], input[type="date"], input:not([type]), textarea {
+    font: inherit; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--border-2); background: #fff; color: var(--text); }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(20, 70, 115, .14); }
+  .banner { margin: 18px 28px 0; background: var(--surface); color: var(--muted); padding: 9px 14px; font-size: 12.5px;
+    border: 1px solid var(--border); border-radius: 10px; display: flex; gap: 8px; align-items: baseline; }
+  .banner b { color: var(--navy); white-space: nowrap; }
 
-  .content { padding: 20px 22px 40px; }
+  .content { padding: 20px 28px 48px; max-width: 1360px; }
   .view[hidden] { display: none; }
+  .view-intro { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; max-width: 860px; }
 
   /* ---------- Student view ---------- */
-  .student-grid { display: grid; grid-template-columns: 305px 1fr; gap: 20px; }
-  @media (max-width: 1080px) { .student-grid { grid-template-columns: 1fr; } }
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-  h2 { font-size: 16px; margin: 0 0 4px; }
-  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
+  .student-grid { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 1080px) { .student-grid { grid-template-columns: 1fr; } #profile { position: static; } }
+  .student-grid > * { min-width: 0; }
+  @media (max-width: 640px) { .chip { white-space: normal; } .content { padding: 16px; } .banner { margin: 12px 16px 0; } .topbar { padding: 12px 16px; } }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  #profile { position: sticky; top: 84px; }
+  #profile .chip { white-space: normal; }
+  .profile-head { display: flex; gap: 12px; align-items: center; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--navy));
+    color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; }
+  h2 { font-size: 16px; margin: 0 0 2px; letter-spacing: -.01em; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 18px 0 8px; font-weight: 600; }
   .muted { color: var(--muted); font-size: 13px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px;
-    font-size: 12.5px; background: var(--cream); color: var(--navy); white-space: nowrap; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; background: #eef1f5; color: #34465a; white-space: nowrap; }
   .chip.ok { background: var(--ok-soft); color: var(--ok); }
   .chip.warn { background: var(--warn-soft); color: var(--warn); }
   .chip.bad { background: var(--bad-soft); color: var(--bad); }
   .chip.accent { background: var(--blue-soft); color: var(--blue); }
-  .chip.s-draft { background: var(--gold); color: var(--navy); font-weight: 600; }
+  .chip.ai { background: var(--ai-soft); color: var(--ai); }
+  .chip.s-draft { background: var(--cream); color: #7a5410; font-weight: 600; }
   .chip.s-submitted { background: var(--blue-soft); color: var(--blue); }
   .chip.s-review { background: var(--warn-soft); color: var(--warn); }
   .chip.s-shortlisted { background: var(--ok-soft); color: var(--ok); }
   .chip.s-declined { background: var(--bad-soft); color: var(--bad); }
 
-  .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
-  .tabs button { font: inherit; background: none; border: 0; padding: 8px 14px; cursor: pointer;
-    color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  .tabs button[aria-selected="true"] { color: var(--blue); border-color: var(--gold); font-weight: 600; }
+  .tabs { max-width: 100%; overflow-x: auto; display: inline-flex; gap: 2px; margin-bottom: 16px; padding: 4px; background: #e8edf3; border-radius: 12px; }
+  .tabs button { white-space: nowrap; font: inherit; font-weight: 500; background: none; border: 0; padding: 7px 16px; cursor: pointer;
+    color: var(--muted); border-radius: 9px; transition: background .15s, color .15s; }
+  .tabs button:hover { color: var(--navy); }
+  .tabs button[aria-selected="true"] { background: #fff; color: var(--navy); font-weight: 600; box-shadow: 0 1px 3px rgba(16, 32, 56, .12); }
 
-  .btn { font: inherit; border: 1px solid var(--blue); background: var(--blue); color: #fff;
-    padding: 6px 14px; border-radius: 6px; cursor: pointer; }
-  .btn.gold { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 600; }
-  .btn.secondary { background: var(--surface); color: var(--blue); }
-  .btn.danger { background: var(--surface); color: var(--bad); border-color: var(--bad); }
-  .btn.small { padding: 3px 10px; font-size: 13px; }
+  .btn { font: inherit; font-weight: 600; font-size: 13.5px; border: 1px solid var(--blue); background: var(--blue); color: #fff;
+    padding: 7px 15px; border-radius: 9px; cursor: pointer; transition: transform .08s, box-shadow .15s, background .15s;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--navy-2); box-shadow: 0 2px 8px rgba(20, 70, 115, .25); }
+  .btn:active { transform: translateY(1px); }
+  .btn.gold { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .btn.gold:hover { background: var(--gold-2); }
+  .btn.secondary { background: var(--surface); color: var(--blue); border-color: var(--border-2); }
+  .btn.secondary:hover { background: var(--blue-soft); box-shadow: none; }
+  .btn.danger { background: var(--surface); color: var(--bad); border-color: #f1b7b1; }
+  .btn.danger:hover { background: var(--bad-soft); box-shadow: none; }
+  .btn.ai { background: linear-gradient(135deg, var(--ai), var(--ai-2)); border-color: transparent; }
+  .btn.ai:hover { box-shadow: 0 3px 12px rgba(91, 75, 214, .35); }
+  .btn.small { padding: 4px 11px; font-size: 12.5px; }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .toolbar input, .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .seg { display: inline-flex; border: 1px solid var(--border-2); border-radius: 9px; overflow: hidden; background: #fff; }
+  .seg button { font: inherit; font-size: 12.5px; border: 0; background: none; padding: 6px 11px; cursor: pointer; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
 
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
-  .card.conflict { border-left: 4px solid var(--bad); }
-  .card.unknown { border-left: 4px solid var(--gold); }
-  .card.highlight { outline: 3px solid var(--gold); }
-  .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-  .card-head .title { font-weight: 600; font-size: 15.5px; }
-  .card .desc { margin: 6px 0 0; }
-  .score { min-width: 56px; text-align: center; border-radius: 8px; padding: 4px 8px;
-    background: var(--cream); color: var(--navy); font-weight: 700; font-size: 18px; line-height: 1.1; }
-  .score small { display: block; font-size: 10px; font-weight: 500; text-transform: uppercase; }
-  .why { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-top: 10px; }
-  @media (max-width: 640px) { .why { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px;
+    margin-bottom: 14px; box-shadow: var(--shadow); transition: box-shadow .2s; }
+  .card:hover { box-shadow: var(--shadow-lg); }
+  .card.conflict { background: linear-gradient(0deg, #fffafa, #fff); border-color: #f3cdc8; }
+  .card.unknown { border-color: #f0dfb8; }
+  .card.highlight { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .card-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+  .card-head .title { font-weight: 700; font-size: 16px; letter-spacing: -.01em; color: var(--navy); }
+  .card .desc { margin: 8px 0 0; }
+  .rank { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--navy);
+    color: #fff; font-size: 11.5px; font-weight: 700; margin-right: 8px; vertical-align: 2px; }
+  .gauges { display: flex; gap: 10px; flex: none; }
+  .score { min-width: 64px; text-align: center; border-radius: 12px; padding: 8px 10px;
+    background: var(--cream); color: var(--navy); font-weight: 800; font-size: 22px; line-height: 1.05; }
+  .score small { display: block; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 3px; }
+  .ring { --v: 0; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; position: relative;
+    background: conic-gradient(var(--ai) calc(var(--v) * 1%), #e9e6fb 0); }
+  .ring::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
+  .ring span { position: relative; font-weight: 800; font-size: 15px; color: var(--ai); line-height: 1; text-align: center; }
+  .ring small { display: block; font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
+  .skills-row { margin-top: 12px; display: grid; gap: 6px; }
+  .skills-row .lbl { font-size: 12px; color: var(--muted); min-width: 70px; }
+  .why { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  @media (max-width: 640px) { .why { grid-template-columns: 1fr; } .card-head { flex-direction: column; } }
   .why ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
-  .why h4 { margin: 0 0 4px; font-size: 13px; }
+  .why li { margin: 2px 0; }
+  .why h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
 
-  .ai { border: 1px dashed var(--gold); background: #fdf6ea; border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 13px; }
-  .ai h4 { margin: 0 0 4px; color: var(--warn); font-size: 13px; }
-  .ai ul { margin: 4px 0; padding-left: 18px; }
-  .ai p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+  /* ---------- AI panel ---------- */
+  .ai { margin-top: 14px; border-radius: 12px; padding: 1px; background: linear-gradient(135deg, var(--ai-border), #f3dfc0); }
+  .ai-inner { background: linear-gradient(180deg, #faf9ff, #fff); border-radius: 11px; padding: 14px 16px; }
+  .ai-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .ai-head h4 { margin: 0; font-size: 13.5px; color: var(--ai); display: flex; align-items: center; gap: 6px; }
+  .ai-head .ver { margin-left: auto; font-size: 11px; color: var(--muted); }
+  .ai-summary { margin: 8px 0 0; font-size: 14px; color: var(--text); }
+  .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; margin-top: 12px; }
+  @media (max-width: 760px) { .ai-grid { grid-template-columns: 1fr; } }
+  .ai h5 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #6d63b8; }
+  .ai ul { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+  .ai li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; }
+  .gain { flex: none; min-width: 30px; text-align: center; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 6px;
+    background: var(--ok-soft); color: var(--ok); }
+  .gain.zero { background: var(--blue-soft); color: var(--blue); }
+  .ai .fine { margin: 10px 0 0; color: var(--muted); font-size: 11.5px; }
+  .sim { font: inherit; font-size: 12.5px; border: 1px solid var(--ai-border); background: #fff; color: var(--ai);
+    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .sim:hover { background: var(--ai-soft); }
 
-  .meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
-  .actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
-  .empty { padding: 24px; text-align: center; color: var(--muted); background: var(--surface);
-    border: 1px dashed var(--border); border-radius: 10px; }
-  .msg { font-size: 13.5px; }
+  /* ---------- Summary tiles ---------- */
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .tile .n { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.1; }
+  .tile .l { font-size: 12px; color: var(--muted); }
+  .tile.ai-tile { background: linear-gradient(135deg, #f4f2ff, #fff); border-color: var(--ai-border); }
+  .tile.ai-tile .n { color: var(--ai); font-size: 15px; line-height: 1.3; padding: 4px 0 2px; }
+
+  .meta { margin-top: 12px; font-size: 11.5px; color: #8593a3; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .actions label { display: flex; flex-direction: column; gap: 4px; }
+  .actions label input { width: 100%; }
+  .actions { margin-top: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  .empty { padding: 32px; text-align: center; color: var(--muted); background: var(--surface);
+    border: 1.5px dashed var(--border-2); border-radius: var(--radius); }
+  .msg { font-size: 13px; }
   .msg.error { color: var(--bad); }
   .msg.success { color: var(--ok); }
 
-  details.hist { margin-top: 6px; font-size: 13px; }
-  details.hist summary { cursor: pointer; color: var(--blue); }
-  details.hist ul { margin: 6px 0 0; padding-left: 18px; }
+  details.hist { margin-top: 8px; font-size: 13px; }
+  details.hist summary { cursor: pointer; color: var(--blue); font-weight: 500; }
+  details.hist ul { margin: 8px 0 0; padding-left: 18px; }
   details.hist .reason { color: var(--bad); }
 
-  .compare-pick { font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
-  .compare th { width: 140px; }
-  details.rules { font-size: 13px; margin-bottom: 12px; }
-  details.rules summary { cursor: pointer; color: var(--blue); }
+  .compare-pick { font-size: 12.5px; display: inline-flex; gap: 6px; align-items: center; color: var(--muted); cursor: pointer; }
+  .compare th { width: 150px; }
+  details.rules { font-size: 13px; margin-bottom: 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 14px; }
+  details.rules summary { cursor: pointer; color: var(--blue); font-weight: 600; }
 
   .linkish { font: inherit; font-size: 13px; background: none; border: 0; color: var(--blue); text-decoration: underline; cursor: pointer; padding: 0; }
+  .stack-title { margin: 26px 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; }
 
-  .stack-title { margin: 22px 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--navy); }
-
-  dialog { border: 0; border-radius: 12px; padding: 20px; max-width: 460px; box-shadow: 0 10px 40px rgba(12, 40, 64, .3); }
-  dialog::backdrop { background: rgba(12, 40, 64, .45); }
-  dialog h2 { margin-bottom: 6px; }
-  dialog textarea, dialog select, dialog input { width: 100%; font: inherit; padding: 8px 10px;
-    border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; }
-  dialog label { display: block; font-size: 13.5px; margin-top: 12px; }
+  dialog { border: 0; border-radius: 16px; padding: 24px; width: min(520px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(12, 40, 64, .35); }
+  dialog::backdrop { background: rgba(12, 40, 64, .5); backdrop-filter: blur(3px); }
+  dialog h2 { margin-bottom: 6px; font-size: 18px; }
+  dialog textarea, dialog select, dialog input { width: 100%; margin-top: 6px; }
+  dialog label { display: block; font-size: 13.5px; font-weight: 500; margin-top: 14px; }
+  .ai-draft-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
 
   :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
   .sidebar :focus-visible { outline-color: var(--gold); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
@@ -142,9 +225,11 @@
 
   <aside class="sidebar">
     <div class="brand">
-      <h1>Coop Platform</h1>
-      <div class="sub">P04 Applications · P05 Matching · Sprint 2</div>
+      <div class="logo" aria-hidden="true">IPP</div>
+      <div><h1>Coop Platform</h1>
+      <div class="sub">P04 Applications · P05 Matching · Sprint 2</div></div>
     </div>
+    <div class="nav-label">Simulated roles</div>
     <nav class="nav" aria-label="Simulated roles">
       <button type="button" data-role="student" aria-current="true"><span class="ico">🎓</span>Student
         <small>Recommendations · catalogue · drafts &amp; applications</small></button>
@@ -158,17 +243,17 @@
     <div class="side-note">Simulated role switching — there is no login. Real access control is a deferred task and is recorded as a gap.</div>
   </aside>
 
-  <div>
+  <div class="main-col">
     <header class="topbar">
       <h2 id="viewTitle">Student view</h2>
       <span class="role-chip" id="roleChip">Student · simulated</span>
-      <label id="studentPicker" hidden>Viewing as student (simulated)
+      <label id="studentPicker">Viewing as student (simulated)
         <select id="student" aria-label="Student"></select>
       </label>
     </header>
-    <div class="banner"><b>Demo only:</b> synthetic data · simulated role switching (no login) ·
-      AI term-matching is bounded, deterministic and labelled — it never overrides the rules baseline ·
-      an application is not a placement.</div>
+    <div class="banner"><b>Demo only</b><span>Synthetic data · simulated role switching (no login) ·
+      AI assistance is bounded, deterministic and labelled — it never overrides the rules baseline ·
+      an application is not a placement.</span></div>
 
     <main class="content">
 
@@ -187,11 +272,16 @@
 
             <div id="tab-recs">
               <div class="toolbar">
-                <button class="btn" id="recommend">Run matching</button>
-                <span class="muted" id="recInfo"></span>
+                <button class="btn" id="recommend">↻ Run matching</button>
+                <div class="seg" role="group" aria-label="Order recommendations by">
+                  <button type="button" data-sort="rules" aria-pressed="true">Rules ranking</button>
+                  <button type="button" data-sort="ai" aria-pressed="false">✨ AI relevance</button>
+                </div>
                 <span class="msg" id="recMsg"></span>
               </div>
+              <div id="recTiles"></div>
               <details class="rules"><summary>How matching works</summary><div id="rules"></div></details>
+              <p class="muted" id="recInfo"></p>
               <div id="recs"></div>
             </div>
 
@@ -215,7 +305,7 @@
 
       <!-- ================= EMPLOYER ================= -->
       <section class="view" id="view-employer" hidden>
-        <p class="muted">Simulated employer reviewer. Submitted applications are reviewed here; each decision
+        <p class="view-intro">Simulated employer reviewer. Submitted applications are reviewed here; each decision
           records the actor, time and a next action for the student. A decline requires a reason.
           Offers are a Sprint 3 story and can never follow a decline.</p>
         <span class="msg" id="employerMsg"></span>
@@ -224,7 +314,7 @@
 
       <!-- ================= COORDINATOR ================= -->
       <section class="view" id="view-coordinator" hidden>
-        <p class="muted">Simulated university coordinator (COORD-01). A student flags a recommendation; the
+        <p class="view-intro">Simulated university coordinator (COORD-01). A student flags a recommendation; the
           coordinator sees the reason, affected field and the input versions used, records a correction
           request for the owning module (P01 / P03) and, for profile corrections, applies it as a new
           input version that can be rematched. The original recommendation stays traceable.</p>
@@ -246,7 +336,7 @@
 
       <!-- ================= FACULTY ================= -->
       <section class="view" id="view-faculty" hidden>
-        <p class="muted"><b>Read-only view.</b> Viewing an application never implies an approved placement —
+        <p class="view-intro"><b>Read-only view.</b> Viewing an application never implies an approved placement —
           application status and placement status are shown separately. Placement confirmation is a
           Sprint 3 story (P04-06).</p>
         <div id="facultyApps"></div>
@@ -261,8 +351,12 @@
   <h2 id="applyTitle">Apply</h2>
   <p class="muted" id="applyContext"></p>
   <label>Statement <span class="muted">(required before submission; drafts may leave it empty)</span>
-    <textarea id="applyStatement" rows="4" placeholder="One or two sentences: why does this role fit you?"></textarea>
+    <textarea id="applyStatement" rows="5" placeholder="One or two sentences: why does this role fit you?"></textarea>
   </label>
+  <div class="ai-draft-row">
+    <button type="button" class="btn ai small" id="aiDraft">✨ Draft with AI</button>
+    <span class="muted" id="aiDraftNote">Starter text from your profile — you review and edit it; nothing is sent.</span>
+  </div>
   <p class="msg" id="applyMsg"></p>
   <div class="actions">
     <button type="button" class="btn" id="applySubmit">Submit application</button>
@@ -318,7 +412,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const state = {
   role: "student", skills: {}, student: null, students: [], opps: {}, apps: [], recs: {},
-  compare: [], corrections: [], allApps: [], runs: [], lastAccepted: null,
+  compare: [], corrections: [], allApps: [], runs: [], lastAccepted: null, recList: [], sort: "rules",
 };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
@@ -331,10 +425,20 @@ const ROLES = {
   faculty: { title: "Faculty reviewer", chip: "Faculty · simulated" },
 };
 
-async function api(path, opts) {
-  const res = await fetch(path, opts);
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.detail || res.statusText);
+async function api(path, opts = {}) {
+  // ngrok's free tier answers browser requests with an HTML warning page unless this
+  // header is present; without it res.json() fails with "unexpected character".
+  const headers = { "ngrok-skip-browser-warning": "1", ...(opts.headers || {}) };
+  const res = await fetch(path, { ...opts, headers });
+  const text = await res.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Server returned a non-JSON response for ${path} (HTTP ${res.status}). ` +
+      "Is the backend / ngrok tunnel still running?");
+  }
+  if (!res.ok) throw new Error((body && body.detail) || res.statusText);
   return body;
 }
 
@@ -360,7 +464,10 @@ async function switchRole(role) {
   $("studentPicker").hidden = role !== "student";
   if (role === "student" && state.student) await refreshLists();
   if (role === "employer" || role === "faculty") await loadAllApps();
-  if (role === "coordinator") { await loadCorrections(); await loadRuns(); }
+  if (role === "coordinator") {
+    try { await loadCorrections(); await loadRuns(); }
+    catch (err) { setMsg("crMsg", err.message, "error"); }
+  }
 }
 document.querySelectorAll(".nav button").forEach(btn => btn.onclick = () => switchRole(btn.dataset.role));
 
@@ -370,9 +477,18 @@ function renderProfile(s) {
   const avail = s.availability_start && s.availability_end
     ? `${esc(s.availability_start)} → ${esc(s.availability_end)}`
     : `<span class="chip warn">Not provided</span>`;
+  const initials = (s.display_name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  const reviewed = skills.filter(sk => sk.evidence_status === "reviewed").length;
   $("profile").innerHTML = `
-    <h2>${esc(s.display_name)}</h2>
-    <div class="muted">${esc(s.student_id)} · profile version ${esc(s.profile_version)}</div>
+    <div class="profile-head">
+      <div class="avatar" aria-hidden="true">${esc(initials)}</div>
+      <div><h2>${esc(s.display_name)}</h2>
+        <div class="muted">${esc(s.student_id)} · profile v${esc(s.profile_version)}</div></div>
+    </div>
+    <div class="chips" style="margin-top:12px">
+      <span class="chip ok">${reviewed} reviewed</span>
+      <span class="chip">${skills.length - reviewed} self-declared</span>
+    </div>
     <h3>Interests</h3>
     <div class="chips">${(s.interests || []).length
       ? s.interests.map(i => `<span class="chip accent">${esc(i)}</span>`).join("")
@@ -399,11 +515,9 @@ function chip(id, required) {
 
 function skillChips(o) {
   return `
-    <div class="chips" style="margin-top:8px">
-      <span class="muted">Required:</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="muted">none</span>'}
-    </div>
-    <div class="chips" style="margin-top:4px">
-      <span class="muted">Desirable:</span> ${o.desirable_skills.map(id => chip(id, false)).join("") || '<span class="muted">none</span>'}
+    <div class="skills-row">
+      <div class="chips"><span class="lbl">Required</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="muted">none</span>'}</div>
+      <div class="chips"><span class="lbl">Desirable</span> ${o.desirable_skills.map(id => chip(id, false)).join("") || '<span class="muted">none</span>'}</div>
     </div>`;
 }
 
@@ -428,61 +542,104 @@ function applyButton(o) {
 
 // ================= Recommendations (rules + bounded AI) =================
 function aiBox(r) {
-  const items = (r.ai_matches || []).map(m =>
-    `<li>“${esc(m.term)}” in the ${esc(m.field)} ≈ your skill <b>${esc(m.skill_name)}</b> (${esc(m.skill_id)}, ${esc(m.evidence_status)})</li>`).join("");
+  const ins = r.ai_insights;
+  const terms = (r.ai_matches || []).map(m =>
+    `<li><span class="chip ai">“${esc(m.term)}”</span><span>in the ${esc(m.field)} ≈ your <b>${esc(m.skill_name)}</b>
+      <span class="muted">(${esc(m.evidence_status)})</span></span></li>`).join("");
+  const steps = (ins?.next_steps || []).slice(0, 3).map(t =>
+    `<li><span class="gain ${t.score_gain ? "" : "zero"}">${t.score_gain ? `+${t.score_gain}` : "✓"}</span><span>${esc(t.tip)}</span></li>`).join("");
+  const similar = (ins?.similar || []).map(x =>
+    `<button class="sim" data-view="${esc(x.opportunity_id)}" title="${esc(x.employer_name || "")} · ${x.similarity}% similar skill set">${esc(x.title)}</button>`).join("");
   return `
-  <div class="ai">
-    <h4>AI assistance — simulated, deterministic (${esc(r.ai_method_version || "ai-termmatch-v1")})</h4>
-    ${items ? `<ul>${items}</ul>` : `<div>No equivalent skill terms found for this opportunity.</div>`}
-    <p>Assistance only: term matches never change eligibility, score, gaps or unknowns, and never invent a
-      qualification. The rules result above is unchanged and stays usable on its own.</p>
+  <div class="ai"><div class="ai-inner">
+    <div class="ai-head">
+      <h4>✨ AI assistant</h4><span class="chip ai">simulated · deterministic</span>
+      <span class="ver">${esc(r.ai_method_version || "ai-termmatch-v1")}${ins ? ` · ${esc(ins.version)}` : ""}</span>
+    </div>
+    ${ins ? `<p class="ai-summary">${esc(ins.summary)}</p>` : `<p class="ai-summary muted">This run predates AI insights — run matching again to see them.</p>`}
+    <div class="ai-grid">
+      <div><h5>Skill terms it recognised</h5>
+        ${terms ? `<ul>${terms}</ul>` : `<div class="muted">No equivalent skill terms in this listing.</div>`}</div>
+      <div><h5>Next steps to strengthen this match</h5>
+        ${steps ? `<ul>${steps}</ul>` : `<div class="muted">Nothing to add — every listed skill is on your profile and reviewed.</div>`}</div>
+    </div>
+    ${similar ? `<div style="margin-top:12px"><h5>Similar open listings</h5><div class="chips">${similar}</div></div>` : ""}
+    ${ins?.top_terms?.length ? `<p class="fine">AI relevance ${ins.relevance}% — text similarity driven by: ${ins.top_terms.map(esc).join(", ")}.</p>` : ""}
+    <p class="fine">Assistance only: it never changes eligibility, score, gaps or unknowns, and never invents a
+      qualification. The rules result stays the decision baseline.</p>
+  </div></div>`;
+}
+
+function renderTiles(recs) {
+  if (!recs.length) { $("recTiles").innerHTML = ""; return; }
+  const count = e => recs.filter(r => r.eligibility === e).length;
+  const best = recs.filter(r => r.eligibility !== "ineligible" && r.ai_insights)
+    .sort((a, b) => b.ai_insights.relevance - a.ai_insights.relevance)[0];
+  const bestOpp = best && state.opps[best.opportunity_id];
+  $("recTiles").innerHTML = `<div class="tiles">
+    <div class="tile"><div class="n">${count("eligible")}</div><div class="l">Meet mandatory conditions</div></div>
+    <div class="tile"><div class="n">${count("unknown")}</div><div class="l">Need checking</div></div>
+    <div class="tile"><div class="n">${count("ineligible")}</div><div class="l">Mandatory conflicts</div></div>
+    <div class="tile ai-tile"><div class="n">${bestOpp ? `✨ ${esc(bestOpp.title)}` : "—"}</div>
+      <div class="l">${best ? `Top AI relevance · ${best.ai_insights.relevance}%` : "Run matching for AI insights"}</div></div>
   </div>`;
 }
 
 async function renderRecs(recs) {
+  state.recList = recs;
   state.recs = Object.fromEntries(recs.map(r => [r.opportunity_id, r]));
   if (!recs.length) {
     $("recInfo").textContent = "";
+    $("recTiles").innerHTML = "";
     $("recs").innerHTML = `<div class="empty">No recommendations yet. Click <b>Run matching</b> to score open opportunities against this profile.</div>`;
     return;
   }
-  $("recInfo").textContent = `Last run ${recs[0].created_at} · rules ${recs[0].method_version} · AI ${recs[0].ai_method_version || "—"} · profile v${recs[0].profile_version}`;
-  const opps = await Promise.all(recs.map(r => opp(r.opportunity_id)));
+  $("recInfo").textContent = `Last run ${recs[0].created_at} · rules ${recs[0].method_version} · AI ${recs[0].ai_method_version || "—"} · profile v${recs[0].profile_version}`
+    + (state.sort === "ai" ? " · ordered by AI relevance (view only — the stored rules ranking is unchanged)" : "");
+  await Promise.all(recs.map(r => opp(r.opportunity_id)));
+  renderTiles(recs);
+  const ordered = state.sort === "ai"
+    ? [...recs].sort((a, b) => (b.ai_insights?.relevance ?? -1) - (a.ai_insights?.relevance ?? -1))
+    : recs;
   const list = (items, empty) => items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : `<div class="muted">${empty}</div>`;
-  $("recs").innerHTML = recs.map((r, i) => {
-    const o = opps[i];
+  $("recs").innerHTML = ordered.map((r, i) => {
+    const o = state.opps[r.opportunity_id];
     const eligibilityBadge = {
-      eligible: `<span class="chip ok">Meets mandatory conditions</span>`,
-      unknown: `<span class="chip warn">Eligibility needs checking</span>`,
-      ineligible: `<span class="chip bad">Mandatory conflict</span>`,
+      eligible: `<span class="chip ok">● Meets mandatory conditions</span>`,
+      unknown: `<span class="chip warn">● Eligibility needs checking</span>`,
+      ineligible: `<span class="chip bad">● Mandatory conflict</span>`,
     }[r.eligibility];
+    const rel = r.ai_insights?.relevance;
     return `
     <article class="card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}" id="rec-${esc(o.opportunity_id)}">
       <div class="card-head">
-        <div>
-          <div class="title">${esc(o.title)}</div>
+        <div style="min-width:0">
+          <div class="title"><span class="rank">${i + 1}</span>${esc(o.title)}</div>
           ${oppSummary(o)}
           ${o.description ? `<p class="muted desc">${esc(o.description)}</p>` : ""}
-          <div class="chips" style="margin-top:6px">
+          <div class="chips" style="margin-top:10px">
             ${eligibilityBadge}
             ${r.unknowns.length && r.eligibility !== "unknown" ? `<span class="chip warn">Needs checking</span>` : ""}
-            ${r.gaps.length ? `<span class="chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : ""}
+            ${r.gaps.length ? `<span class="chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : `<span class="chip ok">No required-skill gaps</span>`}
           </div>
         </div>
-        <div class="score">${r.score}<small>score</small></div>
+        <div class="gauges">
+          <div class="score" title="Rules score (${esc(r.method_version)})">${r.score}<small>Rules score</small></div>
+          ${rel != null ? `<div class="ring" style="--v:${rel}" title="AI relevance: text similarity between your profile and this listing"><span>${rel}%<small>AI match</small></span></div>` : ""}
+        </div>
       </div>
       ${skillChips(o)}
       <div class="why">
-        <div><h4>Why it matches (rules ${esc(r.method_version)})</h4>${list(r.reasons, "No matching interests or skills")}</div>
+        <div><h4>Why it matches · rules ${esc(r.method_version)}</h4>${list(r.reasons, "No matching interests or skills")}</div>
         <div>
           <h4>Gaps</h4>${list(r.gaps, "No missing required skills")}
-          <h4 style="margin-top:8px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
+          <h4 style="margin-top:10px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
         </div>
       </div>
       ${aiBox(r)}
       <div class="actions">${applyButton(o)}
         <button class="btn secondary" data-view="${esc(o.opportunity_id)}">Open in catalogue</button>
-        <button class="btn secondary" data-flag="${esc(r.recommendation_id)}">Flag this result</button>
+        <button class="btn secondary" data-flag="${esc(r.recommendation_id)}">⚑ Flag this result</button>
         <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
       <div class="meta">
         <span>${esc(r.recommendation_id)}</span><span>${esc(o.opportunity_id)} v${esc(r.opportunity_version)}</span>
@@ -491,6 +648,12 @@ async function renderRecs(recs) {
     </article>`;
   }).join("");
 }
+
+document.querySelectorAll("[data-sort]").forEach(b => b.onclick = () => {
+  state.sort = b.dataset.sort;
+  document.querySelectorAll("[data-sort]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  renderRecs(state.recList);
+});
 
 // ================= Browse & compare (P04-01) =================
 async function searchOpps() {
@@ -582,8 +745,10 @@ function renderRules(rules) {
   const m = rules.mandatory || {};
   $("rules").innerHTML = `
     <p><b>Rules baseline ${esc(rules.version)}</b> (transparent, editable in <code>app/rules.json</code>; no AI).
-      A separate bounded AI feature (<code>ai-termmatch-v1</code>, simulated and labelled) runs alongside it and
-      only adds term matches — never eligibility or score.</p>
+      A separate bounded AI assistant (<code>ai-termmatch-v1</code> + <code>ai-insights-v1</code>, simulated and
+      labelled) runs alongside it: recognised skill terms, a plain-language summary, an AI relevance % (TF-IDF text
+      similarity), next steps and similar listings. It never changes eligibility, score or the stored ranking;
+      "AI relevance" ordering is a view-only option.</p>
     <p><b>Mandatory condition</b> (decides eligibility, not score):
       availability must cover the opportunity dates — ${m.availability_covers_dates === false ? "switched off" : "on"}.
       Missing dates give "Eligibility needs checking", never a pass.</p>
@@ -654,6 +819,26 @@ document.addEventListener("click", async e => {
     $("applyDialog").showModal();
   }
 });
+$("aiDraft").onclick = async () => {
+  const oid = applyCtx?.opportunityId || applyCtx?.application?.opportunity_id;
+  if (!oid) return;
+  const ta = $("applyStatement");
+  if (ta.value.trim() && !confirm("Replace your current text with an AI starter draft?")) return;
+  $("aiDraft").disabled = true;
+  try {
+    const d = await api("/api/ai/statement-draft", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id: studentId(), opportunity_id: oid }),
+    });
+    ta.value = d.draft;
+    ta.focus();
+    setMsg("applyMsg", `AI draft inserted (${d.version}) — edit it so it sounds like you before submitting.`, "success");
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");
+  } finally {
+    $("aiDraft").disabled = false;
+  }
+};
 $("applyCancel").onclick = () => { applyCtx = null; $("applyDialog").close(); };
 $("applyDraftBtn").onclick = async () => {
   if (!applyCtx) return;

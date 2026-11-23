@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from app import db
-from app.ai import AI_METHOD_VERSION, term_matches
+from app.ai import AI_METHOD_VERSION, insights, relevance_scores, statement_draft, term_matches
 from app.matching import RULES, is_eligible_listing, recommend
 
 # Active = an application that blocks a duplicate for the same student+opportunity
@@ -87,6 +87,7 @@ def rec_row_to_dict(r) -> dict:
     for k in ("reasons", "gaps", "unknowns"):
         d[k] = json.loads(d[k])
     d["ai_matches"] = json.loads(d["ai_matches"]) if d.get("ai_matches") else []
+    d["ai_insights"] = json.loads(d["ai_insights"]) if d.get("ai_insights") else None
     return d
 
 
@@ -207,25 +208,30 @@ def run_recommendations(student_id: str):
         skills = db.skill_names()
         results = recommend(student, opps, skills)
         opps_by_id = {o["opportunity_id"]: o for o in opps}
+        open_opps = [o for o in opps if is_eligible_listing(o)]
+        relevance = relevance_scores(student, open_opps, skills)
         run_id, created_at = uuid.uuid4().hex[:8], now()
         for r in results:
             # Bounded AI assistance runs alongside the rules result and never
             # changes eligibility, score, gaps or unknowns (P05-04 AC2).
             r["ai_method_version"] = AI_METHOD_VERSION
-            r["ai_matches"] = term_matches(student, opps_by_id[r["opportunity_id"]], skills)
+            o = opps_by_id[r["opportunity_id"]]
+            r["ai_matches"] = term_matches(student, o, skills)
+            r["ai_insights"] = insights(student, o, r, r["ai_matches"], open_opps, skills,
+                                        RULES["weights"], relevance[r["opportunity_id"]])
             r["recommendation_id"] = f"REC-{uuid.uuid4().hex[:8]}"
             r["run_id"], r["created_at"] = run_id, created_at
             conn.execute(
                 "INSERT INTO recommendations "
                 "(recommendation_id, run_id, student_id, profile_version, opportunity_id, opportunity_version, "
                 "method_version, score, compatible, reasons, gaps, unknowns, created_at, eligibility, "
-                "ai_method_version, ai_matches) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "ai_method_version, ai_matches, ai_insights) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (r["recommendation_id"], run_id, r["student_id"], r["profile_version"],
                  r["opportunity_id"], r["opportunity_version"], r["method_version"], r["score"],
                  int(r["compatible"]), json.dumps(r["reasons"]), json.dumps(r["gaps"]),
                  json.dumps(r["unknowns"]), created_at, r["eligibility"],
-                 r["ai_method_version"], json.dumps(r["ai_matches"])),
+                 r["ai_method_version"], json.dumps(r["ai_matches"]), json.dumps(r["ai_insights"])),
             )
     return results
 
@@ -246,6 +252,20 @@ def latest_recommendations(student_id: str):
             (last["run_id"],),
         ).fetchall()
     return [rec_row_to_dict(r) for r in rows]
+
+
+class StatementDraftIn(BaseModel):
+    student_id: str
+    opportunity_id: str
+
+
+@app.post("/api/ai/statement-draft")
+def ai_statement_draft(body: StatementDraftIn):
+    """AI starter statement for the apply dialog. It is returned to the student to edit;
+    nothing is saved or submitted here (P05-04 bounds: cites only skills on the profile)."""
+    with db.connect() as conn:
+        student, opp = _student_and_opportunity(conn, body.student_id, body.opportunity_id)
+    return statement_draft(student, opp, db.skill_names())
 
 
 @app.get("/api/students/{student_id}/recommendation-runs")
