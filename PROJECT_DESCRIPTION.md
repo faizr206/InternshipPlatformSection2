@@ -12,7 +12,7 @@ The source of seed data is [data/ipp_sample_data.json](data/ipp_sample_data.json
 
 The five student_profiles records represent four students. Reads select the highest numeric profile_version with profile_status = submitted for each student_id, ignoring drafts. Layla (COOP-B001) starts at version 2 with reviewed SQL evidence. Saving a display-name correction appends a new submitted version, preserving history. The UI exposes all four synthetic students through a demo selector.
 
-Student listing reads and application submission require publication_status = published AND listing_status = open. The initial eligible IDs are OP-028, OP-031 and OP-034; OP-036 is closed and OP-039 is unpublished. Administrators can publish unpublished demo listings; publishing never reopens a closed listing. No recommendation scoring or AI integration is implemented.
+Student listing reads and application submission require publication_status = published AND listing_status = open. The initial eligible IDs are OP-028, OP-031 and OP-034; OP-036 is closed and OP-039 is unpublished. Administrators can publish unpublished demo listings; publishing never reopens a closed listing. No recommendation scoring is implemented. The Internship Assistant is a keyword matcher over data/faq.txt, not a language model.
 
 Student-safe listing projections remove supervisor_name and supervisor_contact, including nested application records. Faculty projections also omit these P07-only fields. The public JSON retains the supplied synthetic values for the intended handoff; this static demo does not provide access control over the raw file.
 
@@ -27,6 +27,7 @@ Noor (COOP-B004) has no interests or known availability. The profile displays th
 - src/store.js: shared business rules, latest-profile selection, append-only corrections, safe listing projections, duplicate prevention and localStorage persistence.
 - scripts/serve.mjs: localhost static server with port fallback and an explicit demo-file allowlist, including the JSON endpoint.
 - tests/: business rules, persistence and UI contracts/runtime checks using Node's built-in test runner.
+- src/faq.js and data/faq.txt: the Internship Assistant. Pure text matching (stop words, stems, synonym groups, inverse-document-frequency weights, a confidence threshold, typo repair), a personal-information guard, and the store for unanswered questions and coordinator-approved additions (localStorage key ipp-faq-v1). data/faq.txt is fetched only when the assistant or the Administrator's Assistant FAQ tab is opened. No API key, language model or third-party service. See docs/assistant.md.
 
 The app uses plain HTML, CSS and classic JavaScript with no dependencies or build step. Runtime state includes copies of the shared records plus demo applications, reviews and one synthetic faculty reviewer. Storage is versioned as ipp-demo-v2; older ipp-demo-v1 data is not loaded or deleted. Reset restores a fresh copy of the shared seed. Browser-blocked storage falls back to memory with a warning.
 
@@ -46,7 +47,8 @@ Use HTTP hosting, not file://, because the app fetches its seed JSON. No offline
 4. Employer HR → Applicants shows the application without faculty review data. Switch to Faculty Reviewer: the same application/student/opportunity/review IDs appear read-only, with no supervisor information.
 5. Employer HR: untick authorization to see submission blocked, then re-tick, fill sample data and submit. A new OP-040 listing starts unpublished/Pending Review.
 6. Administrator: publish OP-040. It becomes visible to students because it is now published and open. OP-036 remains closed.
-7. Reload to check persistence; reset when finished.
+7. Internship Assistant: click Ask the Internship Assistant and ask "Can I intern remotely?" (answered from the FAQ, with its section as the source) and "Are co-op students paid?" ("I don't know yet"). Open Administrator → Assistant FAQ: the unanswered question is listed. Write an answer, submit it (Pending, coordinator approval required), approve it, then ask again.
+8. Reload to check persistence; reset when finished (Reset also clears the assistant's saved questions and added entries).
 
 ## Deferred work and constraints
 

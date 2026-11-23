@@ -1920,3 +1920,187 @@ dialog[open] {
     animation: none !important;
   }
 }
+
+/* ================= Internship Assistant ================= */
+
+.proto-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid #ecd28f;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+  max-height: min(52vh, 480px);
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--g50);
+}
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.msg-user {
+  justify-content: flex-end;
+}
+.msg-bubble {
+  max-width: min(640px, 86%);
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+.msg-user .msg-bubble {
+  border-color: var(--g800);
+  border-bottom-right-radius: 4px;
+  background: var(--g800);
+  color: #fff;
+}
+.msg-bot .msg-bubble {
+  border-top-left-radius: 4px;
+}
+.msg-bot.is-unknown .msg-bubble {
+  border-color: #ecd28f;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+}
+.msg-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-strong);
+  font-size: 0.84rem;
+  color: var(--grey-ink);
+}
+.msg-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+}
+.suggestions {
+  display: flex;
+  flex-direction: column;
+}
+.suggestions-label {
+  margin-bottom: 6px;
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.suggestion {
+  appearance: none;
+  padding: 5px 12px;
+  border: 1.5px solid #9fb8a9;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--g900);
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+.suggestion:hover {
+  border-color: var(--g800);
+  background: var(--g50);
+}
+.privacy-reminder {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.privacy-reminder .icon {
+  margin-top: 3px;
+  color: var(--g700);
+}
+.chat-form {
+  display: flex;
+  gap: 10px;
+}
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.opp-foot .row-actions {
+  margin-top: 0;
+}
+.faq-approved summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: var(--g900);
+}
+.faq-groups {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+.faq-group h3 {
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+.faq-group ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+.faq-approved .form-actions {
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  /* the mobile tab bar keeps its five role slots; the top-bar button reaches the assistant */
+  .nav-item[data-route='assistant'] {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .chat-form {
+    flex-direction: column;
+  }
+  .msg-bubble {
+    max-width: 92%;
+  }
+}
+
+/* Top bar: keep the labels on one line and give them room at tablet and small-laptop widths. */
+.topbar-actions {
+  margin-left: auto;
+}
+.topbar-actions .btn {
+  white-space: nowrap;
+}
+@media (min-width: 901px) and (max-width: 1280px) {
+  .crumbs,
+  .persona-detail {
+    display: none;
+  }
+}

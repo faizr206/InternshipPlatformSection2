@@ -18,6 +18,10 @@ The app fetches [data/ipp_sample_data.json](data/ipp_sample_data.json) on startu
 
 Records are browser-local under ipp-demo-v2. Old ipp-demo-v1 records are left untouched and are not loaded. **Reset demo data** restores the shared fixture.
 
+## Internship Assistant (FAQ chatbot)
+
+Use **Ask the Internship Assistant** (top bar, Overview, or the sidebar) to ask internship questions in your own words. It answers **only** from the approved FAQ in [data/faq.txt](data/faq.txt), shows the FAQ section as the source, and says "I don't know yet" instead of guessing; those questions go to a coordinator list under **University Administrator → Assistant FAQ**, where new entries need coordinator approval before the assistant uses them. It is a keyword matcher, not a language model, and no API key is involved. Prototype, synthetic data, not official university policy. How it works, the tech stack, the Botpress setup steps and the test report are in [docs/assistant.md](docs/assistant.md).
+
 ## Run locally
 
 ~~~bash

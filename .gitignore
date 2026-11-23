@@ -18,3 +18,6 @@
 .omx/
 !data/
 !data/ipp_sample_data.json
+!data/faq.txt
+!docs/
+!docs/*.md

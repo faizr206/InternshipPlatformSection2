@@ -6,14 +6,14 @@ await import('../src/ui.js'); // publishes IPPUI (pure at load time, so it works
 const { ICON_NAMES } = globalThis.IPPUI;
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const SOURCES = ['src/store.js', 'src/ui.js', 'src/app.js'];
+const SOURCES = ['src/store.js', 'src/ui.js', 'src/faq.js', 'src/app.js'];
 
 test('index.html loads the demo without remote script, style or media dependencies', async () => {
   const html = await read('index.html');
   const css = await read('styles.css');
   assert.deepEqual([...html.matchAll(/<(?:script|link|img|iframe|source)\b[^>]*\b(?:src|href)="(?:https?:)?\/\/[^"]+"/g)], [], 'no external assets');
   assert.doesNotMatch(css, /@import|url\(\s*['"]?(?:https?:)?\/\//, 'stylesheet pulls nothing remote');
-  assert.match(html, /<script src="src\/store\.js(?:\?v=[0-9a-f]+)?"><\/script>\s*<script src="src\/ui\.js(?:\?v=[0-9a-f]+)?"><\/script>\s*<script src="src\/app\.js(?:\?v=[0-9a-f]+)?"><\/script>/, 'scripts load in dependency order');
+  assert.match(html, /<script src="src\/store\.js(?:\?v=[0-9a-f]+)?"><\/script>\s*<script src="src\/ui\.js(?:\?v=[0-9a-f]+)?"><\/script>\s*<script src="src\/faq\.js(?:\?v=[0-9a-f]+)?"><\/script>\s*<script src="src\/app\.js(?:\?v=[0-9a-f]+)?"><\/script>/, 'scripts load in dependency order');
   assert.match(html, /<link rel="stylesheet" href="styles\.css(?:\?v=[0-9a-f]+)?"/);
 });
 
@@ -50,10 +50,10 @@ test('no source file injects user text as HTML', async () => {
 
 test('the Overview plus all four Lab 3 roles have views; the demo opens on the Overview', async () => {
   const app = await read('src/app.js');
-  for (const label of ['Overview', 'Employer HR', 'University Administrator', 'Student', 'Faculty Reviewer']) {
+  for (const label of ['Overview', 'Employer HR', 'University Administrator', 'Student', 'Faculty Reviewer', 'Internship Assistant']) {
     assert.ok(app.includes(`label: '${label}'`), `missing route ${label}`);
   }
-  assert.match(app, /VIEWS = \{ overview: overviewView, student: studentView, employer: employerView, admin: adminView, faculty: facultyView \}/);
+  assert.match(app, /VIEWS = \{ overview: overviewView, student: studentView, employer: employerView, admin: adminView, faculty: facultyView, assistant: assistantView \}/);
   assert.match(app, /DEFAULT_ROUTE = 'overview'/);
 });
 
@@ -114,4 +114,53 @@ test('the server allowlist exposes the shared JSON seed at its canonical path', 
   assert.match(server, /\['\/data\/ipp_sample_data\.json', \['data\/ipp_sample_data\.json', 'application\/json; charset=utf-8'\]\]/);
   const app = await read('src/app.js');
   assert.match(app, /new URL\('data\/ipp_sample_data\.json', document\.baseURI\)/);
+});
+
+// ---------- Internship Assistant: hard requirements from the Sprint 2 lab ----------
+
+test('no API key, token or secret is committed anywhere in the published files', async () => {
+  const files = ['index.html', 'styles.css', 'package.json', 'README.md', 'PROJECT_DESCRIPTION.md', 'docs/assistant.md', 'src/store.js', 'src/ui.js', 'src/faq.js', 'src/app.js', 'scripts/serve.mjs', 'scripts/stamp.mjs', 'data/faq.txt', 'data/ipp_sample_data.json'];
+  const secretPatterns = [/\bsk-[A-Za-z0-9_-]{20,}/, /\bbearer\s+[A-Za-z0-9._-]{20,}/i, /api[_-]?key["']?\s*[:=]\s*["'][^"']{8,}/i, /secret["']?\s*[:=]\s*["'][^"']{8,}/i, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pousr]_[A-Za-z0-9]{20,}/, /\bxox[bpas]-/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/];
+  for (const path of files) {
+    const text = await read(path);
+    for (const pattern of secretPatterns) assert.doesNotMatch(text, pattern, `${path} looks like it contains a secret (${pattern})`);
+  }
+});
+
+test('the assistant makes no third-party requests: the only fetches are the seed and the FAQ file, by relative URL', async () => {
+  const app = await read('src/app.js');
+  const faq = await read('src/faq.js');
+  const relativeFetches = [...app.matchAll(/fetch\(new URL\('([^']+)', document\.baseURI\)/g)].map((match) => match[1]);
+  assert.equal([...app.matchAll(/\bfetch\(/g)].length, relativeFetches.length, 'every fetch is a relative URL resolved against the page');
+  assert.deepEqual(relativeFetches.sort(), ['data/faq.txt', 'data/ipp_sample_data.json']);
+  assert.doesNotMatch(app + faq, /\bhttps?:\/\/(?!www\.w3\.org)/, 'no absolute URLs in the code');
+  assert.doesNotMatch(app + faq, /XMLHttpRequest|WebSocket|sendBeacon|EventSource|importScripts/);
+});
+
+test('the lab wording is exact: banner, unknown reply, coordinator approval label and the assistant button', async () => {
+  const app = await read('src/app.js');
+  const faq = await read('src/faq.js');
+  const html = await read('index.html');
+  assert.ok(app.includes("'Prototype. Synthetic data. Not official university policy.'"));
+  assert.ok(faq.includes(`"I don't know yet. I've noted your question for the coordinator."`));
+  assert.match(app, /Coordinator approval required/);
+  assert.match(html, /id="assistant-btn" href="#assistant">[\s\S]*<span>Ask the Internship Assistant<\/span>/);
+  assert.match(app, /'Ask the Internship Assistant'/);
+});
+
+test('the approved FAQ is a plain file in the repository, served by the local server and loaded by relative URL', async () => {
+  const server = await read('scripts/serve.mjs');
+  assert.match(server, /\['\/data\/faq\.txt', \['data\/faq\.txt', 'text\/plain; charset=utf-8'\]\]/);
+  assert.match(server, /\['\/src\/faq\.js'/);
+  const gitignore = await read('.gitignore');
+  assert.match(gitignore, /^!data\/faq\.txt$/m, 'faq.txt is published');
+  const faqText = await read('data/faq.txt');
+  assert.equal(faqText.trim().split('\n').length, 8);
+  assert.ok(faqText.trim().split('\n').every((line) => /^Section: .+ \| Q: .+ \| A: .+$/.test(line)));
+});
+
+test('the assistant engine has no DOM, network or language-model dependency (pure, deterministic text matching)', async () => {
+  const code = (await read('src/faq.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''); // judge the code, not the comments
+  assert.doesNotMatch(code, /\bdocument\b|\bwindow\b|\bfetch\b|\bXMLHttpRequest\b|\bimport\s*\(|\brequire\s*\(/);
+  assert.doesNotMatch(code, /openai|anthropic|botpress|gemini|\bllm\b|completion/i, 'no AI service is called from the engine');
 });

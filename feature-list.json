@@ -1,12 +1,12 @@
 {
   "project": "IPP Walking Skeleton Demo (Coop)",
-  "last_updated": "2026-11-17",
+  "last_updated": "2026-11-24",
   "notes": "Historical feature verification is retained below. The shared-seed integration is verified by current store, runtime UI, contract and asset-hash tests; see PROGRESS.md for fresh evidence and browser/deployment checks. No Sprint 0 R-numbers have been invented.",
   "features": [
     {
       "id": "F01",
       "name": "Employer submits an opportunity (IPP-01 / EMP-01)",
-      "description": "Employer HR form requires organization, title, description and location; whitespace-only values are rejected; a valid submission gets a unique ID (OP-040, \u2026) and starts as Pending Review.",
+      "description": "Employer HR form requires organization, title, description and location; whitespace-only values are rejected; a valid submission gets a unique ID (OP-040, …) and starts as Pending Review.",
       "verification_steps": [
         "Employer HR > Fill sample data > Submit for review: OP-040 appears as Pending Review",
         "Leave organization as spaces and submit: inline errors, nothing created, typed values kept"
@@ -171,7 +171,7 @@
         "Arrow keys move between student tabs"
       ],
       "passes": false,
-      "notes": "Layout and keyboard verified in Chrome (390px iframe). Not verified: real phone, other browsers, an actual screen reader, a formal contrast audit."
+      "notes": "Layout and keyboard verified in Chrome (390px iframe). Not verified: real phone, other browsers, an actual screen reader, a formal contrast audit. The Internship Assistant and coordinator tab were also checked at 390px and with the keyboard in headless Chrome (2026-11-24); still no real device or screen-reader check."
     },
     {
       "id": "F18",
@@ -240,10 +240,10 @@
     {
       "id": "F24",
       "name": "Employer HR views applications",
-      "description": "After a student applies, Employer HR sees the applicant in a read-only Applicants tab (name, student ID, eligibility, application and opportunity IDs, Submitted vs Not placed, submitted time), with a live count on the tab, a '1 applicant \u00b7 View' link on each opportunity, and a link from the student's apply confirmation. HR receives a narrower data projection than Faculty: no review records.",
+      "description": "After a student applies, Employer HR sees the applicant in a read-only Applicants tab (name, student ID, eligibility, application and opportunity IDs, Submitted vs Not placed, submitted time), with a live count on the tab, a '1 applicant · View' link on each opportunity, and a link from the student's apply confirmation. HR receives a narrower data projection than Faculty: no review records.",
       "verification_steps": [
         "Apply as the student, then open Employer HR > Applicants: the applicant card appears with Submitted and Not placed",
-        "Employer HR > Opportunities: the approved opportunity shows '1 applicant \u00b7 View', which opens the Applicants tab",
+        "Employer HR > Opportunities: the approved opportunity shows '1 applicant · View', which opens the Applicants tab",
         "The Applicants tab has no controls and shows no REV-/FAC- IDs; Faculty still shows REV-001"
       ],
       "passes": true,
@@ -263,6 +263,32 @@
       ],
       "passes": true,
       "notes": "Store and runtime regression tests. No AI ranking or shared storage added."
+    },
+    {
+      "id": "F26",
+      "name": "Internship Assistant (FAQ chatbot)",
+      "description": "A chatbot page (#assistant), reachable from an 'Ask the Internship Assistant' button in the top bar, the Overview and the sidebar, answers internship questions only from data/faq.txt. Each answer shows its FAQ section as the source; unknown questions get \"I don't know yet. I've noted your question for the coordinator.\" and are saved to an unanswered list; messages that look like personal information are refused and never stored; a 'Prototype. Synthetic data. Not official university policy.' banner and a privacy reminder are shown. In-browser keyword matcher: no language model, no API key, no third-party service.",
+      "verification_steps": [
+        "Open #assistant and ask the 8 FAQ questions: each returns its exact answer and section",
+        "Ask 'Can I intern remotely?': on-site answer. Ask 'Are co-op students paid?' and 'Will I get money?': 'I don't know yet'",
+        "Ask 'Is my application approved?' and 'Can I apply?': refused, not answered with an unrelated FAQ entry",
+        "Type an email address into the question: refused, not shown and not stored"
+      ],
+      "passes": true,
+      "notes": "Approach B of the Sprint 2 lab (Approach A, Botpress, needs a team member's account and was not built; setup steps are in docs/assistant.md). Verified by 26 engine tests (including a 3000-question invariant that every reply is an approved answer verbatim), runtime and contract tests (116 total) and a real-keystroke headless Chrome 158 run (32 checks). Rewordings can be missed; the matcher refuses rather than guesses. Not tested on a real phone, Safari/Firefox or a screen reader."
+    },
+    {
+      "id": "F27",
+      "name": "Coordinator FAQ approval (Administrator > Assistant FAQ)",
+      "description": "The Administrator view has an Assistant FAQ tab listing unanswered questions (deduplicated, with a count), an add-entry form (Section, Question, Answer) labelled 'coordinator approval required', pending entries with Approve and Discard, and the approved FAQ with a Download faq.txt export. Pending entries are never used by the assistant; approving one closes the unanswered questions it covers. Reset demo data clears this state.",
+      "verification_steps": [
+        "Ask an unknown question, then open Administrator > Assistant FAQ: it is listed",
+        "Write an answer and submit: the entry is Pending and the assistant still says 'I don't know yet'",
+        "Approve it: the assistant now answers from it and the unanswered question closes",
+        "Download faq.txt: the 9 approved entries in the original format"
+      ],
+      "passes": true,
+      "notes": "Verified by runtime tests and a real-click headless Chrome run (20 checks). Unanswered questions and coordinator additions are stored per browser (localStorage), so a coordinator does not see questions asked on other devices; a shared store is the same deferred gap as IPP-18."
     }
   ]
 }

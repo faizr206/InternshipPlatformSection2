@@ -11,8 +11,10 @@ const ALLOWED = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/src/store.js', ['src/store.js', 'text/javascript; charset=utf-8']],
   ['/src/ui.js', ['src/ui.js', 'text/javascript; charset=utf-8']],
+  ['/src/faq.js', ['src/faq.js', 'text/javascript; charset=utf-8']],
   ['/src/app.js', ['src/app.js', 'text/javascript; charset=utf-8']],
   ['/data/ipp_sample_data.json', ['data/ipp_sample_data.json', 'application/json; charset=utf-8']],
+  ['/data/faq.txt', ['data/faq.txt', 'text/plain; charset=utf-8']],
 ]);
 
 const server = http.createServer(async (request, response) => {

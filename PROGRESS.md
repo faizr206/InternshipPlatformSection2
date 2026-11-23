@@ -6,6 +6,28 @@ Authoritative planning lives in the course's Lab 3 – Sprint 1 walking-skeleton
 
 Sprint 1: walking skeleton demo. Local standalone implementation is complete and verified; the shared Lovable/GitHub build is a separate class activity.
 
+## 2026-11-24: Internship Assistant (FAQ chatbot): committed locally, not pushed
+
+**Work done**
+- Built Approach B of the Sprint 2 lab: an in-browser FAQ assistant at `#assistant`, answering only from `data/faq.txt` (the 8 approved entries, verbatim). "Ask the Internship Assistant" button in the top bar, on the Overview and in the sidebar. Answers show their FAQ section as the source; unknown questions get "I don't know yet. I've noted your question for the coordinator." and are saved; personal information is refused and never echoed or stored; the exact banner "Prototype. Synthetic data. Not official university policy." and a privacy reminder are shown.
+- Engine `src/faq.js` (pure, no DOM or network): parsing, stop words, light stemming, synonym groups, IDF weights, a strict confidence rule, typo repair, PII guard, and the store for unanswered questions and coordinator approvals (`ipp-faq-v1`).
+- Coordinator tools in Administrator → Assistant FAQ: unanswered list, add-entry form labelled "coordinator approval required", Pending → Approve/Discard, approved list, Download faq.txt. Reset demo data clears the assistant state.
+- Wiring: `src/faq.js` and `data/faq.txt` added to the server allowlist, cache-stamp assets and `.gitignore` allowlist; `docs/assistant.md` documents how it works, the tech stack, the Botpress (Approach A) setup steps and the test report.
+- Approach A (Botpress) was not built: it needs a team member's Botpress account. No API key exists in the repository, and a test scans for secret patterns.
+
+**Verification**
+- `npm test`: **116/116** (75 existing + 26 engine + runtime and contract tests for the assistant). Engine tests include all 8 questions, 24 rewordings, typos, 39 questions that must be refused (threshold margin enforced), PII, the coordinator flow, persistence, and an invariant over 3000 generated questions (every reply is exactly an approved answer).
+- Real Chrome 158 (headless, isolated profile, real keystrokes and clicks): assistant test plan **32/32** (8 FAQ, "Can I intern remotely?", "Will I get money?", "Are co-op students paid?", rewordings, typo, near-misses, PII, keyboard); coordinator workflow **20/20**; phone and widths **13/13** (390px no overflow on five pages; top bar at 1000/1100/1280px). The Claude-in-Chrome extension was not connected, so this used a separate headless Chrome over the DevTools protocol.
+- Failures found and fixed: "Is my application approved?" and "Can I apply?" wrongly matched an unrelated FAQ entry (stricter match rule, now regression tests); a synonym collision ("listing" -> "list"); "co-op"/"coop" counted as different words; Download faq.txt hidden in a collapsed list; top bar cramped at 1000px.
+
+**Known limits and risks**
+- Unanswered questions and coordinator additions are per browser (localStorage), so the coordinator will not see questions asked on students' devices. Needs a shared store (IPP-18).
+- Keyword matching can miss rewordings (it answers "I don't know yet" rather than guess). "Will I get money?" has no FAQ entry, so the correct answer is "I don't know yet".
+- Not tested: real phone/tablet, Safari/Firefox, screen reader, a Botpress mode.
+
+**Recommended next step**
+Decide whether to push (publishes to the public GitHub Pages site), then re-run the live check with a fresh page load. If the team wants Approach A, a team member creates the Botpress bot (steps in docs/assistant.md) and the embed URLs can be wired in as an optional mode.
+
 ## 2026-11-17: shared synthetic seed integration
 
 - Integrated the newer remote redesign and Employer Applicants work before applying the shared data change; preserved Overview, activity, journey, filters/sort, cache stamping and applicant projections.

@@ -10,8 +10,10 @@
   'use strict';
 
   const Store = window.IPPStore;
+  const Faq = window.IPPFaq;
   const { h, icon, orgTile, avatar, timeEl, refreshRelativeTimes } = window.IPPUI;
   let store;
+  let faq; // internship assistant: approved FAQ, unanswered questions, coordinator approvals
   const { OPPORTUNITY_STATUS, PLACEMENT_STATUS, WORK_MODES, LIMITS } = Store;
 
   const DEFAULT_ROUTE = 'overview'; // set to 'student' to open on the Student view instead
@@ -24,7 +26,8 @@
     { id: 'student', label: 'Student', short: 'Student', hint: '3 · Browse and apply', icon: 'cap' },
     { id: 'faculty', label: 'Faculty Reviewer', short: 'Faculty', hint: '4 · View applications', icon: 'book' },
   ];
-  const ROUTES = [OVERVIEW, ...ROLES];
+  const ASSISTANT = { id: 'assistant', label: 'Internship Assistant', short: 'Assistant', hint: 'FAQ answers only', icon: 'chat' };
+  const ROUTES = [OVERVIEW, ...ROLES, ASSISTANT];
   const ACTIVITY_ICON = { employer: 'briefcase', admin: 'shield', student: 'cap', faculty: 'book', system: 'reset' };
   const STUDENT_TABS = [
     { id: 'opportunities', label: 'Opportunities', icon: 'search' },
@@ -35,7 +38,11 @@
     { id: 'submit', label: 'Opportunities', icon: 'briefcase' },
     { id: 'applicants', label: 'Applicants', icon: 'inbox' },
   ];
-  const ROLE_TABS = { student: STUDENT_TABS, employer: EMPLOYER_TABS };
+  const ADMIN_TABS = [
+    { id: 'review', label: 'Opportunities', icon: 'inbox' },
+    { id: 'faq', label: 'Assistant FAQ', icon: 'chat' },
+  ];
+  const ROLE_TABS = { student: STUDENT_TABS, employer: EMPLOYER_TABS, admin: ADMIN_TABS };
 
   // Fictional organizations, used by "Fill sample data" so repeated demos do not repeat one listing.
   const SAMPLE_DRAFTS = [
@@ -96,6 +103,12 @@
     prevStats: {},
     enter: false, // true on route changes: play the entrance animation
     batch: false,
+    chat: null, // assistant conversation: kept in memory only, never saved
+    faqLoading: false,
+    faqError: '',
+    faqDraft: { section: '', question: '', answer: '' },
+    faqErrors: {},
+    faqMessage: '',
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -202,7 +215,7 @@
   }
 
   function field(spec) {
-    const { id, name, label, value, error, hint, required, multiline, options, maxlength, counter } = spec;
+    const { id, name, label, value, error, hint, required, multiline, options, maxlength, counter, list, datalist } = spec;
     const describedBy = [error ? `${id}-error` : null, hint ? `${id}-hint` : null].filter(Boolean).join(' ');
     const common = {
       id,
@@ -217,7 +230,7 @@
     } else if (multiline) {
       control = h('textarea', { ...common, rows: '4', maxlength }, value || '');
     } else {
-      control = h('input', { ...common, type: 'text', value: value || '', maxlength, autocomplete: 'off' });
+      control = h('input', { ...common, type: 'text', value: value || '', maxlength, autocomplete: 'off', list: list || null });
     }
     return h(
       'div',
@@ -229,6 +242,7 @@
         counter && h('span', { class: 'counter', id: `${id}-count`, 'aria-hidden': 'true' }, `${(value || '').length} / ${maxlength}`),
       ),
       control,
+      datalist && h('datalist', { id: list }, datalist.map((item) => h('option', { value: item }))),
       hint && h('p', { id: `${id}-hint`, class: 'hint' }, hint),
       error && h('p', { id: `${id}-error`, class: 'error' }, error),
     );
@@ -356,6 +370,7 @@
             { class: 'hero-actions' },
             h('a', { class: 'btn btn-light', href: '#employer' }, 'Start the demo', icon('arrow', 16)),
             h('a', { class: 'btn btn-outline-light', href: '#student' }, 'Browse as a student'),
+            h('a', { class: 'btn btn-outline-light', href: '#assistant' }, icon('chat', 16), 'Ask the Internship Assistant'),
           ),
         },
       ),
@@ -479,6 +494,7 @@
 
   function setTab(id, moveFocus) {
     ui.tab = id;
+    if (needsFaq()) ensureFaq();
     document.querySelectorAll('#view [role="tab"]').forEach((button) => {
       const selected = button.id === `tab-${id}`;
       button.setAttribute('aria-selected', String(selected));
@@ -1090,21 +1106,26 @@
         )
       : emptyState('checkCircle', 'Nothing approved yet', 'Approved opportunities are listed here once published to students.');
 
+    const faqCounts = faq.counts();
     return h(
       'div',
       null,
       hero('University Administrator view', 'University Administrator', 'Review submitted opportunities and approve them for students. Rejection and return for revision are deferred.', { icon: 'shield' }),
-      stats(
-        [
-          { key: 'pending', label: 'Pending review', value: pending.length, note: 'Waiting for your decision', icon: 'clock' },
-          { key: 'published', label: 'Published', value: approved.length, note: 'Includes closed listings; only open listings reach students', icon: 'checkCircle' },
-        ],
-        'two',
-      ),
-      h('div', { class: 'section-head' }, h('h2', { id: 'queue-heading', tabindex: '-1' }, 'Review queue')),
-      queue,
-      h('div', { class: 'section-head' }, h('h2', null, 'Published opportunities')),
-      approvedList,
+      tabBar(ADMIN_TABS, 'Administrator sections', { faq: faqCounts.unanswered + faqCounts.pending }),
+      tabPanel('review', [
+        stats(
+          [
+            { key: 'pending', label: 'Pending review', value: pending.length, note: 'Waiting for your decision', icon: 'clock' },
+            { key: 'published', label: 'Published', value: approved.length, note: 'Includes closed listings; only open listings reach students', icon: 'checkCircle' },
+          ],
+          'two',
+        ),
+        h('div', { class: 'section-head' }, h('h2', { id: 'queue-heading', tabindex: '-1' }, 'Review queue')),
+        queue,
+        h('div', { class: 'section-head' }, h('h2', null, 'Published opportunities')),
+        approvedList,
+      ]),
+      tabPanel('faq', faqAdminPanel()),
     );
   }
 
@@ -1171,9 +1192,407 @@
     );
   }
 
+  // ---------- Internship Assistant (FAQ chatbot) ----------
+
+  const PROTOTYPE_BANNER = 'Prototype. Synthetic data. Not official university policy.';
+  const blankFaqDraft = () => ({ section: '', question: '', answer: '' });
+
+  /** Loads the approved FAQ file the first time the assistant or the coordinator's FAQ tab is opened. */
+  function ensureFaq() {
+    if (faq.isLoaded() || ui.faqLoading) return;
+    ui.faqLoading = true;
+    ui.faqError = '';
+    fetch(new URL('data/faq.txt', document.baseURI), { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error('FAQ request failed: ' + response.status);
+        return response.text();
+      })
+      .then((text) => {
+        const parsed = Faq.parseFaq(text);
+        if (parsed.entries.length === 0) throw new Error('The FAQ file has no valid entries.');
+        ui.faqLoading = false;
+        faq.setBase(parsed.entries); // notifies the subscriber, which renders
+      })
+      .catch(() => {
+        ui.faqLoading = false;
+        ui.faqError = 'Could not load the approved FAQ. Check your connection and try again.';
+        render();
+      });
+  }
+
+  const needsFaq = () => ui.route === 'assistant' || (ui.route === 'admin' && ui.tab === 'faq');
+
+  function faqUnavailable() {
+    if (ui.faqError) {
+      return h(
+        'div',
+        { class: 'card', role: 'alert' },
+        h('p', { class: 'error' }, ui.faqError),
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'btn',
+            onClick: () => {
+              ui.faqError = '';
+              ensureFaq();
+              render();
+            },
+          },
+          'Retry loading the FAQ',
+        ),
+      );
+    }
+    return h('p', { class: 'muted', role: 'status' }, 'Loading the approved FAQ…');
+  }
+
+  function chatMessages() {
+    if (!ui.chat) {
+      ui.chat = [
+        {
+          role: 'bot',
+          kind: 'greeting',
+          text: 'Hi! Ask me about placements, grading, employer submissions, review or applying. I only answer from the approved FAQ, and I will say so when I do not know.',
+        },
+      ];
+    }
+    return ui.chat;
+  }
+
+  function messageElement(message) {
+    if (message.role === 'user') {
+      return h('div', { class: 'msg msg-user' }, h('div', { class: 'msg-bubble' }, h('span', { class: 'sr-only' }, 'You asked: '), message.text));
+    }
+    return h(
+      'div',
+      { class: `msg msg-bot${message.kind === 'unknown' ? ' is-unknown' : ''}` },
+      h('span', { class: 'avatar tone-0', 'aria-hidden': 'true' }, icon('chat', 16)),
+      h(
+        'div',
+        { class: 'msg-bubble' },
+        h('span', { class: 'sr-only' }, 'Assistant: '),
+        h('p', null, message.text),
+        message.source &&
+          h(
+            'p',
+            { class: 'msg-source' },
+            icon('book', 14),
+            h('strong', null, 'Source: '),
+            `FAQ · ${message.source.section}`,
+            h('span', { class: 'muted' }, ` · “${message.source.question}”${message.source.origin === 'coordinator' ? ' (added by the coordinator)' : ''}`),
+          ),
+        message.kind === 'unknown' && h('p', { class: 'msg-note' }, icon('inbox', 14), 'Saved in the coordinator’s list of unanswered questions.'),
+      ),
+    );
+  }
+
+  function assistantView() {
+    const ready = faq.isLoaded();
+    return h(
+      'div',
+      null,
+      hero(
+        'Internship Assistant',
+        'Ask the Internship Assistant',
+        'Ask in your own words. Answers come only from the approved FAQ. If the answer is not there, the assistant says so and notes your question for the coordinator.',
+        { icon: 'chat' },
+      ),
+      h('p', { class: 'proto-banner', role: 'note' }, icon('alert', 18), h('strong', null, PROTOTYPE_BANNER)),
+      h(
+        'section',
+        { class: 'card chat', 'aria-labelledby': 'chat-title' },
+        h('h2', { class: 'card-title', id: 'chat-title' }, icon('chat', 18), 'Conversation'),
+        h(
+          'div',
+          { id: 'chat-log', class: 'chat-log', role: 'log', 'aria-live': 'polite', 'aria-label': 'Conversation with the Internship Assistant', tabindex: '0' },
+          chatMessages().map(messageElement),
+        ),
+        ready
+          ? h(
+              'div',
+              { class: 'suggestions' },
+              h('p', { class: 'suggestions-label' }, 'Try asking:'),
+              h(
+                'div',
+                { class: 'suggestion-list' },
+                faq
+                  .approved()
+                  .slice(0, 8)
+                  .map((entry) => h('button', { type: 'button', class: 'suggestion', onClick: () => askAssistant(entry.question) }, entry.question)),
+              ),
+            )
+          : faqUnavailable(),
+        h(
+          'p',
+          { id: 'chat-privacy', class: 'privacy-reminder' },
+          icon('lock', 14),
+          "Please don't type personal information (names, email addresses, phone numbers or ID numbers). Questions the assistant can't answer are saved, as typed, for the coordinator.",
+        ),
+        h(
+          'form',
+          { id: 'chat-form', class: 'chat-form', novalidate: true, onSubmit: onAsk },
+          h('label', { for: 'chat-input', class: 'sr-only' }, 'Your question'),
+          h('input', {
+            id: 'chat-input',
+            type: 'text',
+            name: 'question',
+            maxlength: Faq.LIMITS.ask,
+            autocomplete: 'off',
+            placeholder: 'Ask a question, for example “Can I intern remotely?”',
+            'aria-describedby': 'chat-privacy',
+            disabled: !ready,
+          }),
+          h('button', { type: 'submit', class: 'btn', disabled: !ready }, icon('send', 16), 'Send'),
+        ),
+      ),
+      h(
+        'p',
+        { class: 'muted' },
+        'Answers are copied word for word from the approved FAQ and show their FAQ section as the source. This is a keyword matcher, not a language model, so it can miss a rewording; when that happens it says "I don\'t know yet" instead of guessing.',
+      ),
+    );
+  }
+
+  function onAsk(event) {
+    event.preventDefault();
+    askAssistant($('#chat-input').value);
+  }
+
+  function askAssistant(text) {
+    const typed = String(text ?? '').trim();
+    if (!typed) {
+      const input = $('#chat-input');
+      if (input) input.focus();
+      return;
+    }
+    const result = act(() => faq.ask(typed));
+    const messages = chatMessages();
+    // A message that looks like personal information is never echoed back or stored.
+    messages.push({ role: 'user', text: result.kind === 'pii' ? '(message withheld: it looked like personal information)' : typed });
+    messages.push({ role: 'bot', kind: result.kind, text: result.reply, source: result.source });
+    if (messages.length > 60) messages.splice(0, messages.length - 60);
+    ui.focusId = 'chat-input';
+    render();
+  }
+
+  // ---------- coordinator: unanswered questions and FAQ approval (Administrator view, "Assistant FAQ" tab) ----------
+
+  function faqAdminPanel() {
+    const unanswered = faq.openUnanswered();
+    const pending = faq.pending();
+    const ready = faq.isLoaded();
+
+    const unansweredRow = (item) =>
+      h(
+        'li',
+        { class: 'status-row' },
+        h('span', { class: 'act-icon act-system' }, icon('help', 16)),
+        h(
+          'div',
+          { class: 'body' },
+          h('div', { class: 'row-head' }, h('p', { class: 'row-title' }, item.question), item.count > 1 && chip(`Asked ${item.count} times`, 'neutral')),
+          h('p', { class: 'muted' }, 'Last asked ', timeEl(item.last_asked_at)),
+          h(
+            'div',
+            { class: 'row-actions' },
+            h('button', { type: 'button', class: 'btn btn-sm', onClick: () => draftFromQuestion(item) }, 'Write an answer', h('span', { class: 'sr-only' }, ` for “${item.question}”`)),
+            h('button', { type: 'button', class: 'btn btn-quiet btn-sm', onClick: () => dismissQuestion(item) }, 'Dismiss', h('span', { class: 'sr-only' }, ` “${item.question}”`)),
+          ),
+        ),
+      );
+
+    const pendingCard = (entry) =>
+      h(
+        'article',
+        { class: `card${ui.fresh.has(entry.id) ? ' is-new' : ''}` },
+        h('div', { class: 'card-top' }, chip(entry.section, 'neutral'), h('span', { class: 'idtag' }, entry.id)),
+        h('h3', null, entry.question),
+        h('p', { class: 'desc' }, entry.answer),
+        h('p', { class: 'muted' }, 'Added ', timeEl(entry.created_at)),
+        h(
+          'div',
+          { class: 'opp-foot' },
+          chip('Pending', 'pending', 'clock'),
+          h(
+            'div',
+            { class: 'row-actions' },
+            h('button', { type: 'button', class: 'btn btn-sm', onClick: () => approveFaq(entry) }, icon('check', 16), 'Approve', h('span', { class: 'sr-only' }, ` ${entry.id}`)),
+            h('button', { type: 'button', class: 'btn btn-quiet btn-sm', onClick: () => discardFaq(entry) }, 'Discard', h('span', { class: 'sr-only' }, ` ${entry.id}`)),
+          ),
+        ),
+      );
+
+    const form = h(
+      'form',
+      { id: 'faq-form', class: 'card form', novalidate: true, onSubmit: onFaqAdd, onInput: onFaqInput },
+      h('h2', { class: 'card-title' }, icon('plus', 18), 'Add an FAQ entry', chip('Coordinator approval required', 'pending', 'lock')),
+      h('p', { class: 'hint' }, 'Use plain language and no personal information. The entry is saved as Pending and the assistant does not use it until it is approved below.'),
+      ui.faqMessage && h('div', { id: 'faq-form-error', class: 'error-summary', role: 'alert', tabindex: '-1' }, ui.faqMessage),
+      field({
+        id: 'faq-section',
+        name: 'section',
+        label: 'Section',
+        value: ui.faqDraft.section,
+        error: ui.faqErrors.section,
+        required: true,
+        maxlength: Faq.LIMITS.section,
+        list: 'faq-sections',
+        datalist: ready ? faq.sections() : [],
+        hint: 'Choose an existing section or type a new one.',
+      }),
+      field({ id: 'faq-question', name: 'question', label: 'Question', value: ui.faqDraft.question, error: ui.faqErrors.question, required: true, maxlength: Faq.LIMITS.question }),
+      field({ id: 'faq-answer', name: 'answer', label: 'Answer', value: ui.faqDraft.answer, error: ui.faqErrors.answer, required: true, multiline: true, maxlength: Faq.LIMITS.answer, counter: true }),
+      h('div', { class: 'form-actions' }, h('button', { type: 'submit', class: 'btn' }, icon('send', 16), 'Submit for coordinator approval')),
+    );
+
+    return [
+      h('p', { class: 'notice' }, icon('info', 18), 'Coordinator approval required. New entries stay Pending, and the assistant only ever answers from approved entries.'),
+      h('div', { class: 'section-head' }, h('h2', { id: 'unanswered-heading', class: 'card-title', tabindex: '-1' }, icon('help', 18), `Unanswered questions (${unanswered.length})`)),
+      unanswered.length
+        ? h('div', { class: 'card' }, h('ul', { class: 'status-list' }, unanswered.map(unansweredRow)))
+        : emptyState('checkCircle', 'No unanswered questions', 'Questions the assistant cannot answer appear here, exactly as typed, so the coordinator can write an answer.'),
+      form,
+      h(
+        'div',
+        { class: 'section-head' },
+        h('h2', { id: 'pending-heading', class: 'card-title', tabindex: '-1' }, icon('clock', 18), `Pending entries (${pending.length})`, chip('Coordinator approval required', 'pending')),
+      ),
+      pending.length ? h('div', { class: 'grid-2' }, pending.map(pendingCard)) : emptyState('inbox', 'No pending entries', 'Entries added above wait here for approval.', null, true),
+      ready ? approvedFaq(faq.approved()) : faqUnavailable(),
+    ];
+  }
+
+  function approvedFaq(entries) {
+    const groups = new Map();
+    for (const entry of entries) {
+      if (!groups.has(entry.section)) groups.set(entry.section, []);
+      groups.get(entry.section).push(entry);
+    }
+    return h(
+      'div',
+      { class: 'stack' },
+      h(
+        'div',
+        { class: 'section-head' },
+        h('h2', { class: 'card-title' }, icon('book', 18), `Approved FAQ (${entries.length})`),
+        h('button', { type: 'button', class: 'btn btn-quiet btn-sm', onClick: exportFaq }, icon('download', 16), 'Download faq.txt'),
+      ),
+      h(
+      'details',
+      { class: 'card faq-approved' },
+      h('summary', null, 'Show what the assistant can answer'),
+      h(
+        'div',
+        { class: 'faq-groups' },
+        [...groups].map(([section, list]) =>
+          h(
+            'section',
+            { class: 'faq-group' },
+            h('h3', null, section),
+            h(
+              'ul',
+              null,
+              list.map((entry) =>
+                h(
+                  'li',
+                  null,
+                  h('p', { class: 'row-title' }, entry.question),
+                  h('p', { class: 'muted' }, entry.answer),
+                  h('span', { class: 'idtag' }, `${entry.id} · ${entry.origin === 'coordinator' ? 'added by coordinator' : 'faq.txt'}`),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      h('p', { class: 'hint' }, 'Download faq.txt is the file to upload as a chatbot Knowledge Base. Entries approved here exist only in this browser until the file in the repository is replaced.'),
+      ),
+    );
+  }
+
+  function draftFromQuestion(item) {
+    ui.faqDraft = { section: '', question: item.question.slice(0, Faq.LIMITS.question), answer: '' };
+    ui.faqErrors = {};
+    ui.faqMessage = '';
+    ui.focusId = 'faq-section';
+    render();
+  }
+
+  function dismissQuestion(item) {
+    act(() => faq.dismissUnanswered(item.id));
+    ui.focusId = 'unanswered-heading';
+    render();
+  }
+
+  function onFaqInput(event) {
+    const name = event.target.getAttribute('name');
+    if (!name || !(name in ui.faqDraft)) return;
+    ui.faqDraft[name] = event.target.value;
+    if (name === 'answer') {
+      const counter = $('#faq-answer-count');
+      if (counter) counter.textContent = `${event.target.value.length} / ${Faq.LIMITS.answer}`;
+    }
+  }
+
+  function onFaqAdd(event) {
+    event.preventDefault();
+    const result = act(() => faq.addEntry(ui.faqDraft));
+    if (!result.ok) {
+      ui.faqErrors = result.errors;
+      ui.faqMessage = result.message;
+      const firstInvalid = ['section', 'question', 'answer'].find((name) => result.errors[name]);
+      ui.focusId = `faq-${firstInvalid}`;
+      render();
+      return;
+    }
+    ui.faqDraft = blankFaqDraft();
+    ui.faqErrors = {};
+    ui.faqMessage = '';
+    ui.fresh = new Set([result.entry.id]);
+    ui.focusId = 'pending-heading';
+    showToast(`${result.entry.id} added as Pending. The coordinator must approve it before the assistant can use it.`);
+    render();
+  }
+
+  function approveFaq(entry) {
+    ui.fresh = new Set([entry.id]);
+    ui.focusId = 'pending-heading';
+    const result = act(() => faq.approve(entry.id));
+    if (!result.ok) {
+      ui.fresh = new Set();
+      showToast(result.message, { error: true });
+      render();
+      return;
+    }
+    const covered = result.resolved ? ` ${result.resolved} unanswered question${result.resolved === 1 ? ' is' : 's are'} now covered.` : '';
+    showToast(`${entry.id} approved. The assistant can now answer it.${covered}`, { link: { href: '#assistant', text: 'Next: ask the assistant' } });
+    render();
+  }
+
+  function discardFaq(entry) {
+    const result = act(() => faq.discard(entry.id));
+    ui.focusId = 'pending-heading';
+    showToast(result.ok ? `${entry.id} discarded.` : result.message, { error: !result.ok });
+    render();
+  }
+
+  function exportFaq() {
+    try {
+      const url = URL.createObjectURL(new Blob([faq.exportText()], { type: 'text/plain;charset=utf-8' }));
+      const link = h('a', { href: url, download: 'faq.txt' });
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Downloaded faq.txt with the approved entries.');
+    } catch (error) {
+      showToast('This browser could not create the file.', { error: true });
+    }
+  }
+
   // ---------- chrome: navigation, top bar, render loop ----------
 
-  const VIEWS = { overview: overviewView, student: studentView, employer: employerView, admin: adminView, faculty: facultyView };
+  const VIEWS = { overview: overviewView, student: studentView, employer: employerView, admin: adminView, faculty: facultyView, assistant: assistantView };
 
   function persona(routeId) {
     switch (routeId) {
@@ -1189,6 +1608,8 @@
         const faculty = store.getFaculty();
         return { name: faculty.display_name, detail: `${faculty.faculty_id} · Faculty` };
       }
+      case 'assistant':
+        return { name: 'Internship Assistant', detail: 'Answers from the approved FAQ' };
       default:
         return { name: 'Demo overview', detail: 'Choose a role to begin' };
     }
@@ -1199,9 +1620,11 @@
     $('#crumb-current').textContent = current.label;
     const who = persona(ui.route);
     $('#persona').replaceChildren(
-      ui.route === 'overview' ? h('span', { class: 'avatar tone-0', 'aria-hidden': 'true' }, icon('layers', 16)) : avatar(who.name),
+      ui.route === 'overview' || ui.route === 'assistant'
+        ? h('span', { class: 'avatar tone-0', 'aria-hidden': 'true' }, icon(ui.route === 'assistant' ? 'chat' : 'layers', 16))
+        : avatar(who.name),
       h('span', { class: 'persona-text' }, h('span', { class: 'persona-name' }, who.name), h('span', { class: 'persona-detail' }, who.detail)),
-      h('span', { class: 'sim-tag', title: 'There is no real sign-in; roles are switched from the sidebar.' }, ui.route === 'overview' ? 'Demo' : 'Simulated'),
+      h('span', { class: 'sim-tag', title: 'There is no real sign-in; roles are switched from the sidebar.' }, ui.route === 'overview' ? 'Demo' : ui.route === 'assistant' ? 'Prototype' : 'Simulated'),
     );
   }
 
@@ -1214,10 +1637,15 @@
       view.classList.add('view-enter');
       ui.enter = false;
     }
-    $('#workspace').classList.toggle('no-rail', ui.route === 'overview');
-    $('#rail').replaceChildren(...(ui.route === 'overview' ? [] : [journeyCard(false), activityCard(6)]));
+    const wide = ui.route === 'overview' || ui.route === 'assistant'; // these pages have no journey/activity rail
+    $('#workspace').classList.toggle('no-rail', wide);
+    $('#rail').replaceChildren(...(wide ? [] : [journeyCard(false), activityCard(6)]));
     renderTopbar();
     if (ui.route === 'student') fillResults();
+    if (ui.route === 'assistant') {
+      const log = $('#chat-log');
+      if (log) log.scrollTop = log.scrollHeight;
+    }
     $('#storage-warning').hidden = store.isPersistent();
     ui.fresh = new Set();
     ui.activityPrimed = true;
@@ -1244,7 +1672,7 @@
           h('span', { class: 'nav-hint' }, item.hint),
         ),
       );
-    $('#role-nav').replaceChildren(link(OVERVIEW), h('p', { class: 'nav-group' }, 'Demo roles'), ...ROLES.map(link));
+    $('#role-nav').replaceChildren(link(OVERVIEW), h('p', { class: 'nav-group' }, 'Demo roles'), ...ROLES.map(link), h('p', { class: 'nav-group' }, 'Help'), link(ASSISTANT));
   }
 
   function updateNav() {
@@ -1263,6 +1691,7 @@
     ui.route = next;
     const tabs = ROLE_TABS[next];
     ui.tab = tabs ? (tabs.some((tab) => tab.id === tabId) ? tabId : tabs[0].id) : null;
+    if (needsFaq()) ensureFaq();
     updateNav();
     if (changed || initial) {
       if (changed) clearToast();
@@ -1299,7 +1728,14 @@
       ui.studentId = store.listStudents()[0].student_id;
       ui.dialogFocusId = 'page-title';
       resetDialog.close();
-      act(() => store.reset());
+      ui.chat = null;
+      ui.faqDraft = blankFaqDraft();
+      ui.faqErrors = {};
+      ui.faqMessage = '';
+      act(() => {
+        store.reset();
+        faq.reset();
+      });
       showToast('Demo data reset to the initial synthetic records.');
       render();
     });
@@ -1316,6 +1752,10 @@
   }
 
   function init() {
+    faq = Faq.createFaqStore(Store.browserStorage());
+    faq.subscribe(() => {
+      if (!ui.batch) render();
+    });
     buildNav();
     wireDialogs();
     store.subscribe(() => {
@@ -1324,6 +1764,7 @@
     window.addEventListener('hashchange', () => route(false));
     window.addEventListener('storage', (event) => {
       if (event.key === null || event.key === Store.STORAGE_KEY) store.refresh();
+      if (event.key === null || event.key === Faq.STORAGE_KEY) faq.refresh();
     });
     setInterval(() => refreshRelativeTimes(), 15000);
     route(true);

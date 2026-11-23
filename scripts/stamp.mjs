@@ -12,7 +12,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
-export const ASSETS = ['styles.css', 'src/store.js', 'src/ui.js', 'src/app.js'];
+export const ASSETS = ['styles.css', 'src/store.js', 'src/ui.js', 'src/faq.js', 'src/app.js'];
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

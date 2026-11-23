@@ -77,6 +77,13 @@
       ['circle', { cx: 12, cy: 12, r: 3 }],
     ],
     layers: [['path', { d: 'm12 3 9 5-9 5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5' }]],
+    chat: [['path', { d: 'M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' }]],
+    plus: [['path', { d: 'M12 5v14M5 12h14' }]],
+    download: [['path', { d: 'M12 3v12M7 10l5 5 5-5M4 21h16' }]],
+    help: [
+      ['circle', { cx: 12, cy: 12, r: 9 }],
+      ['path', { d: 'M9.5 9.2a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01' }],
+    ],
   };
 
   const PALETTE_SIZE = 6; // tone-0 … tone-5 are defined in styles.css
