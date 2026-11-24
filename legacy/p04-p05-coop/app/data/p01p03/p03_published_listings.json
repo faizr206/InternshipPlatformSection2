@@ -1,0 +1,121 @@
+[
+  {
+    "opportunity_id": "OP-028",
+    "version": 2,
+    "submission_version": 2,
+    "employer_name": "Emirates Group",
+    "title": "Aviation Analytics Intern",
+    "sector": "aviation",
+    "location": "Dubai",
+    "work_mode": "on-site",
+    "description": "Support the analytics team with SQL queries, Jira ticket tracking and dashboards on flight operations data.",
+    "start_date": "2027-02-01",
+    "end_date": "2027-05-31",
+    "required_skills": [
+      "SK-SQL",
+      "SK-JIRA"
+    ],
+    "desirable_skills": [
+      "SK-VIZ"
+    ],
+    "publication_status": "published",
+    "listing_status": "open",
+    "supervisor_name": "R. Khan (synthetic)",
+    "supervisor_contact": "supervisor.op028@example.com"
+  },
+  {
+    "opportunity_id": "OP-031",
+    "version": 1,
+    "submission_version": 1,
+    "employer_name": "Desert Grid Energy (fictional)",
+    "title": "Energy Data Intern",
+    "sector": "energy",
+    "location": "Abu Dhabi",
+    "work_mode": "on-site",
+    "description": "Clean and analyse energy grid data in Python and SQL, and prepare weekly Excel summaries.",
+    "start_date": "2027-02-01",
+    "end_date": "2027-05-31",
+    "required_skills": [
+      "SK-PY",
+      "SK-SQL"
+    ],
+    "desirable_skills": [
+      "SK-EXCEL"
+    ],
+    "publication_status": "published",
+    "listing_status": "open",
+    "supervisor_name": "A. Saleh (synthetic)",
+    "supervisor_contact": "supervisor.op031@example.com"
+  },
+  {
+    "opportunity_id": "OP-034",
+    "version": 1,
+    "submission_version": 1,
+    "employer_name": "Oasis Ventures (fictional startup)",
+    "title": "Product Design Intern",
+    "sector": "technology",
+    "location": "Abu Dhabi",
+    "work_mode": "hybrid",
+    "description": "Design app screens in Figma for an early-stage startup and help with user research and launch content.",
+    "start_date": "2027-01-15",
+    "end_date": "2027-05-15",
+    "required_skills": [
+      "SK-FIGMA"
+    ],
+    "desirable_skills": [
+      "SK-COMM",
+      "SK-DMKT"
+    ],
+    "publication_status": "published",
+    "listing_status": "open",
+    "supervisor_name": "L. Park (synthetic)",
+    "supervisor_contact": "supervisor.op034@example.com"
+  },
+  {
+    "opportunity_id": "OP-036",
+    "version": 1,
+    "submission_version": 1,
+    "employer_name": "Falcon Analytics (fictional)",
+    "title": "BI Dashboard Intern",
+    "sector": "finance",
+    "location": "Dubai",
+    "work_mode": "on-site",
+    "description": "Build BI dashboards in Tableau or Power BI and maintain Excel reporting for the finance team.",
+    "start_date": "2027-02-01",
+    "end_date": "2027-06-30",
+    "required_skills": [
+      "SK-VIZ",
+      "SK-EXCEL"
+    ],
+    "desirable_skills": [
+      "SK-SQL"
+    ],
+    "publication_status": "published",
+    "listing_status": "closed",
+    "supervisor_name": "M. Ortiz (synthetic)",
+    "supervisor_contact": "supervisor.op036@example.com"
+  },
+  {
+    "opportunity_id": "OP-039",
+    "version": 1,
+    "submission_version": 1,
+    "employer_name": "Gulf Health Data Office (fictional government)",
+    "title": "Health Data Intern",
+    "sector": "health",
+    "location": "Abu Dhabi",
+    "work_mode": "on-site",
+    "description": "Assist with health data quality checks in Python and simple visual reports.",
+    "start_date": null,
+    "end_date": null,
+    "required_skills": [
+      "SK-PY"
+    ],
+    "desirable_skills": [
+      "SK-VIZ"
+    ],
+    "publication_status": "unpublished",
+    "listing_status": "open",
+    "supervisor_name": "S. Rahman (synthetic)",
+    "supervisor_contact": "supervisor.op039@example.com"
+  }
+]

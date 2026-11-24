@@ -1,0 +1,125 @@
+[
+  {
+    "student_id": "COOP-B001",
+    "profile_version": 2,
+    "profile_status": "submitted",
+    "display_name": "Layla Hassan",
+    "interests": [
+      "aviation",
+      "analytics"
+    ],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-06-30",
+    "skills": [
+      {
+        "skill_id": "SK-SQL",
+        "evidence_status": "reviewed",
+        "reviewed_by": "Maya (learning reviewer)",
+        "reviewed_at": "2026-11-10",
+        "evidence_id": "E-SQL-01"
+      },
+      {
+        "skill_id": "SK-JIRA",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      },
+      {
+        "skill_id": "SK-VIZ",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      }
+    ]
+  },
+  {
+    "student_id": "COOP-B002",
+    "profile_version": 1,
+    "profile_status": "submitted",
+    "display_name": "Arjun Mehta",
+    "interests": [
+      "energy",
+      "data engineering"
+    ],
+    "availability_start": "2027-02-01",
+    "availability_end": "2027-05-31",
+    "skills": [
+      {
+        "skill_id": "SK-PY",
+        "evidence_status": "reviewed",
+        "reviewed_by": "Maya (learning reviewer)",
+        "reviewed_at": "2026-11-09",
+        "evidence_id": "E-PY-02"
+      },
+      {
+        "skill_id": "SK-SQL",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      },
+      {
+        "skill_id": "SK-EXCEL",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      }
+    ]
+  },
+  {
+    "student_id": "COOP-B003",
+    "profile_version": 1,
+    "profile_status": "submitted",
+    "display_name": "Mei Chen",
+    "interests": [
+      "product design",
+      "startups"
+    ],
+    "availability_start": "2027-01-15",
+    "availability_end": "2027-06-15",
+    "skills": [
+      {
+        "skill_id": "SK-FIGMA",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      },
+      {
+        "skill_id": "SK-COMM",
+        "evidence_status": "reviewed",
+        "reviewed_by": "Maya (learning reviewer)",
+        "reviewed_at": "2026-11-08",
+        "evidence_id": "E-COMM-03"
+      },
+      {
+        "skill_id": "SK-DMKT",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      }
+    ]
+  },
+  {
+    "student_id": "COOP-B004",
+    "profile_version": 1,
+    "profile_status": "submitted",
+    "display_name": "Noor Al Hashimi",
+    "interests": [],
+    "availability_start": null,
+    "availability_end": null,
+    "skills": [
+      {
+        "skill_id": "SK-EXCEL",
+        "evidence_status": "self_declared",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "evidence_id": null
+      }
+    ]
+  }
+]
