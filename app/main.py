@@ -7,16 +7,16 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from app import db
+from app import db, live_jobs
 from app.ai import AI_METHOD_VERSION, insights, relevance_scores, statement_draft, term_matches
 from app.matching import RULES, is_eligible_listing, recommend
 
 # Active = an application that blocks a duplicate for the same student+opportunity
 # (agreed active statuses, see docs/data-dictionary.md). Drafts, Declined, Offer declined
 # and Withdrawn are not active.
-ACTIVE_STATUSES = ("Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted")
+ACTIVE_STATUSES = ("Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed", "Offered", "Offer accepted")
 
 # Employer transition matrix (P04-04, extended for offers in P04-05). Declined is
 # terminal and can never be followed by an offer (P04-04 AC2).
@@ -24,18 +24,23 @@ DECISION_TRANSITIONS = {
     "Submitted": {"Under review"},
     "Under review": {"Shortlisted", "Declined"},
     "Shortlisted": {"Offered", "Declined"},
+    "Interview completed": {"Offered", "Declined"},
+    "Interview scheduled": {"Declined"},
 }
 EMPLOYER_ACTIONS = {"Under review": "Under review", "Shortlisted": "Shortlisted",
                     "Declined": "Declined", "Offer": "Offered"}
 
 # P04-07: the agreed withdrawable states.
-WITHDRAWABLE = ("Submitted", "Under review", "Shortlisted")
+WITHDRAWABLE = ("Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed")
 
 NEXT_ACTIONS = {
     "Draft": "Finish the statement and submit while the listing is open",
     "Submitted": "Await employer review",
     "Under review": "Await employer decision (shortlist or decline)",
-    "Shortlisted": "Await employer offer",
+    "Shortlisted": "Await interview invitation or employer offer",
+    "Interview rescheduled": "Attend the interview at the updated time",
+    "Interview scheduled": "Attend the interview at the scheduled time",
+    "Interview completed": "Await employer decision",
     "Declined": "Browse other opportunities or address the decline reason",
     "Offered": "Accept or decline the offer",
     "Offer accepted": "Await university confirmation (this is not yet a placement)",
@@ -149,6 +154,8 @@ def application_dict(conn, row) -> dict:
     )]
     student = get_student(conn, d["student_id"])
     d["student_name"] = student["display_name"] if student else d["student_id"]
+    interview = conn.execute("SELECT * FROM interviews WHERE application_id = ?", (d["application_id"],)).fetchone()
+    d["interview"] = dict(interview) if interview else None
     opp = get_opportunity(conn, d["opportunity_id"])
     d["opportunity_title"] = opp["title"] if opp else d["opportunity_id"]
     d["employer_name"] = opp.get("employer_name") if opp else None
@@ -207,6 +214,20 @@ def list_skills():
 @app.get("/api/rules")
 def read_rules():
     return RULES
+
+
+@app.get("/api/external-opportunities")
+def external_opportunities():
+    return live_jobs.catalogue()
+
+
+@app.get("/api/data-sources")
+def data_sources():
+    return {
+        "profiles": {"mode": db.data_source(), "label": "P01/P03 team export" if db.data_source() != "fixtures" else "Test fixtures"},
+        "listings": {"mode": "public-feed", "label": "Canonical + Remotive"},
+        "team_connections": {"P01": "file export", "P03": "file export", "P06": "file export", "P07": "mock outbox"},
+    }
 
 
 # --- Students (P01 stand-in + correction revisions) ---
@@ -545,6 +566,7 @@ def decide(application_id: str, body: DecisionIn):
                                  f"Allowed: {', '.join(EMPLOYER_ACTIONS)}.")
     target = EMPLOYER_ACTIONS[body.action]
     with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = _load_application(conn, application_id)
         current = row["application_status"]
         if target == "Offered" and current == "Declined":
@@ -559,6 +581,67 @@ def decide(application_id: str, body: DecisionIn):
         _add_event(conn, application_id, target, "employer",
                    (body.actor_name or "Employer reviewer (simulated)").strip() or "Employer reviewer (simulated)",
                    (body.reason or "").strip() or None, ts)
+        return application_dict(conn, _load_application(conn, application_id))
+
+
+# Interview is optional for legacy shortlisted applications. Once scheduled, it must
+# be completed before an offer. P04 owns scheduling; no P01/P03/P06/P07 payload changes.
+class InterviewIn(BaseModel):
+    starts_at: datetime
+    duration_minutes: int = Field(default=30, ge=15, le=240)
+    mode: str = "online"
+    location: str = Field(min_length=1, max_length=500)
+    actor_role: str
+    actor_name: str | None = None
+
+
+class InterviewCompleteIn(BaseModel):
+    actor_role: str
+    actor_name: str | None = None
+
+
+@app.post("/api/applications/{application_id}/interview", status_code=201)
+def schedule_interview(application_id: str, body: InterviewIn):
+    require_role(body.actor_role, "employer", "schedule an interview")
+    if body.starts_at.utcoffset() is None:
+        raise HTTPException(422, "Include the interview time zone.")
+    if body.starts_at <= datetime.now(timezone.utc):
+        raise HTTPException(422, "Choose a future interview time.")
+    if body.mode not in ("online", "in-person") or not body.location.strip():
+        raise HTTPException(422, "Choose online or in-person and provide a meeting link or location.")
+    actor = (body.actor_name or "Employer reviewer").strip() or "Employer reviewer"
+    with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = _load_application(conn, application_id)
+        if row["application_status"] not in ("Shortlisted", "Interview scheduled"):
+            raise HTTPException(409, "Only shortlisted applications or scheduled interviews can be scheduled.")
+        rescheduled = row["application_status"] == "Interview scheduled"
+        ts = _set_status(conn, application_id, "Interview scheduled")
+        conn.execute("INSERT OR REPLACE INTO interviews VALUES (?, ?, ?, ?, ?, ?, ?, NULL)",
+                     (application_id, body.starts_at.astimezone(timezone.utc).isoformat(),
+                      body.duration_minutes, body.mode, body.location.strip(), actor, ts))
+        details = f"{body.starts_at.isoformat()} · {body.duration_minutes} min · {body.mode} · {body.location.strip()}"
+        _add_event(conn, application_id, "Interview rescheduled" if rescheduled else "Interview scheduled",
+                   "employer", actor, details, ts)
+        return application_dict(conn, _load_application(conn, application_id))
+
+
+@app.post("/api/applications/{application_id}/interview/complete")
+def complete_interview(application_id: str, body: InterviewCompleteIn):
+    require_role(body.actor_role, "employer", "complete an interview")
+    with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = _load_application(conn, application_id)
+        interview = conn.execute("SELECT * FROM interviews WHERE application_id = ?", (application_id,)).fetchone()
+        if row["application_status"] != "Interview scheduled" or not interview:
+            raise HTTPException(409, "This application has no scheduled interview to complete.")
+        if datetime.fromisoformat(interview["starts_at"]) > datetime.now(timezone.utc):
+            raise HTTPException(409, "The interview has not started yet.")
+        ts = _set_status(conn, application_id, "Interview completed")
+        conn.execute("UPDATE interviews SET completed_at = ?, updated_at = ? WHERE application_id = ?",
+                     (ts, ts, application_id))
+        _add_event(conn, application_id, "Interview completed", "employer",
+                   (body.actor_name or "Employer reviewer").strip(), None, ts)
         return application_dict(conn, _load_application(conn, application_id))
 
 
@@ -577,6 +660,7 @@ def respond_to_offer(application_id: str, body: OfferResponseIn):
     if body.response not in ("accept", "decline"):
         raise HTTPException(422, "Response must be 'accept' or 'decline'.")
     with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = _load_application(conn, application_id)
         current = row["application_status"]
         if current != "Offered":
@@ -610,6 +694,7 @@ def withdraw(application_id: str, body: WithdrawIn):
     Cancelling in the UI makes no call, so the record is unchanged (AC2)."""
     require_role(body.actor_role, "student", "withdraw an application")
     with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = _load_application(conn, application_id)
         current = row["application_status"]
         if row["placement_status"] == PLACEMENT_CONFIRMED:
@@ -655,6 +740,7 @@ def confirm_placement(application_id: str, body: ConfirmPlacementIn):
     duplicate handoff (P04-06 AC2)."""
     require_role(body.actor_role, "coordinator", "confirm a placement")
     with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = _load_application(conn, application_id)
         existing = conn.execute("SELECT * FROM placements WHERE application_id = ?", (application_id,)).fetchone()
         if existing:

@@ -38,6 +38,19 @@ def data_source() -> str:
 log = logging.getLogger(__name__)
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS external_job_cache (
+    cache_key TEXT PRIMARY KEY, checked_at TEXT NOT NULL, payload TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS interviews (
+    application_id TEXT PRIMARY KEY,
+    starts_at TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    mode TEXT NOT NULL,
+    location TEXT NOT NULL,
+    scheduled_by TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT
+);
 CREATE TABLE IF NOT EXISTS students (
     student_id TEXT PRIMARY KEY,
     profile_version INTEGER NOT NULL,

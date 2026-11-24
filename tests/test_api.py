@@ -301,7 +301,7 @@ def test_decision_flow_records_actor_timestamp_and_next_action(client):
     for event in history[1:]:
         assert event["actor_role"] == "employer" and event["actor_name"]
         assert event["created_at"] and event["next_action"]
-    assert history[-1]["next_action"] == "Await employer offer"
+    assert history[-1]["next_action"] == "Await interview invitation or employer offer"
 
     # Active statuses now block duplicates across the whole lifecycle
     assert submit(client).status_code == 409

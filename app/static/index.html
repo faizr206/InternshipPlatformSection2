@@ -468,6 +468,20 @@
   </div>
 </dialog>
 
+<dialog id="interviewDialog" aria-labelledby="interviewTitle">
+  <h2 id="interviewTitle">Schedule interview</h2>
+  <p class="muted" id="interviewContext"></p>
+  <div class="interview-fields">
+    <label>Interview time<input type="datetime-local" id="interviewTime" required></label>
+    <label>Duration<select id="interviewDuration"><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
+    <label>Format<select id="interviewMode"><option value="online">Online</option><option value="in-person">In person</option></select></label>
+    <label>Meeting link or location<input type="text" id="interviewLocation" maxlength="500" required placeholder="Meeting link or office address"></label>
+  </div>
+  <p class="muted" id="interviewZone"></p>
+  <p class="msg" role="alert" id="interviewMsg"></p>
+  <div class="actions"><button class="btn" id="interviewSave" type="button">Save interview</button><button class="btn secondary" id="interviewCancel" type="button">Cancel</button></div>
+</dialog>
+
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -477,8 +491,8 @@ const state = {
 };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
-const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted"];
-const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted"];
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed"];
 const json = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 const ROLES = {
@@ -610,7 +624,7 @@ function oppSummary(o) {
 
 function statusChip(status) {
   const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
-                Shortlisted: "s-shortlisted", Declined: "s-declined", Offered: "s-offered",
+                Shortlisted: "s-shortlisted", "Interview scheduled":"s-review", "Interview completed":"s-review", Declined: "s-declined", Offered: "s-offered",
                 "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
   return `<span class="chip ${cls}">${esc(status)}</span>`;
 }
@@ -1106,10 +1120,12 @@ function employerCard(a) {
     "Submitted": `<button class="btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
     "Under review": `<button class="btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
                      <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
-    "Shortlisted": `<button class="btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+    "Shortlisted": `<button class="btn small" type="button" data-interview="${esc(a.application_id)}">Schedule interview</button><button class="btn small secondary" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
                     <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview scheduled": `<button class="btn small secondary" data-interview="${esc(a.application_id)}">Reschedule</button><button class="btn small" data-complete-interview="${esc(a.application_id)}">Mark completed</button><button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview completed": `<button class="btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button><button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
     "Offered": `<span class="muted">Waiting for the student to accept or decline.</span>`,
-    "Offer accepted": `<span class="muted">Student accepted — the university coordinator confirms the placement.</span>`,
+    "Offer accepted": `<span class="muted">Accepted — the university coordinator confirms the placement.</span>`,
     "Declined": `<span class="muted">Final — an offer can never follow a decline.</span>`,
   }[a.application_status] || "";
   return `
@@ -1123,6 +1139,7 @@ function employerCard(a) {
       <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
     </div>
     <p class="muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
+    ${interviewDetails(a)}
     ${historyHtml(a)}
     <div class="actions">${actions}</div>
   </article>`;
@@ -1130,7 +1147,7 @@ function employerCard(a) {
 
 function renderEmployer() {
   const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
-                  [["Shortlisted"], "Shortlisted"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Shortlisted"], "Shortlisted"], [["Interview scheduled", "Interview completed"], "Interviews"], [["Offered", "Offer accepted"], "Offers"],
                   [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
   $("queue").innerHTML = groups.map(([statuses, label]) => {
     const rows = state.allApps.filter(a => statuses.includes(a.application_status));
@@ -1390,6 +1407,72 @@ function renderFaculty() {
     }).join("")}
   </table></div>` : `<div class="empty">No applications yet.</div>`;
 }
+
+function interviewDetails(a) {
+  if (!a.interview) return "";
+  const i = a.interview;
+  const when = new Date(i.starts_at).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `<section class="interview-info" aria-label="Interview details">
+    <strong>${a.application_status === "Interview completed" ? "Interview completed" : "Interview"}</strong>
+    <p>${esc(when)} · ${i.duration_minutes} min · ${esc(zone)}</p>
+    <p>${i.mode === "online" ? "Online" : "In person"} · ${esc(i.location)}</p>
+  </section>`;
+}
+
+let interviewApp;
+document.addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.interview) {
+    interviewApp = button.dataset.interview;
+    const application = state.allApps.find(a=>a.application_id===interviewApp);
+    const existing = application.interview;
+    $("interviewTitle").textContent = existing ? "Reschedule interview" : "Schedule interview";
+    $("interviewContext").textContent = `${application.student_name} · ${application.opportunity_title}`;
+    const when = existing ? new Date(existing.starts_at) : new Date(Date.now()+86400000);
+    const offset = when.getTimezoneOffset()*60000;
+    $("interviewTime").value = new Date(when.getTime()-offset).toISOString().slice(0,16);
+    $("interviewZone").textContent = `Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+    $("interviewDuration").value = existing?.duration_minutes || 30;
+    $("interviewMode").value = existing?.mode || "online";
+    $("interviewLocation").value = existing?.location || "";
+    setMsg("interviewMsg","");
+    $("interviewDialog").showModal();
+  }
+  if (button.dataset.completeInterview) {
+    button.disabled = true;
+    try {
+      await api(`/api/applications/${button.dataset.completeInterview}/interview/complete`,json({actor_role:"employer"}));
+      await loadAllApps();
+    } catch (error) {
+      setMsg("employerMsg",error.message,"error");
+      button.disabled = false;
+    }
+  }
+});
+
+$("interviewCancel").onclick = () => $("interviewDialog").close();
+$("interviewSave").onclick = async () => {
+  const time = $("interviewTime");
+  const location = $("interviewLocation");
+  if (!time.reportValidity() || !location.reportValidity()) return;
+  const save = $("interviewSave");
+  save.disabled = true;
+  try {
+    await api(`/api/applications/${interviewApp}/interview`, json({
+      starts_at:new Date(time.value).toISOString(),
+      duration_minutes:Number($("interviewDuration").value),
+      mode:$("interviewMode").value, location:location.value, actor_role:"employer"
+    }));
+    $("interviewDialog").close();
+    await loadAllApps();
+  } catch (error) {
+    setMsg("interviewMsg",error.message,"error");
+  } finally {
+    save.disabled = false;
+  }
+};
 
 // ================= Wiring =================
 async function refreshLists() {

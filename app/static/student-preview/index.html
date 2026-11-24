@@ -20,9 +20,9 @@
   #coop-preview { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--paper); color: var(--text); }
 
   #coop-preview .shell { display: grid; grid-template-columns: 252px 1fr; min-height: 0; }
-  
 
-  
+
+
   #coop-preview .sidebar { background: var(--navy); color: #d7e1ec; display: flex; flex-direction: column; }
   #coop-preview .brand { padding: 18px 18px 14px; border-bottom: 1px solid rgba(217, 186, 130, .35); }
   #coop-preview .brand h1 { color: #fff; font-size: 17px; margin: 0 0 2px; }
@@ -36,7 +36,7 @@
   #coop-preview .cp-nav small { display: block; color: #9db1c6; font-weight: 400; font-size: 11.5px; margin-left: 27px; }
   #coop-preview .side-note { padding: 14px 16px; font-size: 12px; color: #9db1c6; border-top: 1px solid rgba(217, 186, 130, .25); }
 
-  
+
   #coop-preview .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px;
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   #coop-preview .topbar h2 { margin: 0; font-size: 18px; color: var(--navy); }
@@ -50,9 +50,9 @@
   #coop-preview .content { padding: 20px 22px 40px; }
   #coop-preview .view[hidden] { display: none; }
 
-  
+
   #coop-preview .student-grid { display: grid; grid-template-columns: 305px 1fr; gap: 20px; }
-  
+
   #coop-preview .cp-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
   #coop-preview h2 { font-size: 16px; margin: 0 0 4px; }
   #coop-preview h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
@@ -86,8 +86,8 @@
   #coop-preview .cp-toolbar input, #coop-preview .cp-toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
 
   #coop-preview .cp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
-  #coop-preview .cp-card.conflict { border-left: 4px solid var(--bad); }
-  #coop-preview .cp-card.unknown { border-left: 4px solid var(--gold); }
+  #coop-preview .cp-card.conflict { border-color: var(--bad); }
+  #coop-preview .cp-card.unknown { border-color: var(--gold); }
   #coop-preview .cp-card.highlight { outline: 3px solid var(--gold); }
   #coop-preview .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
   #coop-preview .card-head .cp-title { font-weight: 600; font-size: 15.5px; }
@@ -569,6 +569,74 @@
 #coop-preview .stack-title {margin:26px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
 #coop-preview .role-banner {margin:0 0 14px;padding:8px 12px;border-radius:10px;background:var(--blue-soft);color:var(--blue);font-size:13px}
 #coop-preview .ai-summary {margin:6px 0;font-weight:500}
+#coop-preview .public-header {grid-template-columns:auto minmax(0,1fr) auto;gap:18px}
+#coop-preview .public-links {gap:19px}
+#coop-preview .demo-role {font-size:11px;gap:4px}
+#coop-preview .demo-role select {max-width:145px}
+#coop-preview .header-end {gap:8px}
+#coop-preview .feature-home {min-height:225px;grid-template-columns:1.15fr 1fr}
+#coop-preview .feature-home h2 {font-size:40px;letter-spacing:-.035em}
+#coop-preview .feature-content {padding:28px 30px}
+#coop-preview .feature-home .feature-photo {max-height:260px}
+#coop-preview .feature-secondary {min-height:0;grid-template-columns:1fr auto;background:transparent;border-radius:0;margin-bottom:18px}
+#coop-preview .feature-secondary .feature-content {padding:3px 0}
+#coop-preview .feature-secondary h2 {font-size:30px;letter-spacing:-.03em}
+#coop-preview .feature-secondary .feature-photo {width:145px;height:90px;min-height:0;aspect-ratio:auto;border-radius:12px}
+#coop-preview .feature-secondary p {max-width:48ch;font-size:14px}
+#coop-preview .content::before {opacity:.33;max-height:320px}
+#coop-preview .basic-search {grid-template-columns:minmax(170px,1.5fr) minmax(110px,1fr) minmax(120px,1fr) auto}
+#coop-preview .source-tools {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+#coop-preview .source-tools label {display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+#coop-preview .source-tools select {background:#fffdf8;border:1px solid #baad96;border-radius:8px;padding:8px;color:var(--navy);max-width:100%;font:inherit}
+#coop-preview #feedStatus {font-size:12px;color:#4d5d6e;max-width:75ch;margin:0 0 15px;overflow-wrap:anywhere}
+#coop-preview .role-banner {background:transparent;border:0;padding:0;font-size:14px;max-width:65ch}
+#coop-preview .page-title {font:650 30px/1.15 system-ui,sans-serif;letter-spacing:-.03em}
+#coop-preview .stack-title {font-size:14px;text-transform:none;letter-spacing:0}
+#coop-preview .meta {overflow-wrap:anywhere}
+#coop-preview .listing-content .cp-title {font-size:18px;line-height:1.3}
+#coop-preview .listing-content .actions a {text-decoration:none}
+#coop-preview .listing-content .source-line {font-size:12px;color:#4d5d6e;margin:9px 0 0}
+#coop-preview .listing-content .source-line a {color:var(--blue)}
+#coop-preview .live-art {height:90px;background:#e9eff4;display:flex;align-items:center;justify-content:space-between;padding:20px;color:var(--blue);font-size:14px}
+#coop-preview .live-art strong {font-size:20px;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#coop-preview .why {grid-template-columns:1fr;gap:14px}
+#coop-preview .ai {background:#f5f2eb;border:1px solid var(--border);font-size:13px}
+#coop-preview .history-tools {margin-top:12px}
+#coop-preview .empty {border:1px solid var(--border);background:#fffaf0;color:#4d5d6e}
+#coop-preview .review-empty {padding:15px 0;color:#4d5d6e}
+#coop-preview .interview-info {margin:13px 0;padding:12px 14px;border-radius:10px;background:#e7eff6;border:1px solid #bdcbd7}
+#coop-preview .interview-info p {margin:3px 0;overflow-wrap:anywhere}
+#coop-preview .interview-info strong {font-weight:650}
+#coop-preview .s-interview {color:var(--blue);background:#e7eff6}
+#coop-preview dialog {width:min(480px,calc(100% - 26px));max-height:calc(100dvh - 30px);overflow:auto}
+#coop-preview .chat-embed {max-height:calc(100dvh - 200px)}
+#coop-preview .content table {min-width:580px}
+#coop-preview .interview-fields {display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+#coop-preview .interview-fields label:first-child,#coop-preview .interview-fields label:last-child {grid-column:1/-1}
+#coop-preview .role-picker-label {display:none}
+#coop-preview #tab-recs > .cp-toolbar {margin:0}
+@media(max-width:850px) {
+ #coop-preview .public-header {display:flex;flex-wrap:wrap}
+ #coop-preview .header-end {margin-left:auto}
+ #coop-preview .public-links {order:3;width:100%;justify-content:flex-start;flex-wrap:wrap}
+ #coop-preview .feature-home h2 {font-size:34px}
+ #coop-preview .advanced-filters {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:630px) {
+ #coop-preview .feature-home {grid-template-columns:1fr}
+ #coop-preview .feature-home .feature-photo {display:none}
+ #coop-preview .feature-home {min-height:0}
+ #coop-preview .feature-secondary .feature-photo {display:none}
+ #coop-preview .feature-secondary {display:block}
+ #coop-preview .feature-content {padding:23px}
+ #coop-preview .feature-home h2 {font-size:31px}
+ #coop-preview .public-links {gap:13px}
+ #coop-preview .advanced-filters {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #coop-preview .basic-search {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #coop-preview .demo-role select {max-width:135px}
+ #coop-preview .source-tools label {flex-wrap:wrap}
+}
+
 </style>
 <div id="coop-preview">
 
@@ -585,11 +653,11 @@
         <button type="button" data-tab="guide">Career guide</button>
       </nav>
       <div class="header-end">
-      <label class="demo-role">Demo as
-        <select id="demoRole" aria-label="Simulated role (no login)">
-          <option value="student">Student · Layla</option>
-          <option value="employer">Employer reviewer</option>
-          <option value="coordinator">University coordinator</option>
+      <label class="demo-role"><span class="role-picker-label">Workspace</span>
+        <select id="demoRole" aria-label="Test workspace role">
+          <option value="student">Student</option>
+          <option value="employer">Employer</option>
+          <option value="coordinator">Coordinator</option>
           <option value="faculty">Faculty reviewer</option>
         </select></label>
       <button type="button" class="avatar-button" data-tab="profile" aria-label="Open Layla Hassan’s profile"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""></button>
@@ -608,12 +676,12 @@
 <dialog id="careerChat" class="career-chat" aria-labelledby="chatTitle">
   <div class="chat-header">
     <span class="robot-art robot-mini" aria-hidden="true"><span class="robot-antenna"></span><span class="robot-head"><span class="robot-visor"></span></span><span class="robot-body"></span></span>
-    <div><h2 id="chatTitle">Co-op assistant</h2><p>FAQ chatbot by Team P6/P7</p></div>
+    <div><h2 id="chatTitle">Co-op assistant</h2><p>Placement support</p></div>
     <button type="button" id="closeChat" class="chat-close" aria-label="Close co-op assistant">×</button>
   </div>
   <!-- Team P6/P7 owns the FAQ chatbot; their embed is loaded on first open. -->
   <iframe id="chatEmbed" class="chat-embed" title="IPP co-op assistant" data-src="https://lizhengxi25.github.io/waypoint/#/embed"></iframe>
-  <p class="chat-foot">Provided by Team P6/P7 (P06). Not loading?
+  <p class="chat-foot">Having trouble?
     <a href="https://lizhengxi25.github.io/waypoint/#/embed" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
 </dialog>
 
@@ -625,7 +693,7 @@
         <div class="student-grid">
 
           <section>
-            
+
             <div id="tab-recs">
               <header class="feature feature-home">
                 <div class="feature-content">
@@ -637,14 +705,16 @@
               </header>
               <div class="section-head"><h2>Your matches</h2><button class="inline-action" id="recommend" type="button">Refresh matches</button></div>
               <div class="cp-toolbar">
-                
+
                 <span class="msg" aria-live="polite" id="recMsg"></span>
               </div>
               <details class="rules"><summary>How matching works</summary><div class="cp-muted run-meta" id="recInfo" hidden></div><div id="rules"></div></details>
               <div id="recs"></div>
             </div>
 
-            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2><p>Explore internships, part-time work, and graduate roles. Listings are for practice.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
+            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2><p>Explore current roles and university placements.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
+<div class="source-tools"><label for="catalogueSource">Show<select id="catalogueSource"><option value="live">Live opportunities</option><option value="university">University listings</option></select></label></div>
+<p id="feedStatus" role="status">Loading live opportunities…</p>
 <form id="opportunitySearch" class="opportunity-search" aria-label="Search opportunities">
   <div class="basic-search">
     <label class="keyword-field" for="q">Search
@@ -669,7 +739,7 @@
     <button type="button" class="inline-action" id="clearFilters" hidden>Clear all</button>
   </div>
   <fieldset id="advancedFilters" class="advanced-filters" hidden aria-label="Advanced search filters">
-    <label for="jobType">Job type<select id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option></select></label>
+    <label for="jobType">Job type<select id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance</option></select></label>
     <label for="mode">Work mode
       <select id="mode">
         <option value="">Any mode</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option>
@@ -678,7 +748,7 @@
     <label for="sector">Sector
       <select id="sector"><option value="">Any sector</option></select>
     </label>
-    <label for="requiredSkill">Required skill
+    <label for="requiredSkill">Skill keyword
       <select id="requiredSkill"><option value="">Any skill</option></select>
     </label>
     <label for="startBy">Starts on or before
@@ -686,7 +756,7 @@
     </label>
     <p class="cp-muted filter-help" id="dateFilterHelp">Roles with unconfirmed dates are excluded when a start date is set.</p>
   </fieldset>
-  <p class="cp-muted filter-note" id="degreeNote" hidden>Degree levels are sample criteria for this preview.</p>
+  <p class="cp-muted filter-note" id="degreeNote" hidden>Degree criteria are shown only when supplied by the listing. Unspecified degrees are excluded by a degree filter.</p>
 </form>
 <div class="search-results-head">
   <h3 id="searchCount" aria-live="polite"></h3>
@@ -696,13 +766,13 @@
               <div id="opps"></div>
             </div>
 
-            
+
             <div id="tab-apps" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Applications</h2><p>Pick up a draft or check the status of an application.</p></div><img src="/student-preview/assets/e985c5a0af90f86b.webp" alt="" class="feature-photo"></header><div id="apps"></div></div>
             <div id="tab-saved" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Saved opportunities</h2><p>Keep track of the roles you want to come back to.</p></div><img src="/student-preview/assets/459af678c8771a45.webp" alt="" class="feature-photo"></header><div id="savedList"></div></div>
             <div id="tab-guide" hidden>
               <header class="feature feature-secondary"><div class="feature-content"><h2>Career guide</h2><p>See how your experience fits and what to check before applying.</p></div><img src="/student-preview/assets/e26fddd022106113.webp" alt="" class="feature-photo"></header>
               <div class="cp-panel advisor-panel">
-                
+
                 <div class="advisor-controls">
                   <label for="guideRole">Opportunity</label><select id="guideRole"></select>
                   <span id="guideMsg" class="msg" aria-live="polite"></span>
@@ -720,27 +790,24 @@
 
       <!-- ================= EMPLOYER ================= -->
       <section inert class="view" id="view-employer" hidden><h2 class="page-title">Application review</h2>
-        <p class="role-banner">Simulated role — no login. Each decision records the actor, time and a next action for
-          the student. A decline needs a reason; a shortlisted application can get an offer, never after a decline.</p>
+        <p class="role-banner">Review applications, arrange interviews, and send offers. Test workspace.</p>
         <span class="msg" aria-live="polite" id="employerMsg"></span>
         <div id="queue"></div>
       </section>
 
       <!-- ================= COORDINATOR ================= -->
       <section inert class="view" id="view-coordinator" hidden><h2 class="page-title">Placements, corrections &amp; matching</h2>
-        <p class="role-banner">Simulated university coordinator (COORD-01) — no login. Only the coordinator turns an
-          accepted offer into a placement; confirming creates one placement and one P07 handoff, and confirming again
-          creates neither.</p>
+        <p class="role-banner">Confirm accepted offers and manage profile correction requests. Test workspace.</p>
         <h2 class="stack-title">Accepted offers awaiting confirmation</h2>
         <span class="msg" aria-live="polite" id="plMsg"></span>
         <div id="awaiting"></div>
-        <h2 class="stack-title">Confirmed placements · P07 handoff (mock)</h2>
+        <h2 class="stack-title">Confirmed placements</h2>
         <div id="placements"></div>
         <span class="msg" aria-live="polite" id="crMsg"></span>
         <h2 class="stack-title">Correction requests</h2>
         <div id="corrections"></div>
 
-        <h2 class="stack-title">Matching runs (traceability)</h2>
+        <h2 class="stack-title">Matching history</h2>
         <div class="cp-toolbar">
           <label class="cp-muted">Student
             <select id="runsStudent" aria-label="Student for matching runs"></select>
@@ -754,16 +821,14 @@
 
       <!-- ================= FACULTY ================= -->
       <section inert class="view" id="view-faculty" hidden><h2 class="page-title">Skill evidence &amp; application records</h2>
-        <p class="role-banner">Simulated faculty reviewer (FAC-01) — no login. This button stands in for the real route:
-          P06 sends a review with outcome “demonstrated” to P01, P01 makes a new profile version, and we rematch.
-          Earlier recommendations keep their versions. Applications are read-only here.</p>
+        <p class="role-banner">Review skill evidence and update the student’s matches. Test workspace.</p>
         <h2 class="stack-title">Review skill evidence</h2>
         <div class="cp-card">
           <div class="inline-form">
             <label>Student <select id="evStudent"></select></label>
             <label>Skill <select id="evSkill"></select></label>
             <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
-            <button class="cp-btn" id="evReview" type="button">Mark demonstrated &amp; rematch (simulated)</button>
+            <button class="cp-btn" id="evReview" type="button">Approve evidence</button>
           </div>
           <p class="msg" id="evMsg"></p>
           <div id="evVersions"></div>
@@ -775,6 +840,20 @@
     </main>
   </div>
 </div>
+
+<dialog id="interviewDialog" aria-labelledby="interviewTitle">
+  <h2 id="interviewTitle">Schedule interview</h2>
+  <p class="cp-muted" id="interviewContext"></p>
+  <div class="interview-fields">
+    <label>Interview time<input type="datetime-local" id="interviewTime" required></label>
+    <label>Duration<select id="interviewDuration"><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
+    <label>Format<select id="interviewMode"><option value="online">Online</option><option value="in-person">In person</option></select></label>
+    <label>Meeting link or location<input type="text" id="interviewLocation" maxlength="500" required placeholder="Meeting link or office address"></label>
+  </div>
+  <p class="cp-muted" id="interviewZone"></p>
+  <p class="msg" role="alert" id="interviewMsg"></p>
+  <div class="actions"><button class="cp-btn" id="interviewSave" type="button">Save interview</button><button class="cp-btn secondary" id="interviewCancel" type="button">Cancel</button></div>
+</dialog>
 
 <!-- Apply / draft dialog -->
 <dialog id="applyDialog" aria-labelledby="applyTitle">
@@ -866,6 +945,7 @@ const root = document.getElementById("coop-preview");
 const visualAssets = {"OP-028": "/student-preview/assets/974facbb687552a3.webp", "OP-031": "/student-preview/assets/0a984719eef967cd.webp", "OP-032": "/student-preview/assets/e82d8abd3b648e7d.webp", "OP-033": "/student-preview/assets/8be8476f80cd742d.webp"};
 const rolePhotos = {"OP-101": {"image": "/student-preview/assets/93c7e737742d126e.webp", "alt": "Colleagues discussing ideas at a whiteboard"}, "OP-102": {"image": "/student-preview/assets/9695a56f9332df37.webp", "alt": "Server racks lining a data center corridor"}, "OP-103": {"image": "/student-preview/assets/0e564b1deb74fbce.webp", "alt": "Close-up of equipment in a server rack"}, "OP-104": {"image": "/student-preview/assets/463b05961dc7091c.webp", "alt": "Robotic arm in an engineering laboratory"}, "OP-105": {"image": "/student-preview/assets/1995f991d95cc999.webp", "alt": "Two colleagues examining analytics on a laptop"}, "OP-106": {"image": "/student-preview/assets/1bd991f661eca63f.webp", "alt": "Team discussing graphs and product data"}, "OP-107": {"image": "/student-preview/assets/78cac49c2d20d73c.webp", "alt": "Researchers reviewing materials together at a worktable"}, "OP-108": {"image": "/student-preview/assets/20aa104b05a87d20.webp", "alt": "Team reviewing charts and documentation at a table"}};
 function employerPhoto(o) {
+  if (o.external) return "";
   const photo = rolePhotos[o.opportunity_id];
   if (photo) return `<img class="employer-photo" loading="lazy" src="${photo.image}" alt="${esc(photo.alt)}">`;
   const url = visualAssets[o.visual || o.opportunity_id];
@@ -877,12 +957,9 @@ function employerPhoto(o) {
   return `<img class="employer-photo" loading="lazy" src="${url}" alt="${label}">`;
 }
 
-const demo = {"opportunities": [{"opportunity_id": "OP-101", "version": 1, "employer_name": "Microsoft", "title": "Applied AI Research Intern", "sector": "AI research", "location": "Cambridge", "country_code": "GB", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["masters", "doctorate"], "description": "Evaluate retrieval and reasoning in language models and document experimental results.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-102", "version": 1, "employer_name": "Amazon Web Services", "title": "Cloud Data Engineering Intern", "sector": "cloud engineering", "location": "Dubai", "country_code": "AE", "work_mode": "on-site", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Build data pipelines and validate data quality for analytics workflows.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-103", "version": 1, "employer_name": "Google", "title": "Machine Learning Engineer, Early Career", "sector": "machine learning", "location": "London", "country_code": "GB", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Build evaluation pipelines and monitor how machine learning models perform in production.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-104", "version": 1, "employer_name": "G42", "title": "Computer Vision Engineer, Graduate", "sector": "computer vision", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "full-time", "degree_levels": ["masters", "doctorate"], "description": "Prototype image models and measure their performance across varied environments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-105", "version": 1, "employer_name": "Presight", "title": "Data Science Intern", "sector": "analytics", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "internship", "degree_levels": ["bachelors", "masters"], "description": "Analyze time-series data and communicate model results through dashboards.", "required_skills": ["SK-PY", "SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-106", "version": 1, "employer_name": "Careem", "title": "Product Analytics Associate", "sector": "analytics", "location": "Dubai", "country_code": "AE", "work_mode": "hybrid", "job_type": "part-time", "degree_levels": ["bachelors", "masters"], "description": "Analyze product experiments and summarize user behavior for a product team.", "required_skills": ["SK-SQL"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-031"}, {"opportunity_id": "OP-107", "version": 1, "employer_name": "Technology Innovation Institute", "title": "Research Assistant, Arabic NLP", "sector": "AI research", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "on-site", "job_type": "part-time", "degree_levels": ["masters", "doctorate"], "description": "Help evaluate Arabic language datasets and reproduce multilingual model experiments.", "required_skills": ["SK-PY"], "desirable_skills": [], "start_date": "2027-02-01", "end_date": "2027-05-31", "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-033"}, {"opportunity_id": "OP-108", "version": 1, "employer_name": "e&", "title": "Responsible AI Analyst, Graduate", "sector": "AI governance", "location": "Abu Dhabi", "country_code": "AE", "work_mode": "hybrid", "job_type": "full-time", "degree_levels": ["bachelors", "masters"], "description": "Document model risks, review test results, and help maintain evaluation records.", "required_skills": ["SK-EXCEL"], "desirable_skills": [], "start_date": "2027-07-01", "end_date": null, "publication_status": "published", "listing_status": "open", "example": true, "visual": "OP-032"}]};  // catalogue-only example roles
-// Example roles (OP-101…) are catalogue-only samples: they are not P03 listings in the
-// backend, so they can be browsed and saved but not applied to. Everything else comes
-// from the real API (SQLite), including matching, applications, offers and placements.
-const exampleRoles = demo.opportunities.filter(o => o.example);
-let open = [...exampleRoles];
+// Public discovery and university application records have distinct source ownership.
+let universityCatalogue = [];
+let open = [];
 const records = { saved: {} };
 async function api(path, opts = {}) {
   // ngrok's free tier answers browser requests with an HTML warning page unless this header is present.
@@ -964,12 +1041,10 @@ const state = {
 };
 const skillName = id => state.skills[id] || id;
 const studentId = () => $("student").value;
-const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Offered", "Offer accepted"];
-const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted"];
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed"];
 
 async function opp(id) {
-  const example = exampleRoles.find(o => o.opportunity_id === id);
-  if (example) return state.opps[id] = example;
   if (!state.opps[id]) state.opps[id] = await api(`/api/opportunities/${id}`);
   return state.opps[id];
 }
@@ -1002,14 +1077,14 @@ function renderProfile(s) {
           ? `<span class="cp-chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
           : `<span class="cp-chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
       : `<span class="cp-chip warn">None listed</span>`}</div>
-    <p class="cp-muted">A check mark indicates reviewed skill evidence. Profile v${esc(s.profile_version)}.</p>
+    <p class="cp-muted">A check mark indicates reviewed skill evidence. Profile v${esc(s.profile_version)} · P01 team export.</p>
     <h3>Update availability</h3>
     <div class="inline-form">
       <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
       <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
       <button class="cp-btn small" type="button" id="avSave">Save &amp; refresh matches</button>
     </div>
-    <p class="cp-muted">Saving creates profile v${esc((s.profile_version || 0) + 1)} and a new matching run; earlier runs keep their versions.</p>
+    <p class="cp-muted">Your matches refresh when your availability changes.</p>
     <p class="msg" id="avMsg"></p>`;
   $("avSave").onclick = async () => {
     try {
@@ -1040,7 +1115,7 @@ function skillChips(o) {
 }
 
 function jobType(o) {
-  return {"internship":"Internship","part-time":"Part-time","full-time":"Full-time"}[o.job_type || "internship"];
+  return {"internship":"Internship","part-time":"Part-time","full-time":"Full-time",contract:"Contract",freelance:"Freelance"}[o.job_type] || "Job type not listed";
 }
 
 const employerMarks = {"Emirates Group": "/student-preview/assets/92c13fba445be9cf.png", "Microsoft": "/student-preview/assets/2d48b04349515dd0.png", "Amazon Web Services": "/student-preview/assets/b51716f9fbf3ebbb.png", "Google": "/student-preview/assets/a2b65d58d7ecf008.png", "Presight": "/student-preview/assets/d161dff3cb0bbb72.png", "Careem": "/student-preview/assets/7e4d62e931dab132.png", "Technology Innovation Institute": "/student-preview/assets/5662acabecca4e61.png", "e&": "/student-preview/assets/45308afe3d668a6b.png"};
@@ -1052,7 +1127,7 @@ function employerBadge(name) {
 }
 function oppSummary(o) {
   const location = o.location.toLowerCase() === o.work_mode.toLowerCase() ? "" : o.location;
-  return `<div class="cp-muted listing-company">${employerBadge(o.employer_name)}<span><strong>${esc(o.employer_name)}</strong><br>${[location, o.work_mode, jobType(o), o.example ? "Example role" : ""].filter(Boolean).map(esc).join(" · ")}</span></div>`;
+  return `<div class="cp-muted listing-company">${employerBadge(o.employer_name)}<span><strong>${esc(o.employer_name)}</strong><br>${[location, o.work_mode, jobType(o), o.external ? "" : "University listing"].filter(Boolean).map(esc).join(" · ")}</span></div>`;
 }
 
 function listingFacts(o) {
@@ -1064,7 +1139,7 @@ function listingFacts(o) {
 
 function statusChip(status) {
   const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
-                Shortlisted: "s-shortlisted", Declined: "s-declined", Offered: "s-offered",
+                Shortlisted: "s-shortlisted", "Interview scheduled":"s-interview", "Interview completed":"s-interview", Declined: "s-declined", Offered: "s-offered",
                 "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
   return `<span class="cp-chip ${cls}">${esc(status)}</span>`;
 }
@@ -1075,11 +1150,11 @@ function placementChip(p) {
 const gapSkill = g => (g.match(/\((SK-[A-Z]+)\)$/) || [])[1];
 
 function applyButton(o) {
-  if (o.example) return `<span class="cp-chip">Example role · not open for applications</span>`;
+  if (o.external) return `<a class="cp-btn" href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">View &amp; apply</a>`;
   const active = state.apps.find(a => a.opportunity_id === o.opportunity_id && ACTIVE.includes(a.application_status));
-  if (active) return `<span class="cp-chip ok">Applied · ${esc(active.application_id)}</span>`;
+  if (active) return `<span class="cp-chip ok">Applied</span>`;
   const draft = state.apps.find(a => a.opportunity_id === o.opportunity_id && a.application_status === "Draft");
-  if (draft) return `<button class="cp-btn gold" data-editdraft="${esc(draft.application_id)}">Resume draft · ${esc(draft.application_id)}</button>`;
+  if (draft) return `<button class="cp-btn gold" data-editdraft="${esc(draft.application_id)}">Resume draft</button>`;
   return `<button class="cp-btn" data-apply="${esc(o.opportunity_id)}">Apply</button>`;
 }
 
@@ -1182,8 +1257,8 @@ async function searchOpps() {
 
       <details class="fit-details"><summary>Role details &amp; requirements</summary>${listingFacts(o)}${degreeFact(o)}
         ${o.description ? `<p class="cp-muted desc">${esc(o.description)}</p>` : ""}
-        ${skillChips(o)}
-        <div class="meta"><span>${esc(o.opportunity_id)}</span><span>approved version v${esc(o.version)}</span><span>published · open</span></div>
+        ${o.external ? `<p class="cp-muted">${o.salary ? "Pay: "+esc(o.salary) : "Pay not specified"}</p><p class="source-line">Source: <a href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">${esc(o.source)}</a> · Apply on the provider’s website</p>` : skillChips(o)}
+        <details class="history-tools"><summary>Record information</summary><div class="meta"><span>${esc(o.opportunity_id)}</span><span>version ${esc(o.version)}</span></div></details>
       </details></div>
     </article>`;
   }).join("")
@@ -1309,15 +1384,14 @@ async function loadApps() {
         <div class="cp-muted company">${esc(opps[i].employer_name)}</div></div>
       <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
       <p class="cp-muted" style="margin:6px 0 0">Next: ${esc(a.history?.at(-1)?.next_action || "")}</p>
+      ${interviewDetails(a)}
       ${studentActions(a) ? `<div class="actions">${studentActions(a)}</div>` : ""}
       <details class="fit-details"><summary>Application details &amp; history</summary>
         <p class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.submitted_at)}</p>
         <p>${esc(a.statement || "No statement yet")}</p>
         ${historyHtml(a, true)}
       </details>
-    </article>`).join("") + `<p class="cp-muted">Accepting an offer is not a placement yet: the university confirms it.
-      You can withdraw while an application is Submitted, Under review or Shortlisted; an offer is declined instead.</p>
-      <span class="msg" id="appsMsg" aria-live="polite"></span>`;
+    </article>`).join("") + `<span class="msg" id="appsMsg" aria-live="polite"></span>`;
 }
 
 // ================= Apply / draft dialog =================
@@ -1444,9 +1518,9 @@ function renderGap(g) {
   $("gapTitle").textContent = `Prepare: ${g.skill_name}`;
   const act = g.activity;
   $("gapBody").innerHTML = `
-    <p class="cp-muted">Sent to P06: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
-      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}) · ${esc(g.gap_id)}</p>
-    ${act ? `<div class="p06"><span class="cp-chip accent">P06 · Team P6/P7</span>
+    <details><summary>Handoff details</summary><p class="cp-muted">Sent to P06: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
+      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}) · ${esc(g.gap_id)}</p></details>
+    ${act ? `<div class="p06"><span class="cp-chip accent">Preparation activity</span>
         ${act.status === "outline" ? `<span class="cp-chip warn">Outline — module not finished yet</span>` : ""}
         <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
         <div class="cp-muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
@@ -1513,8 +1587,10 @@ function employerCard(a) {
     "Submitted": `<button class="cp-btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
     "Under review": `<button class="cp-btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
                      <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
-    "Shortlisted": `<button class="cp-btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+    "Shortlisted": `<button class="cp-btn small" type="button" data-interview="${esc(a.application_id)}">Schedule interview</button><button class="cp-btn small secondary" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
                     <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview scheduled": `<button class="cp-btn small secondary" data-interview="${esc(a.application_id)}">Reschedule</button><button class="cp-btn small" data-complete-interview="${esc(a.application_id)}" ${new Date(a.interview?.starts_at) > new Date() ? 'disabled title="Available after the interview starts"' : ""}>Mark completed</button><button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview completed": `<button class="cp-btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button><button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
     "Offered": `<span class="cp-muted">Waiting for the student to accept or decline.</span>`,
     "Offer accepted": `<span class="cp-muted">Accepted — the university coordinator confirms the placement.</span>`,
     "Declined": `<span class="cp-muted">Final — an offer can never follow a decline.</span>`,
@@ -1530,6 +1606,7 @@ function employerCard(a) {
       <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
     </div>
     <p class="cp-muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
+    ${interviewDetails(a)}
     ${historyHtml(a)}
     <div class="actions">${actions}</div>
   </article>`;
@@ -1537,13 +1614,14 @@ function employerCard(a) {
 
 function renderEmployer() {
   const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
-                  [["Shortlisted"], "Shortlisted"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Shortlisted"], "Shortlisted"], [["Interview scheduled", "Interview completed"], "Interviews"], [["Offered", "Offer accepted"], "Offers"],
                   [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
-  $("queue").innerHTML = groups.map(([statuses, label]) => {
+  const activeGroups = groups.filter(([statuses])=>state.allApps.some(a=>statuses.includes(a.application_status)));
+  $("queue").innerHTML = activeGroups.map(([statuses, label]) => {
     const rows = state.allApps.filter(a => statuses.includes(a.application_status));
     return `<h3 class="stack-title">${label} (${rows.length})</h3>` +
       (rows.length ? rows.map(employerCard).join("") : `<div class="empty">Nothing here.</div>`);
-  }).join("");
+  }).join("") || `<div class="empty">Applications will appear here when a student submits.</div>`;
 }
 
 let declineCtx = null;
@@ -1863,19 +1941,31 @@ $("recommend").onclick = async () => {
 const countryCodes = ["AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS", "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE", "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP", "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS", "IT", "JE", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY", "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF", "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "YE", "YT", "ZA", "ZM", "ZW"];
 const regionNames = new Intl.DisplayNames(["en"], {type:"region"});
 const DEGREE_NAMES = {bachelors:"Bachelor’s", masters:"Master’s", doctorate:"Doctorate"};
-const listingDegrees = {
-  "OP-028":["bachelors","masters"],
-  "OP-031":["bachelors","masters","doctorate"],
-  "OP-033":["bachelors"]
-};
+const listingDegrees = {};
 const places = {"Dubai":"AE", "Abu Dhabi":"AE", "Sharjah":"AE"};
 const countryCode = o => o.country_code || places[o.location] || "unknown";
 const countryName = o => countryCode(o) === "unknown" ? "Country not listed" : regionNames.of(countryCode(o));
 const advancedFields = ["jobType","mode","sector","requiredSkill","startBy"];
 const allFilterFields = ["q","country","degree",...advancedFields];
-const listingLevels = o => o.degree_levels || listingDegrees[o.opportunity_id] || [];
+const listingLevels = o => o.degree_levels || [];
+function matchesCountry(o, selected) {
+  if (!o.external) return countryCode(o) === selected;
+  const location = o.location.toLowerCase();
+  const worldwide = /worldwide|anywhere in the world/.test(location);
+  if (selected === "unknown") return !worldwide && !countryCodes.some(code => explicitCountry(location, code));
+  if (worldwide) return true;
+  return explicitCountry(location, selected);
+}
+function explicitCountry(location, code) {
+  const aliases = {US:["usa","united states","us"], GB:["uk","united kingdom"], AE:["uae","united arab emirates"]};
+  const names = [regionNames.of(code).toLowerCase(), ...(aliases[code] || [])];
+  const parts = location.split(/[,;|/()]+/).map(part=>part.trim());
+  return names.some(name=>parts.includes(name) || location === name + " only");
+}
 
 function makeSearchOptions() {
+  const selected = Object.fromEntries(["country","sector","requiredSkill"].map(id=>[id,$(id).value]));
+  for (const id of ["country","sector","requiredSkill"]) $(id).innerHTML = `<option value="">${id === "country" ? "Any country" : id === "sector" ? "Any sector" : "Any skill"}</option>`;
   const represented = new Set(open.map(countryCode).filter(code=>code!=="unknown"));
   const orderCodes = codes => [...codes].sort((a,b)=>regionNames.of(a).localeCompare(regionNames.of(b)));
   const option = (value,label) => `<option value="${esc(value)}">${esc(label)}</option>`;
@@ -1885,8 +1975,9 @@ function makeSearchOptions() {
      <optgroup label="Other countries">${regionOptions(countryCodes.filter(code=>!represented.has(code)))}</optgroup>`);
   const sectors = [...new Set(open.map(o=>o.sector))].sort();
   $("sector").insertAdjacentHTML("beforeend", sectors.map(s=>option(s,s[0].toUpperCase()+s.slice(1))).join(""));
-  const required = [...new Set(open.flatMap(o=>o.required_skills))].sort((a,b)=>skillName(a).localeCompare(skillName(b)));
+  const required = [...new Set(open.flatMap(o=>[...o.required_skills,...(o.mentioned_skills || [])]))].sort((a,b)=>skillName(a).localeCompare(skillName(b)));
   $("requiredSkill").insertAdjacentHTML("beforeend", required.map(id=>option(id,skillName(id))).join(""));
+  for (const [id,value] of Object.entries(selected)) $(id).value = value;
 }
 
 function searchCatalogue() {
@@ -1897,15 +1988,16 @@ function searchCatalogue() {
   const sector = $("sector").value;
   const skill = $("requiredSkill").value;
   const date = $("startBy").value;
-  return open.filter(o=>{
+  const catalogue = $("catalogueSource").value === "live" ? liveCatalogue : universityCatalogue;
+  return catalogue.filter(o=>{
     const code = countryCode(o);
     const degreeLevels = listingLevels(o);
-    if (country && code!==country) return false;
+    if (country && !matchesCountry(o,country)) return false;
     if (degree && (degree==="unknown" ? degreeLevels.length>0 : !degreeLevels.includes(degree))) return false;
-    if ($("jobType").value && (o.job_type || "internship") !== $("jobType").value) return false;
+    if ($("jobType").value && o.job_type !== $("jobType").value) return false;
     if (mode && o.work_mode!==mode) return false;
     if (sector && o.sector!==sector) return false;
-    if (skill && !o.required_skills.includes(skill)) return false;
+    if (skill && ![...o.required_skills,...(o.mentioned_skills || [])].includes(skill)) return false;
     if (date && (!o.start_date || o.start_date>date)) return false;
     if (!words.length) return true;
     const territory = code==="AE" ? "UAE" : code==="unknown" ? "" : code;
@@ -1932,7 +2024,7 @@ function clearSearchFilters() {
 
 function degreeFact(o) {
   const degrees = listingLevels(o).map(level=>DEGREE_NAMES[level]).join(", ");
-  return `<p class="cp-muted degree-fact"><strong>Degree level</strong> ${degrees ? esc(degrees)+" · example criteria" : "Not listed"}</p>`;
+  return `<p class="cp-muted degree-fact"><strong>Degree level</strong> ${degrees ? esc(degrees) : "Not listed"}</p>`;
 }
 
 $("search").onclick = searchOpps;
@@ -2030,9 +2122,113 @@ window.addEventListener("resize",()=>{
   if (robotPosition) positionRobot(robotPosition.left,robotPosition.top);
 });
 
+let liveCatalogue = [];
+let liveFeed = {status:"loading", fetched_at:null};
+
+function renderFeedStatus() {
+  const university = $("catalogueSource").value === "university";
+  const label = $("feedStatus");
+  if (university) {
+    label.textContent = "University listings from the P03 team export. Internal applications are available for testing.";
+    return;
+  }
+  const date = liveFeed.fetched_at ? new Date(liveFeed.fetched_at).toLocaleString(undefined,
+    {dateStyle:"medium",timeStyle:"short"}) : "";
+  label.textContent = liveFeed.status === "loading" ? "Loading live opportunities…" :
+    liveFeed.status === "unavailable" ? "Live opportunities are unavailable. University listings are available in the source selector." :
+    `Sources: Canonical and Remotive · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
+}
+
+async function loadLiveCatalogue() {
+  try {
+    liveFeed = await api("/api/external-opportunities");
+    liveCatalogue = liveFeed.jobs;
+    for (const job of liveCatalogue) state.opps[job.opportunity_id] = job;
+  } catch {
+    liveFeed = {status:"unavailable", fetched_at:null};
+  }
+  open = [...universityCatalogue, ...liveCatalogue];
+  makeSearchOptions();
+  renderFeedStatus();
+  await searchOpps();
+  renderSaved();
+}
+
+$("catalogueSource").onchange = () => {
+  renderFeedStatus();
+  searchOpps();
+};
+
+function interviewDetails(a) {
+  if (!a.interview) return "";
+  const i = a.interview;
+  const when = new Date(i.starts_at).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `<section class="interview-info" aria-label="Interview details">
+    <strong>${a.application_status === "Interview completed" ? "Interview completed" : "Interview"}</strong>
+    <p>${esc(when)} · ${i.duration_minutes} min · ${esc(zone)}</p>
+    <p>${i.mode === "online" ? "Online" : "In person"} · ${esc(i.location)}</p>
+  </section>`;
+}
+
+let interviewApp;
+root.addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.interview) {
+    interviewApp = button.dataset.interview;
+    const application = state.allApps.find(a=>a.application_id===interviewApp);
+    const existing = application.interview;
+    $("interviewTitle").textContent = existing ? "Reschedule interview" : "Schedule interview";
+    $("interviewContext").textContent = `${application.student_name} · ${application.opportunity_title}`;
+    const when = existing ? new Date(existing.starts_at) : new Date(Date.now()+86400000);
+    const offset = when.getTimezoneOffset()*60000;
+    $("interviewTime").value = new Date(when.getTime()-offset).toISOString().slice(0,16);
+    $("interviewZone").textContent = `Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+    $("interviewDuration").value = existing?.duration_minutes || 30;
+    $("interviewMode").value = existing?.mode || "online";
+    $("interviewLocation").value = existing?.location || "";
+    setMsg("interviewMsg","");
+    $("interviewDialog").showModal();
+  }
+  if (button.dataset.completeInterview) {
+    button.disabled = true;
+    try {
+      await api(`/api/applications/${button.dataset.completeInterview}/interview/complete`,json({actor_role:"employer"}));
+      await loadAllApps();
+    } catch (error) {
+      setMsg("employerMsg",error.message,"error");
+      button.disabled = false;
+    }
+  }
+});
+
+$("interviewCancel").onclick = () => $("interviewDialog").close();
+$("interviewSave").onclick = async () => {
+  const time = $("interviewTime");
+  const location = $("interviewLocation");
+  if (!time.reportValidity() || !location.reportValidity()) return;
+  const save = $("interviewSave");
+  save.disabled = true;
+  try {
+    await api(`/api/applications/${interviewApp}/interview`, json({
+      starts_at:new Date(time.value).toISOString(),
+      duration_minutes:Number($("interviewDuration").value),
+      mode:$("interviewMode").value, location:location.value, actor_role:"employer"
+    }));
+    $("interviewDialog").close();
+    await loadAllApps();
+  } catch (error) {
+    setMsg("interviewMsg",error.message,"error");
+  } finally {
+    save.disabled = false;
+  }
+};
+
 (async () => {
   state.skills = await api("/api/skills");
-  open = [...(await api("/api/opportunities")), ...exampleRoles];
+  universityCatalogue = await api("/api/opportunities");
+  open = [...universityCatalogue];
   makeSearchOptions();
   renderRules(await api("/api/rules"));
   state.students = await api("/api/students");
@@ -2043,6 +2239,7 @@ window.addEventListener("resize",()=>{
   $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
   await onStudentChange();
   showTab("recs");
+  loadLiveCatalogue();
 })().catch(err => setMsg("recMsg", err.message, "error"));
 
 })();

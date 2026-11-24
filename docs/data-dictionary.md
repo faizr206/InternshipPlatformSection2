@@ -188,3 +188,28 @@ corrections stay *recorded* — applying them needs the live owning module (defe
 | GET `/api/students/{id}/skill-gaps`, `/api/p06/activities` | Gap handoffs; Team P6/P7's activity list | |
 | POST `/api/students/{id}/profile-updates` `{kind, actor_role, …, rematch?}` | `availability` (student) or `skill_evidence` (faculty) → new profile version + rematch | 403; 404; 422 missing/invalid values |
 | GET `/api/students/{id}/profile-versions` | Every profile version with its source | 404 |
+
+## Interview extension (P04)
+
+Application status additionally supports Interview scheduled and Interview
+completed. Both are active and withdrawable. The optional path is
+Shortlisted → Interview scheduled → Interview completed → Offered.
+Existing Shortlisted → Offered remains supported for callers without interviews.
+
+The additive interviews table stores one current schedule per application with
+starts_at (UTC), duration_minutes (15–240), mode (online/in-person), location,
+scheduled_by, updated_at, and nullable completed_at. Events retain earlier
+schedule details. The application response includes nullable interview.
+
+- POST /api/applications/{id}/interview takes starts_at, duration_minutes,
+  mode, location, actor_role, and optional actor_name. It schedules or
+  reschedules for the employer, returning 201. Naive/past times give 422,
+  disallowed statuses give 409, wrong roles give 403.
+- POST /api/applications/{id}/interview/complete takes actor_role and optional
+  actor_name. Only scheduled interviews whose start has passed can complete.
+- GET /api/external-opportunities returns jobs, source, status, fetched_at,
+  message. Status is current/stale/unavailable. External jobs use REM- IDs
+  and never enter internal applications or placements.
+- GET /api/data-sources describes file-export versus public-feed connections.
+
+See business-rules.md for source ownership and the proposed team review.

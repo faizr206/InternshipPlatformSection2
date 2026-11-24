@@ -53,13 +53,13 @@ Open http://127.0.0.1:8000. The API docs are at http://127.0.0.1:8000/docs.
 To reset the demo data, stop the server and delete `app.db`.
 
 ### The interface
-The main page (`/`) is the Coop design from Abdullah's student catalogue, now backed by the real
-API and SQLite. Use **Demo as** in the header to switch between the simulated roles (no login):
-Student (Layla), Employer reviewer, University coordinator and Faculty reviewer. The extra
-example roles in Explore (OP-101 to OP-108, e.g. Microsoft, Google) are catalogue samples only:
-they can be browsed and saved, not applied to. The earlier four-role layout is still at `/classic`.
-The robot button opens the **co-op assistant (FAQ chatbot) from Team P6/P7**, embedded from
-https://lizhengxi25.github.io/waypoint/#/embed. P06 owns it; P04/P05 own matching, not the chatbot.
+The main page uses the Coop design with live external discovery and the university
+application workflow. Explore's source selector switches between public live
+feeds and P03's team export. External applications open on the listing source. The header's
+workspace selector supports student, employer, coordinator, and faculty testing.
+These roles are simulated and have no login. The older interface remains at /classic.
+The robot opens Team P6/P7's co-op FAQ assistant from
+https://lizhengxi25.github.io/waypoint/#/embed.
 
 ### Public demo (ngrok)
 
@@ -177,3 +177,25 @@ never overwritten). A rematch then stores a new run; earlier runs stay queryable
 - **Deferred:** authentication, live P01/P03/P06/P07 interfaces, evaluation against the baseline
   (P05-08) and joint handoff verification (P04-08) in Sprint 4, applying P03-owned corrections,
   deployment.
+
+## Live discovery and interviews
+
+Explore now defaults to current technology/research advertisements from the
+Canonical’s public Greenhouse board and the Remotive public API. Every external listing links to its source; applications are
+completed on the provider's website. Results are cached for six hours. A failed
+refresh keeps the last successful feed with a stale label. Check each listing's
+location restrictions before applying from the UAE.
+
+Select **University listings** to test the P03 application workflow. Student
+profiles and approved listings still use the P01/P03 export because live team
+endpoints and credentials have not been supplied. Invented company sample jobs
+have been removed. Degree requirements remain unknown unless provided.
+
+Employers can schedule/reschedule an interview after shortlisting and mark it
+completed after its scheduled start. Students see the time in their local zone,
+format, duration, and meeting location. An offer after a scheduled interview
+requires completion. The existing direct shortlist-to-offer route remains
+compatible with previous callers.
+
+Business rules and proposed alignment with the teams are documented in
+[docs/business-rules.md](docs/business-rules.md). Team approval remains pending.
