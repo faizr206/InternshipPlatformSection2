@@ -12,7 +12,7 @@ An FAQ chatbot inside the IPP app for students, employers and the coordinator. I
 
 The lab recommends Approach A (Botpress) and allows Approach B (an in-browser FAQ matcher with no API key) as the fallback.
 
-**Approach B is built and working.** Approach A needs a Botpress account and bot, which have to be created by a team member with their own login, so it could not be done from this repository. Everything A needs is prepared (see "Approach A: Botpress setup" below). No API key exists anywhere in the repository, and a test fails if one is ever committed.
+**Approach B is built and working.** Approach A needs a Botpress account and bot, which have to be created by a team member with their own login, so it could not be done from this repository. An optional, default-off Botpress mode and the setup steps are ready (see "Approach A: Botpress" below). No API key exists anywhere in the repository, and a test fails if one is ever committed.
 
 ## How it answers
 
@@ -56,19 +56,27 @@ The Administrator view is the coordinator's simulated role, so in the demo the s
 - **Rewordings can be missed.** The matcher refuses rather than guesses, so an unusual rewording gets "I don't know yet". Known examples: a pure answer-side question such as "Will the old version be overwritten?", and a transposed typo in a short word.
 - **"Will I get money?" has no FAQ entry.** None of the 8 approved entries mention pay, so the correct behaviour is "I don't know yet" (the same as "Are co-op students paid?"). The coordinator can add an approved pay entry to change that.
 - The privacy guard is heuristic. Do not rely on it as a compliance control.
+- The optional Botpress mode has been tested with stand-in scripts only (validation, opt-in, loading order, failure handling), not with a real Botpress bot.
 - Everything here is synthetic prototype content, not official university policy.
 
-## Approach A: Botpress setup (needs a team member's Botpress account)
+## Approach A: Botpress
 
-These steps follow the lab's instructions; Botpress's menu names change over time, so treat them as a guide.
+The lab recommends Botpress. The app has an **optional Botpress mode that is off** until the team creates a bot and supplies its embed URLs.
 
-1. Create a free account and a new bot at botpress.com.
-2. **Knowledge Base:** upload `data/faq.txt` (or the file from *Download faq.txt*).
+**Models and keys.** On Botpress's free plan the bot uses Botpress's built-in model, so no API key is needed. Botpress documents bringing your own LLM (for example a K2 Think key) as an [Enterprise-plan feature built with their SDK](https://botpress.com/docs/integrations/sdk/integration/use-your-own-llm/), so do not expect to paste a key into a free bot. Never put any model key in this repository: GitHub Pages is public.
+
+**Steps for a team member with their own Botpress login** (menu names change, so treat these as a guide):
+
+1. Create a free bot at botpress.com.
+2. **Knowledge Base:** add `data/faq.txt` (or the file from *Download faq.txt*).
 3. **Instructions:** set exactly: `Answer only from the knowledge base. If the answer is not there, say: 'I don't know yet. I've noted your question for the coordinator.'`
-4. Publish the bot, open **Webchat**, and copy the embed script (a public script URL; it is not an API key).
-5. Send the embed script URL(s) to whoever maintains this repository, to be loaded as an optional mode with the in-browser matcher kept as the fallback.
+4. Test in Botpress's emulator: the 8 FAQ questions, "Can I intern remotely?", and "Are co-op students paid?" (it must say "I don't know yet").
+5. Publish, open **Webchat** (embed), and copy the **two script URLs** (the inject script and the bot's config script). They are public embed URLs, not keys.
+6. Put both URLs in `data/chatbot-config.json` under `botpress.scripts`, set `enabled` to `true`, then commit and push (or send them to whoever maintains the repository).
 
-Cautions: never commit a Botpress API token or personal access token to GitHub (the public embed URL is fine); questions typed into Botpress go to a third party, so the privacy reminder matters more there; Botpress does not feed this app's *Unanswered questions* list unless that is wired up separately.
+**What the app does with them.** The Assistant page then shows a card, "Prefer the Botpress assistant?". Nothing from Botpress loads until someone clicks it. Only `https` URLs on `cdn.botpress.cloud` and `files.bpcontent.cloud`, with no credentials or token-like parameters, are accepted; anything else is ignored. The built-in matcher stays available beside it.
+
+**Cautions.** Questions typed into Botpress go to Botpress and its model provider. This page's personal-information check and the coordinator's unanswered-question list do not apply there. Never commit a Botpress API token or personal access token (the public embed URLs are fine).
 
 ## Test report (2026-11-24, Chrome 158, headless, real keystrokes into the real input)
 

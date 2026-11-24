@@ -19,5 +19,6 @@
 !data/
 !data/ipp_sample_data.json
 !data/faq.txt
+!data/chatbot-config.json
 !docs/
 !docs/*.md

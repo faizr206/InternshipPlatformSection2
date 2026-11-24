@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 await import('../src/ui.js'); // publishes IPPUI (pure at load time, so it works in Node)
+await import('../src/faq.js'); // publishes IPPFaq (pure: used to check the chatbot config)
 const { ICON_NAMES } = globalThis.IPPUI;
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -119,7 +120,7 @@ test('the server allowlist exposes the shared JSON seed at its canonical path', 
 // ---------- Internship Assistant: hard requirements from the Sprint 2 lab ----------
 
 test('no API key, token or secret is committed anywhere in the published files', async () => {
-  const files = ['index.html', 'styles.css', 'package.json', 'README.md', 'PROJECT_DESCRIPTION.md', 'docs/assistant.md', 'src/store.js', 'src/ui.js', 'src/faq.js', 'src/app.js', 'scripts/serve.mjs', 'scripts/stamp.mjs', 'data/faq.txt', 'data/ipp_sample_data.json'];
+  const files = ['index.html', 'styles.css', 'package.json', 'README.md', 'PROJECT_DESCRIPTION.md', 'docs/assistant.md', 'src/store.js', 'src/ui.js', 'src/faq.js', 'src/app.js', 'scripts/serve.mjs', 'scripts/stamp.mjs', 'data/faq.txt', 'data/chatbot-config.json', 'data/ipp_sample_data.json'];
   const secretPatterns = [/\bsk-[A-Za-z0-9_-]{20,}/, /\bbearer\s+[A-Za-z0-9._-]{20,}/i, /api[_-]?key["']?\s*[:=]\s*["'][^"']{8,}/i, /secret["']?\s*[:=]\s*["'][^"']{8,}/i, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pousr]_[A-Za-z0-9]{20,}/, /\bxox[bpas]-/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/];
   for (const path of files) {
     const text = await read(path);
@@ -132,7 +133,7 @@ test('the assistant makes no third-party requests: the only fetches are the seed
   const faq = await read('src/faq.js');
   const relativeFetches = [...app.matchAll(/fetch\(new URL\('([^']+)', document\.baseURI\)/g)].map((match) => match[1]);
   assert.equal([...app.matchAll(/\bfetch\(/g)].length, relativeFetches.length, 'every fetch is a relative URL resolved against the page');
-  assert.deepEqual(relativeFetches.sort(), ['data/faq.txt', 'data/ipp_sample_data.json']);
+  assert.deepEqual(relativeFetches.sort(), ['data/chatbot-config.json', 'data/faq.txt', 'data/ipp_sample_data.json']);
   assert.doesNotMatch(app + faq, /\bhttps?:\/\/(?!www\.w3\.org)/, 'no absolute URLs in the code');
   assert.doesNotMatch(app + faq, /XMLHttpRequest|WebSocket|sendBeacon|EventSource|importScripts/);
 });
@@ -162,5 +163,19 @@ test('the approved FAQ is a plain file in the repository, served by the local se
 test('the assistant engine has no DOM, network or language-model dependency (pure, deterministic text matching)', async () => {
   const code = (await read('src/faq.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''); // judge the code, not the comments
   assert.doesNotMatch(code, /\bdocument\b|\bwindow\b|\bfetch\b|\bXMLHttpRequest\b|\bimport\s*\(|\brequire\s*\(/);
-  assert.doesNotMatch(code, /openai|anthropic|botpress|gemini|\bllm\b|completion/i, 'no AI service is called from the engine');
+  assert.doesNotMatch(code, /openai|anthropic|gemini|\bllm\b|completion/i, 'no AI service is called from the engine');
+  assert.doesNotMatch(code, /\bfetch\b|XMLHttpRequest/, 'the engine only validates embed URLs; it never loads them');
+});
+
+test('optional Botpress mode is inert by default and can only ever hold valid, public embed URLs', async () => {
+  const config = JSON.parse(await read('data/chatbot-config.json'));
+  const parsed = globalThis.IPPFaq.parseChatbotConfig(config);
+  assert.ok(parsed.ok || config.botpress.enabled !== true, 'an enabled config must pass validation');
+  assert.ok(Array.isArray(config.botpress.scripts));
+  const server = await read('scripts/serve.mjs');
+  assert.match(server, /\['\/data\/chatbot-config\.json', \['data\/chatbot-config\.json', 'application\/json; charset=utf-8'\]\]/);
+  assert.match(await read('.gitignore'), /^!data\/chatbot-config\.json$/m);
+  const app = await read('src/app.js');
+  assert.doesNotMatch(app, /botpress\.cloud|bpcontent\.cloud/, 'no embed host or URL is hard-coded in the UI code');
+  assert.match(app, /Faq\.parseChatbotConfig\(config\)/, 'the UI only loads scripts that passed validation');
 });

@@ -15,6 +15,7 @@ const ALLOWED = new Map([
   ['/src/app.js', ['src/app.js', 'text/javascript; charset=utf-8']],
   ['/data/ipp_sample_data.json', ['data/ipp_sample_data.json', 'application/json; charset=utf-8']],
   ['/data/faq.txt', ['data/faq.txt', 'text/plain; charset=utf-8']],
+  ['/data/chatbot-config.json', ['data/chatbot-config.json', 'application/json; charset=utf-8']],
 ]);
 
 const server = http.createServer(async (request, response) => {

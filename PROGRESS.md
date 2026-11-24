@@ -6,6 +6,19 @@ Authoritative planning lives in the course's Lab 3 – Sprint 1 walking-skeleton
 
 Sprint 1: walking skeleton demo. Local standalone implementation is complete and verified; the shared Lovable/GitHub build is a separate class activity.
 
+## 2026-11-24: optional Botpress mode (committed locally, waiting for the team's Botpress embed URLs)
+
+**Work done**
+- Added a default-off Botpress hook for Approach A: `data/chatbot-config.json` lists the bot's two public embed script URLs; when enabled, the Assistant page shows an opt-in card (third-party and personal-information warning) and loads the scripts in order only after a click. `Faq.parseChatbotConfig` accepts only https URLs on cdn.botpress.cloud and files.bpcontent.cloud without credentials, ports or token-like parameters. The built-in matcher stays available.
+- Findings: Botpress documents bringing your own LLM as an Enterprise-plan SDK feature, so a third-party model key (such as K2 Think) cannot simply be pasted into a free bot; the free plan uses Botpress's built-in model. No key is stored anywhere in the repository. `docs/assistant.md` now has the corrected setup steps.
+
+**Verification**
+- `npm test` 125/125 (adds validator tests, runtime tests for opt-in, ordering, failure and invalid configs, and contract tests). Real Chrome with a stand-in config: 7/7 (default off, opt-in card, nothing loads before the click, one validated script added, failure shows an error and retry, built-in chat unaffected).
+- Not verified: a real Botpress bot (none exists yet). Feature F28 stays `passes: false` for that reason.
+
+**Next step**
+A team member creates the Botpress bot (steps in docs/assistant.md) and sends the two embed URLs; then set `enabled` to true, push, and verify on the live site.
+
 ## 2026-11-24: Internship Assistant (FAQ chatbot): published to GitHub Pages
 
 **Work done**

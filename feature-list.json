@@ -289,6 +289,18 @@
       ],
       "passes": true,
       "notes": "Verified by runtime tests and a real-click headless Chrome run (20 checks). Unanswered questions and coordinator additions are stored per browser (localStorage), so a coordinator does not see questions asked on other devices; a shared store is the same deferred gap as IPP-18."
+    },
+    {
+      "id": "F28",
+      "name": "Optional Botpress mode (Approach A hook)",
+      "description": "Data-driven and off by default: data/chatbot-config.json can list the two public Botpress webchat embed script URLs. When enabled, the Assistant page shows an opt-in card with a third-party and personal-information warning, and loads the scripts in order only after a click. Only https URLs on cdn.botpress.cloud and files.bpcontent.cloud without credentials, ports or token-like parameters are accepted; anything else is ignored. The built-in matcher stays available.",
+      "verification_steps": [
+        "With the shipped config (disabled): the Assistant page shows no Botpress card and loads no third-party script",
+        "With a valid enabled config: the card appears, nothing loads until the click, then the scripts load in order",
+        "With a disallowed host, http, credentials or a token parameter: the config is ignored"
+      ],
+      "passes": false,
+      "notes": "Implemented and verified with stand-in scripts only: validator unit tests (lookalike hosts, credentials, ports, secret parameters), runtime tests (opt-in, ordering, failure, invalid configs) and a real-Chrome run (7 checks) using a deliberately missing script on the allowed host. Not verified with a real Botpress bot, because none has been created yet; needs a team member's Botpress account. Bring-your-own-LLM (for example a K2 Think key) is documented by Botpress as Enterprise-only, so the free plan uses Botpress's built-in model. No key is stored anywhere in the repository."
     }
   ]
 }

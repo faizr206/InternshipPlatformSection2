@@ -428,3 +428,51 @@ test('subscribers are notified on changes; refresh picks up another tab\'s write
   assert.equal(a.openUnanswered()[0].question, 'How much is the salary?');
   assert.equal(a.approved()[0].answer, byId['FAQ-001'].answer);
 });
+
+// ---------- optional Botpress mode: only embed scripts from Botpress hosts, never secrets ----------
+
+const INJECT = 'https://cdn.botpress.cloud/webchat/v3.3/inject.js';
+const BOT_CONFIG = 'https://files.bpcontent.cloud/2025/11/24/10/20251124100000-ABCDEFGH.js';
+
+test('chatbot config: disabled or missing config is inert, not an error', () => {
+  for (const config of [undefined, null, {}, { botpress: null }, { botpress: { enabled: false, scripts: [INJECT] } }, { botpress: { scripts: [INJECT] } }, 'text', 42]) {
+    assert.deepEqual(F.parseChatbotConfig(config), { ok: false, reason: 'disabled', scripts: [] });
+  }
+});
+
+test('chatbot config: accepts public Botpress embed URLs and keeps their order', () => {
+  const parsed = F.parseChatbotConfig({ botpress: { enabled: true, scripts: [INJECT, BOT_CONFIG] } });
+  assert.equal(parsed.ok, true);
+  assert.deepEqual(parsed.scripts, [INJECT, BOT_CONFIG]);
+});
+
+test('chatbot config: refuses other hosts, lookalikes, http, credentials, ports and secret-looking parameters', () => {
+  const refused = [
+    'http://cdn.botpress.cloud/webchat/inject.js',
+    'https://evil.example/inject.js',
+    'https://cdn.botpress.cloud.evil.example/inject.js',
+    'https://evil.example/cdn.botpress.cloud/inject.js',
+    'https://cdn.botpress.cloud@evil.example/inject.js',
+    'https://user:pass@cdn.botpress.cloud/inject.js',
+    'https://cdn.botpress.cloud:8443/inject.js',
+    'https://cdn.botpress.cloud/inject.js?api_key=abc123',
+    'https://cdn.botpress.cloud/inject.js?token=abc123',
+    'https://files.bpcontent.cloud/x.js?Authorization=Bearer-abc',
+    'javascript:alert(1)',
+    'data:text/javascript,alert(1)',
+    '//cdn.botpress.cloud/inject.js',
+    'not a url',
+    '',
+  ];
+  for (const url of refused) {
+    const parsed = F.parseChatbotConfig({ botpress: { enabled: true, scripts: [INJECT, url] } });
+    assert.equal(parsed.ok, false, `${url} must be refused`);
+    assert.deepEqual(parsed.scripts, [], 'nothing is loaded when any entry is refused');
+  }
+});
+
+test('chatbot config: bad shapes are refused (empty, too many, not an array)', () => {
+  for (const scripts of [[], undefined, 'https://cdn.botpress.cloud/a.js', { 0: INJECT }, Array.from({ length: 5 }, () => INJECT)]) {
+    assert.equal(F.parseChatbotConfig({ botpress: { enabled: true, scripts } }).ok, false);
+  }
+});

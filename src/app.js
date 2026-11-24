@@ -104,6 +104,7 @@
     enter: false, // true on route changes: play the entrance animation
     batch: false,
     chat: null, // assistant conversation: kept in memory only, never saved
+    bot: { status: 'idle', scripts: [] }, // optional Botpress mode
     faqLoading: false,
     faqError: '',
     faqDraft: { section: '', question: '', answer: '' },
@@ -1345,11 +1346,85 @@
           h('button', { type: 'submit', class: 'btn', disabled: !ready }, icon('send', 16), 'Send'),
         ),
       ),
+      botpressCard(),
       h(
         'p',
         { class: 'muted' },
         'Answers are copied word for word from the approved FAQ and show their FAQ section as the source. This is a keyword matcher, not a language model, so it can miss a rewording; when that happens it says "I don\'t know yet" instead of guessing.',
       ),
+    );
+  }
+
+  // ---------- optional hosted chatbot (Botpress), off unless data/chatbot-config.json enables it ----------
+
+  /** Reads data/chatbot-config.json once, when the assistant page is opened. Missing or invalid means "not configured". */
+  function ensureBotConfig() {
+    if (ui.bot.status !== 'idle') return;
+    ui.bot.status = 'checking';
+    fetch(new URL('data/chatbot-config.json', document.baseURI), { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((config) => {
+        const parsed = Faq.parseChatbotConfig(config);
+        ui.bot.scripts = parsed.scripts;
+        ui.bot.status = parsed.ok ? 'available' : 'unconfigured';
+        if (parsed.ok) render();
+      })
+      .catch(() => {
+        ui.bot.status = 'unconfigured';
+      });
+  }
+
+  /** Loads the validated embed scripts one after another (the config script needs the inject script first). */
+  function loadBotpress() {
+    if (ui.bot.status !== 'available' && ui.bot.status !== 'error') return;
+    ui.bot.status = 'loading';
+    render();
+    const queue = ui.bot.scripts.slice();
+    const next = () => {
+      const src = queue.shift();
+      if (!src) {
+        ui.bot.status = 'loaded';
+        render();
+        try {
+          if (window.botpress && typeof window.botpress.open === 'function') window.botpress.open();
+        } catch (error) {
+          /* the widget's own button still works */
+        }
+        return;
+      }
+      const script = h('script', { src });
+      script.addEventListener('load', next);
+      script.addEventListener('error', () => {
+        ui.bot.status = 'error';
+        render();
+      });
+      document.body.append(script);
+    };
+    next();
+  }
+
+  function botpressCard() {
+    const status = ui.bot.status;
+    if (!['available', 'loading', 'loaded', 'error'].includes(status)) return null;
+    return h(
+      'section',
+      { class: 'card stack', 'aria-labelledby': 'botpress-title' },
+      h('h2', { class: 'card-title', id: 'botpress-title' }, icon('chat', 18), 'Prefer the Botpress assistant?'),
+      h(
+        'p',
+        { class: 'muted' },
+        "This opens a separate chatbot run by Botpress, a third party. Your questions are sent to Botpress and its model provider, not handled by this app. The coordinator's list of unanswered questions will not see them, and this page's personal-information check does not apply, so do not type personal information.",
+      ),
+      status === 'loaded'
+        ? h('p', { class: 'notice', role: 'status' }, icon('info', 18), 'The Botpress assistant is loaded. Look for its chat button at the bottom right of the page.')
+        : [
+            status === 'error' && h('p', { class: 'error', role: 'alert' }, 'The Botpress assistant could not be loaded. Check your connection and try again.'),
+            h(
+              'div',
+              { class: 'form-actions' },
+              h('button', { type: 'button', class: 'btn btn-quiet', disabled: status === 'loading', onClick: loadBotpress }, status === 'loading' ? 'Loading…' : status === 'error' ? 'Try again' : 'Open the Botpress assistant'),
+            ),
+          ],
     );
   }
 
@@ -1692,6 +1767,7 @@
     const tabs = ROLE_TABS[next];
     ui.tab = tabs ? (tabs.some((tab) => tab.id === tabId) ? tabId : tabs[0].id) : null;
     if (needsFaq()) ensureFaq();
+    if (ui.route === 'assistant') ensureBotConfig();
     updateNav();
     if (changed || initial) {
       if (changed) clearToast();

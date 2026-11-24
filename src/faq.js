@@ -245,6 +245,38 @@
     return PII_PATTERNS.filter(([, pattern]) => pattern.test(value)).map(([kind]) => kind);
   }
 
+  // ---------- optional hosted-chatbot mode: which embed scripts may ever be loaded ----------
+
+  // Only the hosts that serve a Botpress webchat embed. A script URL from anywhere else is refused,
+  // and so is any URL that carries credentials or a secret-looking query parameter: embed URLs are
+  // public, an API key or token is never one.
+  const EMBED_HOSTS = Object.freeze(['cdn.botpress.cloud', 'files.bpcontent.cloud']);
+  const SECRET_PARAMETER = /^(?:key|api[_-]?key|token|access[_-]?token|secret|auth|authorization|password|pwd)$/i;
+
+  /** Validates data/chatbot-config.json. Returns { ok, scripts, reason }; a disabled or empty config is not an error. */
+  function parseChatbotConfig(config) {
+    const section = config && typeof config === 'object' ? config.botpress : null;
+    if (!section || section.enabled !== true) return { ok: false, reason: 'disabled', scripts: [] };
+    if (!Array.isArray(section.scripts) || section.scripts.length === 0 || section.scripts.length > 4) {
+      return { ok: false, reason: 'scripts must list between 1 and 4 URLs', scripts: [] };
+    }
+    const scripts = [];
+    for (const raw of section.scripts) {
+      let url;
+      try {
+        url = new URL(String(raw));
+      } catch (error) {
+        return { ok: false, reason: 'a script entry is not a valid URL', scripts: [] };
+      }
+      if (url.protocol !== 'https:') return { ok: false, reason: 'script URLs must use https', scripts: [] };
+      if (!EMBED_HOSTS.includes(url.hostname) || url.port) return { ok: false, reason: `script host not allowed: ${url.hostname}`, scripts: [] };
+      if (url.username || url.password) return { ok: false, reason: 'script URLs must not contain credentials', scripts: [] };
+      if ([...url.searchParams.keys()].some((name) => SECRET_PARAMETER.test(name))) return { ok: false, reason: 'script URLs must not contain keys or tokens', scripts: [] };
+      scripts.push(url.href);
+    }
+    return { ok: true, scripts };
+  }
+
   // ---------- state: coordinator-approved additions and unanswered questions ----------
 
   const questionKey = (text) => [...new Set(tokenize(text))].sort().join(' ');
@@ -466,6 +498,8 @@
     buildIndex,
     matchQuestion,
     detectPii,
+    parseChatbotConfig,
+    EMBED_HOSTS,
     createFaqStore,
   });
 })(globalThis);

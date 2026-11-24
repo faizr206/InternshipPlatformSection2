@@ -56,12 +56,13 @@ const matches = (node, selector) => {
 const descendants = (element) => [element, ...element.children.flatMap(descendants)];
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 
-async function boot({ fail = false, faqFail = false, hash = '#student', prepare, stored = new Map() } = {}) {
+async function boot({ fail = false, faqFail = false, hash = '#student', prepare, stored = new Map(), botConfig = { botpress: { enabled: false, scripts: [] } } } = {}) {
   const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
   const roots = ids.map((id) => { const element = new Element('div'); element.setAttribute('id', id); return element; });
   const all = () => roots.flatMap(descendants);
   const document = {
     baseURI: 'https://ray-suton.github.io/ipp-walking-skeleton-demo/',
+    body: new Element('body'),
     createElement: (tag) => new Element(tag),
     createElementNS: (namespace, tag) => new Element(tag),
     createTextNode: (text) => new Element('#text', text),
@@ -88,7 +89,7 @@ async function boot({ fail = false, faqFail = false, hash = '#student', prepare,
     fetch: async (url) => {
       requests.push(String(url));
       const failed = String(url).endsWith('faq.txt') ? faqShouldFail : shouldFail;
-      return { ok: !failed, status: failed ? 404 : 200, json: async () => JSON.parse(json), text: async () => faqText };
+      return { ok: !failed, status: failed ? 404 : 200, json: async () => (String(url).endsWith('chatbot-config.json') ? botConfig : JSON.parse(json)), text: async () => faqText };
     },
   });
   context.window = context;
@@ -213,6 +214,7 @@ test('employer applicants retain canonical listing and submitted profile details
 
 const FAQ_URL = 'https://ray-suton.github.io/ipp-walking-skeleton-demo/data/faq.txt';
 const SEED_URL = 'https://ray-suton.github.io/ipp-walking-skeleton-demo/data/ipp_sample_data.json';
+const CONFIG_URL = 'https://ray-suton.github.io/ipp-walking-skeleton-demo/data/chatbot-config.json';
 const buttons = (root) => descendants(root).filter((node) => node.tagName === 'button');
 const buttonNamed = (root, pattern) => buttons(root).find((node) => pattern.test(node.textContent.trim()));
 const FAQ_KEY = 'ipp-faq-v1';
@@ -234,7 +236,7 @@ test('assistant: reachable from the app, loads the FAQ relative to the Pages pat
   assert.deepEqual(overview.requests, [SEED_URL], 'the FAQ is only fetched when the assistant is opened');
 
   const app = await boot({ hash: '#assistant' });
-  assert.deepEqual(app.requests.slice().sort(), [FAQ_URL, SEED_URL].sort());
+  assert.deepEqual(app.requests.slice().sort(), [FAQ_URL, SEED_URL, CONFIG_URL].sort());
   assert.match(app.get('page-title').textContent, /Ask the Internship Assistant/);
   assert.ok(app.get('view').textContent.includes('Prototype. Synthetic data. Not official university policy.'));
   assert.match(app.get('chat-privacy').textContent, /don't type personal information/);
@@ -385,4 +387,50 @@ test('reset clears the assistant state: unanswered questions, pending entries an
   await first.get('reset-confirm').fire('click');
   assert.deepEqual(JSON.parse(storage.get(FAQ_KEY)).unanswered, []);
   assert.doesNotMatch(first.get('chat-log').textContent, /co-op/);
+});
+
+// ---------- optional Botpress mode (off by default; only validated Botpress embed scripts, only after a click) ----------
+
+const BOT_INJECT = 'https://cdn.botpress.cloud/webchat/v3.3/inject.js';
+const BOT_BOT = 'https://files.bpcontent.cloud/2025/11/24/10/20251124100000-ABCDEFGH.js';
+const botScripts = (app) => app.document.body.children.filter((node) => node.tagName === 'script').map((node) => node.attributes.src);
+
+test('botpress mode: off by default, so no card is shown and no third-party script is ever added', async () => {
+  const app = await boot({ hash: '#assistant' });
+  assert.ok(app.requests.includes(CONFIG_URL));
+  assert.doesNotMatch(app.get('view').textContent, /Botpress/);
+  assert.deepEqual(botScripts(app), []);
+});
+
+test('botpress mode: configured, it is opt-in, warns about the third party, and loads the scripts in order after a click', async () => {
+  const app = await boot({ hash: '#assistant', botConfig: { botpress: { enabled: true, scripts: [BOT_INJECT, BOT_BOT] } } });
+  const view = app.get('view').textContent;
+  assert.match(view, /Prefer the Botpress assistant\?/);
+  assert.match(view, /third party/);
+  assert.match(view, /do not type personal information/);
+  assert.deepEqual(botScripts(app), [], 'nothing is loaded until the user clicks');
+
+  await buttonNamed(app.get('view'), /^Open the Botpress assistant/).fire('click');
+  assert.deepEqual(botScripts(app), [BOT_INJECT], 'the inject script is added first');
+  await app.document.body.children[0].fire('load');
+  assert.deepEqual(botScripts(app), [BOT_INJECT, BOT_BOT], 'the bot config script follows the inject script');
+  await app.document.body.children[1].fire('load');
+  assert.match(app.get('view').textContent, /Botpress assistant is loaded/);
+  assert.ok(app.get('chat-input'), 'the built-in assistant stays available alongside it');
+});
+
+test('botpress mode: a script that fails to load shows an error and a retry', async () => {
+  const app = await boot({ hash: '#assistant', botConfig: { botpress: { enabled: true, scripts: [BOT_INJECT] } } });
+  await buttonNamed(app.get('view'), /^Open the Botpress assistant/).fire('click');
+  await app.document.body.children[0].fire('error');
+  assert.match(app.get('view').textContent, /could not be loaded/);
+  assert.ok(buttonNamed(app.get('view'), /^Try again/));
+});
+
+test('botpress mode: a config with a disallowed host, http, credentials or a token is ignored entirely', async () => {
+  for (const bad of ['https://evil.example/inject.js', 'http://cdn.botpress.cloud/inject.js', 'https://u:p@cdn.botpress.cloud/inject.js', 'https://cdn.botpress.cloud/inject.js?token=abc']) {
+    const app = await boot({ hash: '#assistant', botConfig: { botpress: { enabled: true, scripts: [BOT_INJECT, bad] } } });
+    assert.doesNotMatch(app.get('view').textContent, /Botpress/, bad);
+    assert.deepEqual(botScripts(app), [], bad);
+  }
 });
