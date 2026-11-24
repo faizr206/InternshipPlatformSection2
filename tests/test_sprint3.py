@@ -227,8 +227,8 @@ def test_p05_06_ac1_gap_passes_ids_and_versions_to_p06(client):
         "student_id": "COOP-B001", "skill_id": "SK-JIRA", "opportunity_id": "OP-028",
         "opportunity_version": rec["opportunity_version"], "recommendation_id": rec["recommendation_id"],
         "profile_version": rec["profile_version"]}
-    assert gap["activity"]["activity_id"] == "P06-ACT-JIRA-01"
-    assert "fixture" in gap["source"].lower()
+    assert gap["activity"]["activity_id"] == "MOD-JIRA-101"
+    assert "Team P6/P7" in gap["source"]
     # repeating returns the same record
     again = client.post(f"/api/recommendations/{rec['recommendation_id']}/gaps/SK-JIRA/handoff",
                         json={"actor_role": "student"}).json()

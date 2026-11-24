@@ -678,8 +678,8 @@ def confirm_placement(application_id: str, body: ConfirmPlacementIn):
         # contact from P03 goes to P07 and is never shown to students.
         # Names follow P07's requested record (Zhengxi, 10 Nov): placement_id, student_id,
         # opportunity_id, employer/location/role, period_start/period_end, supervisor,
-        # academic_advisor, status. P04 does not hold the academic advisor, so it is null
-        # until P01 or the coordinator supplies it.
+        # academic_advisor, status. Agreed with Team P6/P7 (24 Nov): placement_id format PL-0001;
+        # academic_advisor stays null because the coordinator assigns it in P07.
         payload = {
             "placement_id": placement_id,
             "status": "university_confirmed",
@@ -859,7 +859,7 @@ def accept_correction(correction_id: str, body: AcceptCorrectionIn):
 
 
 # --- Skill gap → P06 preparation (P05-06) ---
-GAP_NO_MODULE_ACTION = ("No P06 preparation activity is available for this skill yet. Next step: ask your "
+GAP_NO_MODULE_ACTION = ("Team P6/P7 has no preparation module for this skill yet. Next step: ask your "
                         "coordinator for a preparation route, or check the P06 plan again later.")
 GAP_EVIDENCE_NOTE = ("Completing an activity does not by itself show the skill. A faculty reviewer must "
                      "review your evidence before matching treats it as reviewed.")
@@ -878,7 +878,7 @@ def gap_dict(conn, row) -> dict:
     activity = db.p06_activities().get(d["skill_id"]) if d["activity_id"] else None
     d["skill_name"] = db.skill_names().get(d["skill_id"], d["skill_id"])
     d["activity"] = activity
-    d["source"] = "P06 fixture (labelled; live P06 module not connected)"
+    d["source"] = "P06 activity list from Team P6/P7 (file, 24 Nov; live P06 module not connected)"
     d["next_action"] = (GAP_EVIDENCE_NOTE if activity else GAP_NO_MODULE_ACTION)
     # P06's requested record (Zhengxi, 10 Nov): gap_id, student_id, skill_id, opportunity_id,
     # reason; plus the three trace fields we agreed to add.

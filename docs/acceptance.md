@@ -11,7 +11,7 @@ profile version, with the original still traceable.
 Automated evidence: `uv run pytest` gives **98 passed** (66 Sprint 1–2 tests kept green, 32
 added: `tests/test_sprint3.py`, `tests/test_p01p03_data.py`, rules-v3 checks). One Sprint 2 check changed on purpose: `Offer` is now a
 valid employer action from `Shortlisted`, and still blocked (409, "never") after `Declined`.
-Live browser walk-through in the main Coop UI (`/`, using **Demo as** to switch roles) on a fresh database: Jira gap → P06 fixture → mark
+Live browser walk-through in the main Coop UI (`/`, using **Demo as** to switch roles) on a fresh database: Jira gap → P06 activity → mark
 done (recommendation unchanged) → offer → accept (Awaiting university confirmation) →
 withdraw APP-0002 (cancel first, record unchanged) → coordinator confirms PL-0001 + H07-0001,
 repeat confirm adds nothing → faculty reviews Jira → new profile version, rematch, OP-028 gap gone,
@@ -34,17 +34,18 @@ checked in the browser and in `test_jira_story_with_p01_data_gap_prepare_review_
 | | AC2 No confirmation without acceptance; repeating creates no second placement or handoff | Met | `test_p04_06_ac2_unaccepted_application_cannot_be_confirmed`, `test_p04_06_ac2_repeat_confirmation_is_idempotent`, `test_only_coordinator_confirms` |
 | **P04-07** Withdraw and inspect history | AC1 From Submitted / Under review / Shortlisted, withdrawal sets Withdrawn with actor, time and next action; prior events kept after reload | Met | `test_p04_07_ac1_withdraw_from_agreed_states_keeps_history` (3 states); history timeline in My applications |
 | | AC2 Cancelling leaves the record unchanged; withdrawal after confirmation and other invalid transitions are blocked with an explanation | Met | `test_p04_07_ac2_cancelled_withdrawal_leaves_record_unchanged`, `test_p04_07_ac2_invalid_withdrawals_are_blocked_with_explanation`; Cancel button sends no request |
-| **P05-06** Connect a skill gap to preparation | AC1 A Jira gap passes student ID, skill ID, opportunity/version and recommendation ID to P06; the link shows the activity or a labelled fixture | Met | `test_p05_06_ac1_gap_passes_ids_and_versions_to_p06`; "Prepare →" on each gap opens the P06 fixture activity |
+| **P05-06** Connect a skill gap to preparation | AC1 A Jira gap passes student ID, skill ID, opportunity/version and recommendation ID to P06; the link shows the activity or a labelled fixture | Met | `test_p05_06_ac1_gap_passes_ids_and_versions_to_p06`; "Prepare →" on each gap opens Team P6/P7's activity (`MOD-JIRA-101` for Jira) |
 | | AC2 No module → clear next action; completing a resource never changes the recommendation | Met | `test_p05_06_ac2_no_module_gives_clear_next_action` (Python has no P06 activity), `test_p05_06_ac2_completing_activity_never_changes_the_recommendation` |
 | **P05-07** Rerun matching after a profile change | AC1 Reviewed Jira evidence or changed availability creates a recommendation tied to the new profile version; recorded test shows the expected change | Met | `test_p05_07_ac1_reviewed_jira_evidence_rematches_against_new_version` (fixture data: Jira missing → gap removed, +2 score; P01 data: self-declared Jira evidence gap removed), `test_p05_07_ac1_changing_availability_creates_a_new_versioned_run` |
 | | AC2 Old recommendations keep their versions and reasons; same input and method versions give the same rules result; AI behaviour documented | Met | `test_p05_07_ac2_old_runs_keep_versions_and_same_inputs_give_same_rules_result`. AI here is deterministic (`ai-termmatch-v1`, `ai-insights-v1`), so it also repeats exactly; a future model-based AI would need its variability recorded |
 
 ### Shared completion checks (Sprint 3)
 - **Simulated, labelled in the UI:** role switching; P01/P03 data (file export from the P01–P03 team + revisions, not a live API);
-  P06 activities ("P06 fixture"); P07 receipt ("mock outbox", `receipt_status: mock-received`).
+  P06 activities (Team P6/P7's list, file); P07 receipt ("mock outbox", `receipt_status: mock-received`).
 - **Working:** offers and responses, withdrawal, placement confirmation with a single P07
   handoff, gap handoffs with source versions, profile updates as new versions with rematching.
-- **Open:** P07 placement ID format (`PL-0001` vs `EG-DXB-028`); live P01/P03/P06/P07
+- **Agreed with Team P6/P7 (24 Nov):** placement ID `PL-0001`; `academic_advisor` null (assigned by the coordinator in P07); gaps close only on outcome "demonstrated" (P06 → P01 new version → rematch; our faculty button simulates it); their co-op assistant is embedded behind our chat button.
+- **Open:** live P01/P03/P06/P07
   interfaces; accessibility gaps carried from Sprint 2 (arrow-key tabs, contrast tool,
   screen reader).
 

@@ -511,6 +511,9 @@
   border:1px solid #bdcbd7;border-radius:16px;background:#fffdf7;
 }
 #coop-preview .career-chat[open] {display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+#coop-preview .chat-embed {display:block;width:100%;height:min(600px,calc(100dvh - 140px));border:0;background:#fff}
+#coop-preview .chat-foot {padding:8px 13px 11px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+#coop-preview .chat-foot a {color:var(--blue)}
 #coop-preview .chat-header {
   display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--blue);color:white;
 }
@@ -593,7 +596,7 @@
       </div>
     </header>
 <div class="assistant-layer">
-  <button type="button" id="robotLauncher" class="robot-launcher" aria-label="Open the FAQ chatbot (P06, placeholder)" aria-describedby="robotHelp" aria-haspopup="dialog" aria-controls="careerChat">
+  <button type="button" id="robotLauncher" class="robot-launcher" aria-label="Open the co-op assistant (Team P6/P7)" aria-describedby="robotHelp" aria-haspopup="dialog" aria-controls="careerChat">
     <span class="robot-art" aria-hidden="true">
       <span class="robot-antenna"></span>
       <span class="robot-head"><span class="robot-visor"></span></span>
@@ -605,17 +608,13 @@
 <dialog id="careerChat" class="career-chat" aria-labelledby="chatTitle">
   <div class="chat-header">
     <span class="robot-art robot-mini" aria-hidden="true"><span class="robot-antenna"></span><span class="robot-head"><span class="robot-visor"></span></span><span class="robot-body"></span></span>
-    <div><h2 id="chatTitle">FAQ chatbot</h2><p>Owned by P06 · placeholder</p></div>
-    <button type="button" id="closeChat" class="chat-close" aria-label="Close FAQ chatbot">×</button>
+    <div><h2 id="chatTitle">Co-op assistant</h2><p>FAQ chatbot by Team P6/P7</p></div>
+    <button type="button" id="closeChat" class="chat-close" aria-label="Close co-op assistant">×</button>
   </div>
-  <div id="chatTranscript" class="chat-transcript" role="log" aria-label="Preview messages" aria-live="polite">
-    <p id="chatEmpty">The FAQ chatbot is built by P06 and is not connected here yet. You can type to try the layout; messages stay in this window and nothing is answered or sent.</p>
-  </div>
-  <form id="chatForm" class="chat-form">
-    <label for="chatInput" class="sr-assist">Your message</label>
-    <input type="text" id="chatInput" placeholder="Type a message…" maxlength="500" autocomplete="off">
-    <button type="button" class="cp-btn" id="chatSend" disabled>Send</button>
-  </form>
+  <!-- Team P6/P7 owns the FAQ chatbot; their embed is loaded on first open. -->
+  <iframe id="chatEmbed" class="chat-embed" title="IPP co-op assistant" data-src="https://lizhengxi25.github.io/waypoint/#/embed"></iframe>
+  <p class="chat-foot">Provided by Team P6/P7 (P06). Not loading?
+    <a href="https://lizhengxi25.github.io/waypoint/#/embed" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
 </dialog>
 
     <select id="student" hidden aria-hidden="true" tabindex="-1"></select>
@@ -755,15 +754,16 @@
 
       <!-- ================= FACULTY ================= -->
       <section inert class="view" id="view-faculty" hidden><h2 class="page-title">Skill evidence &amp; application records</h2>
-        <p class="role-banner">Simulated faculty reviewer (FAC-01) — no login. Reviewing a skill creates a new profile
-          version and reruns matching; earlier recommendations keep their versions. Applications are read-only here.</p>
+        <p class="role-banner">Simulated faculty reviewer (FAC-01) — no login. This button stands in for the real route:
+          P06 sends a review with outcome “demonstrated” to P01, P01 makes a new profile version, and we rematch.
+          Earlier recommendations keep their versions. Applications are read-only here.</p>
         <h2 class="stack-title">Review skill evidence</h2>
         <div class="cp-card">
           <div class="inline-form">
             <label>Student <select id="evStudent"></select></label>
             <label>Skill <select id="evSkill"></select></label>
             <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
-            <button class="cp-btn" id="evReview" type="button">Mark reviewed &amp; rematch</button>
+            <button class="cp-btn" id="evReview" type="button">Mark demonstrated &amp; rematch (simulated)</button>
           </div>
           <p class="msg" id="evMsg"></p>
           <div id="evVersions"></div>
@@ -1446,7 +1446,8 @@ function renderGap(g) {
   $("gapBody").innerHTML = `
     <p class="cp-muted">Sent to P06: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
       v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}) · ${esc(g.gap_id)}</p>
-    ${act ? `<div class="p06"><span class="cp-chip accent">P06 fixture</span>
+    ${act ? `<div class="p06"><span class="cp-chip accent">P06 · Team P6/P7</span>
+        ${act.status === "outline" ? `<span class="cp-chip warn">Outline — module not finished yet</span>` : ""}
         <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
         <div class="cp-muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
         <p><b>Evidence needed:</b> ${esc(act.evidence_needed)}</p></div>`
@@ -1955,8 +1956,6 @@ for (const id of ["country","degree",...advancedFields]) $(id).onchange = () => 
 const robot = $("robotLauncher");
 const robotLayer = root.querySelector(".assistant-layer");
 const careerChat = $("careerChat");
-const chatInput = $("chatInput");
-const chatSend = $("chatSend");
 let robotPosition;
 let pointerDrag;
 let suppressPointerClick = false;
@@ -2016,32 +2015,13 @@ robot.addEventListener("keydown", event=>{
 });
 robot.onclick = event => {
   if (event.detail && suppressPointerClick) return;
+  const embed = $("chatEmbed");
+  if (!embed.getAttribute("src")) embed.setAttribute("src", embed.dataset.src);
   careerChat.showModal();
-  chatInput.focus();
+  $("closeChat").focus();
 };
 $("closeChat").onclick = () => careerChat.close();
 careerChat.addEventListener("close", () => robot.focus({preventScroll:true}));
-chatInput.oninput = () => {chatSend.disabled = !chatInput.value.trim();};
-function postPreviewMessage() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-  $("chatEmpty").hidden = true;
-  const message = document.createElement("p");
-  message.className = "preview-message";
-  message.textContent = text;
-  const transcript = $("chatTranscript");
-  transcript.append(message);
-  transcript.scrollTop = transcript.scrollHeight;
-  chatInput.value = "";
-  chatSend.disabled = true;
-  chatInput.focus();
-}
-chatSend.onclick = postPreviewMessage;
-chatInput.addEventListener("keydown", event=>{
-  if (event.key !== "Enter" || event.isComposing) return;
-  event.preventDefault();
-  postPreviewMessage();
-});
 const robotResize = new ResizeObserver(()=>{
   if (robotPosition) positionRobot(robotPosition.left,robotPosition.top);
 });

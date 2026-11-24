@@ -87,7 +87,7 @@ def test_jira_story_with_p01_data_gap_prepare_review_rematch(client):
     gap = client.post(f"/api/recommendations/{op028['recommendation_id']}/gaps/SK-JIRA/handoff",
                       json={"actor_role": "student"}).json()
     assert gap["p06_payload"]["reason"] == "OP-028 requires Jira; not yet demonstrated"
-    assert gap["activity"]["activity_id"] == "P06-ACT-JIRA-01"
+    assert gap["activity"]["activity_id"] == "MOD-JIRA-101"
 
     upd = client.post("/api/students/COOP-B001/profile-updates", json={
         "kind": "skill_evidence", "actor_role": "faculty", "actor_name": "FAC-01",

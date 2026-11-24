@@ -236,9 +236,13 @@ def _load(conn, records, table, id_field, version_field) -> None:
         )
 
 
+P06_DATA = Path(__file__).parent / "data" / "p06"
+
+
 def p06_activities() -> dict[str, dict]:
-    """P06 preparation activities by skill (labelled fixture until the live P06 module exists)."""
-    return {a["skill_id"]: a for a in json.loads((FIXTURES / "p06_activities.json").read_text())}
+    """P06 preparation activities by skill, as sent by Team P6/P7 (24 Nov). Jira is a full
+    module; SQL and VIZ are outlines; skills without a module (e.g. Excel, Figma) have none."""
+    return {a["skill_id"]: a for a in json.loads((P06_DATA / "p06_activities.json").read_text())}
 
 
 def skill_names() -> dict[str, str]:

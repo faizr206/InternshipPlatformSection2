@@ -117,7 +117,7 @@ student sees this history (P04-04 AC1, P04-07). Actions: `Draft saved`, `Submitt
 ## Placement (owner: P04; table `placements`)
 | Field | Meaning |
 |---|---|
-| placement_id | `PL-0001`, … (format still open with P07: `PL-0001` vs `EG-DXB-028`) |
+| placement_id | `PL-0001`, … (format agreed with Team P6/P7, 24 Nov) |
 | application_id | Unique — one placement per application |
 | student_id, profile_version, opportunity_id, opportunity_version | Copied from the application |
 | confirmed_by, confirmed_at | Coordinator and UTC time |
@@ -131,8 +131,7 @@ One row per placement (`placement_id` unique): `handoff_id` (`H07-0001`), `sent_
 (Zhengxi, 10 Nov): `{placement_id, status: "university_confirmed", student_id, opportunity_id,
 employer_name, location, role, period_start, period_end, supervisor_name, supervisor_contact,
 academic_advisor}` plus the fields we agreed to add: `application_id, opportunity_version,
-confirmed_by, confirmed_at`. `academic_advisor` is null: P04 does not hold it (source to agree
-with P01 / the coordinator). Supervisor contact goes to P07 only, never to the student.
+confirmed_by, confirmed_at`. `academic_advisor` is null by agreement with Team P6/P7 (24 Nov): the coordinator assigns it in P07 when the placement arrives. Supervisor contact goes to P07 only, never to the student.
 
 ## Skill gap handoff (owner: P05; table `skill_gap_handoffs`)
 | Field | Meaning |
@@ -140,7 +139,7 @@ with P01 / the coordinator). Supervisor contact goes to P07 only, never to the s
 | gap_id | `GAP-0001`, … (unique per recommendation + skill) |
 | student_id, skill_id, opportunity_id, opportunity_version, recommendation_id, profile_version | Stored source IDs and versions (P05-06 AC1) |
 | p06_payload (API) | What P06 receives, named as P06 requested (10 Nov): `gap_id, student_id, skill_id, opportunity_id, reason` (e.g. "OP-028 requires Jira; not yet demonstrated") plus the trace fields we added: `recommendation_id, opportunity_version, profile_version` |
-| activity_id | P06 activity from `app/fixtures/p06_activities.json` (labelled fixture), or null when none exists — the student then sees a clear next action |
+| activity_id | P06 activity from Team P6/P7's list `app/data/p06/p06_activities.json` (24 Nov: Jira `MOD-JIRA-101` full module; SQL and VIZ outlines, `status: outline`), or null when they have no module (e.g. Excel, Figma, Python) — the student then sees a clear next action |
 | created_at, completed_at | Completing an activity is recorded but **never** changes a recommendation or marks the skill reviewed (P05-06 AC2) |
 
 ## Correction request (owner: P05; table `correction_requests`)
@@ -186,6 +185,6 @@ corrections stay *recorded* — applying them needs the live owning module (defe
 | GET `/api/placements`, `/api/p07/handoffs` | Confirmed placements; mock P07 outbox | |
 | POST `/api/recommendations/{id}/gaps/{skill_id}/handoff` `{actor_role}` | Pass a gap to P06 | 403; 404; 422 not a gap in that recommendation |
 | POST `/api/skill-gaps/{gap_id}/complete` `{actor_role}` | Record the P06 activity as done | 403; 404; 409 no activity |
-| GET `/api/students/{id}/skill-gaps`, `/api/p06/activities` | Gap handoffs; P06 fixture activities | |
+| GET `/api/students/{id}/skill-gaps`, `/api/p06/activities` | Gap handoffs; Team P6/P7's activity list | |
 | POST `/api/students/{id}/profile-updates` `{kind, actor_role, …, rematch?}` | `availability` (student) or `skill_evidence` (faculty) → new profile version + rematch | 403; 404; 422 missing/invalid values |
 | GET `/api/students/{id}/profile-versions` | Every profile version with its source | 404 |
