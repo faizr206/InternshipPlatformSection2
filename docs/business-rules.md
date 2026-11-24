@@ -15,7 +15,7 @@ not reviewed these additions.
 | P05 | Recommendations and gap handoffs | SQLite and matching API | Keep rules and input versions with every result. Preserve earlier runs. |
 | P06 | Preparation activities and demonstration outcomes | Team activity file | Completing a resource does not verify a skill. The P06 → P01 demonstration flow requires a new profile version. |
 | P07 | Placement learning records | Local mock outbox | Send a confirmed placement once. Receipt currently represents a local mock, not confirmed remote delivery. |
-| Anthropic / Canonical / Remotive | External job advertisements | Live public API | Attribute and link to the provider. Applications happen on the provider’s website. |
+| Canonical / Remotive | External job advertisements | Live public API | Attribute and link to the provider. Applications happen on the provider’s website. |
 
 No live team endpoints or credentials were supplied. The app does not claim a
 network connection to those teams. Existing exported fields and handoff IDs remain
@@ -25,19 +25,14 @@ been inferred and no messages have been sent to the teams.
 
 ## Discovery
 
-1. Live Explore classifies titles into AI engineering/research or AI business/policy.
-   Accepted technical subjects include machine learning, LLMs, computer vision,
-   NLP, data science, data engineering, and AI research. Business roles must have
-   explicit AI context; early-career economics/policy fellowships at Anthropic
-   are also included. Generic software, Linux, content-review, and support work
-   is excluded even when a provider tags it AI. Clearly senior or managerial
-   titles are excluded. Employer boards are restricted to explicit early-career
-   titles. Other roles carry a check-experience label. These filters describe
-   subject fit, not an eligibility assessment or a guarantee of student fit.
+1. Live Explore uses Canonical’s public board and Remotive advertisements with technology or research keywords,
+   including data, software, machine learning, Python, cloud, and engineering.
+   Clearly senior or managerial titles are excluded. Keyword filtering is a
+   discovery aid, not an eligibility assessment or a guarantee of student fit.
 2. Show the provider's actual candidate location restrictions. Remote work never
    implies worldwide eligibility. Missing country, degree, pay, or dates remain
    unknown. Never manufacture requirements, availability, or employer approval.
-3. Provider content is converted to plain text. Only HTTPS Remotive and the configured employer Greenhouse listing URLs
+3. Provider content is converted to plain text. Only HTTPS Remotive and Canonical Greenhouse listing URLs
    are accepted. Every external card links back to its provider and names its source.
 4. Cache successful feed responses for six hours, respecting the provider's
    suggested maximum of four fetches per day. Failed refresh attempts are also
@@ -123,5 +118,5 @@ cross-team review.
 Source documentation for the public feed:
 https://github.com/remotive-com/remote-jobs-api
 
-Anthropic and Canonical roles use their public Greenhouse boards, restricted to explicit early-career titles in the AI career paths. Each provider has an independent cache and freshness status.
+Canonical graduate/junior technology roles also use its public Greenhouse board. Each provider has an independent cache and freshness status.
 https://docs.greenhouse.io/job-board.html

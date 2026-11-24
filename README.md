@@ -181,7 +181,7 @@ never overwritten). A rematch then stores a new run; earlier runs stay queryable
 ## Live discovery and interviews
 
 Explore now defaults to current technology/research advertisements from the
-Anthropic and Canonical’s public Greenhouse boards and the Remotive public API. Every external listing links to its source; applications are
+Canonical’s public Greenhouse board and the Remotive public API. Every external listing links to its source; applications are
 completed on the provider's website. Results are cached for six hours. A failed
 refresh keeps the last successful feed with a stale label. Check each listing's
 location restrictions before applying from the UAE.
@@ -199,19 +199,3 @@ compatible with previous callers.
 
 Business rules and proposed alignment with the teams are documented in
 [docs/business-rules.md](docs/business-rules.md). Team approval remains pending.
-
-
-## Career discovery scope
-
-Live discovery focuses on AI engineering/research and AI business/policy. It
-requires role-title evidence of AI, machine learning, data science/engineering,
-or AI business work. Generic software, content-review, and support listings are
-excluded even when an aggregator tags them AI. Direct employer boards contribute
-explicit graduate, internship, fellowship, junior, and residency titles.
-Anthropic's early-career economics/policy fellowships are included in AI business.
-Requirements and location restrictions still come from the employer.
-
-The interface defaults to Find jobs. Career path and experience filters are
-available alongside country, degree, schedule, and skill filters. University
-matches and the complete interview/placement workflow remain available for
-testing with the team export. No CV scores or preparation percentages are invented.

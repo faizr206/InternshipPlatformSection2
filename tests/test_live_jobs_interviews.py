@@ -78,7 +78,7 @@ def test_interview_validation_and_withdrawal(client):
 
 
 def test_external_normalization_preserves_unknowns_and_safe_links():
-    job = {"id": 12, "title": "Junior Machine Learning Engineer", "company_name": "Example",
+    job = {"id": 12, "title": "Junior Python Engineer", "company_name": "Example",
            "url": "https://remotive.com/remote-jobs/software-dev/example-12",
            "description": "<b>Python</b> &amp; SQL", "candidate_required_location": "USA only",
            "job_type": "part_time"}
@@ -89,7 +89,7 @@ def test_external_normalization_preserves_unknowns_and_safe_links():
     assert row["required_skills"] == [] and row["mentioned_skills"] == ["SK-PY", "SK-SQL"]
     assert live_jobs.normalize({**job, "url": "javascript:alert(1)"}) is None
     assert live_jobs.normalize({**job, "url": "https://remotive.com.evil.test/a"}) is None
-    assert live_jobs.normalize({**job, "title": "Senior Machine Learning Engineer"}) is None
+    assert live_jobs.normalize({**job, "title": "Senior Python Engineer"}) is None
 
 
 def test_live_feed_cache_stale_and_unavailable(client, monkeypatch):
@@ -97,13 +97,13 @@ def test_live_feed_cache_stale_and_unavailable(client, monkeypatch):
     def fetch(*args, **kwargs):
         calls.append(1)
         return httpx.Response(200, request=httpx.Request("GET", live_jobs.FEED_URL), json={
-            "jobs": [{"id": 1, "title": "Machine Learning Research Intern", "company_name": "Company",
+            "jobs": [{"id": 1, "title": "Python Research Intern", "company_name": "Company",
                       "url": "https://remotive.com/remote-jobs/software-dev/intern-1"}]})
     monkeypatch.setattr(live_jobs.httpx, "get", fetch)
     response = client.get("/api/external-opportunities").json()
     assert response["status"] == "current" and len(response["jobs"]) == 1
     client.get("/api/external-opportunities")
-    assert len(calls) == 3
+    assert len(calls) == 2
     with db.connect() as conn:
         conn.execute("UPDATE external_job_cache SET checked_at = '2000-01-01T00:00:00+00:00'")
     def fail(*args, **kwargs):
@@ -126,49 +126,12 @@ def test_old_database_receives_new_tables_and_keeps_applications(client):
 
 
 def test_canonical_student_roles_and_link_boundary():
-    job = {"id": 1, "title": "Graduate Machine Learning Engineer", "company_name": "Canonical",
+    job = {"id": 1, "title": "Graduate Software Engineer", "company_name": "Canonical",
            "url": "https://job-boards.greenhouse.io/canonical/jobs/1",
            "candidate_required_location": "Home based - Worldwide",
            "_work_mode": "remote", "description": "Python testing"}
     row = live_jobs.normalize(job, "Canonical")
     assert row["source"] == "Canonical" and row["opportunity_id"] == "CAN-1"
     assert row["location"] == job["candidate_required_location"]
-    assert live_jobs.normalize({**job, "title": "Senior Machine Learning Engineer"}, "Canonical") is None
+    assert live_jobs.normalize({**job, "title": "Senior Software Engineer"}, "Canonical") is None
     assert live_jobs.normalize({**job, "url": "https://job-boards.greenhouse.io/other/jobs/1"}, "Canonical") is None
-
-
-@pytest.mark.parametrize("title", [
-    "Content Reviewer - United States", "Customer Support Engineer",
-    "YouTube Content Creator", "Graduate Software Engineer", "Junior Linux Kernel Engineer",
-])
-def test_ai_tag_does_not_turn_unrelated_work_into_an_ai_role(title):
-    job = {"id": 1, "title": title, "company_name": "Company",
-           "url": "https://remotive.com/remote-jobs/1",
-           "tags": ["AI/ML", "research"], "description": "Our company uses artificial intelligence."}
-    assert live_jobs.normalize(job) is None
-
-
-@pytest.mark.parametrize("title, area", [
-    ("Machine Learning Research Intern", "AI engineering & research"),
-    ("Graduate Data Scientist", "AI engineering & research"),
-    ("AI Business Analyst", "AI business & policy"),
-    ("AI Governance Intern", "AI business & policy"),
-    ("Anthropic Fellows Program, The Anthropic Institute (Economics & Policy)", "AI business & policy"),
-])
-def test_mbzuai_career_paths(title, area):
-    assert live_jobs.career_area(title, "Anthropic" if "Anthropic" in title else "") == area
-
-
-def test_cached_irrelevant_jobs_are_filtered_without_refetch():
-    payload = {"jobs": [
-        {"title": "Content Reviewer", "employer_name": "Company"},
-        {"title": "Junior Machine Learning Engineer", "employer_name": "Company"},
-    ]}
-    result = live_jobs.filter_catalogue(payload)
-    assert [job["title"] for job in result["jobs"]] == ["Junior Machine Learning Engineer"]
-
-
-def test_international_is_not_an_internship():
-    job = {"id": 99, "title": "Applied AI Architect, International Policy",
-           "company_name": "Anthropic", "url": "https://job-boards.greenhouse.io/anthropic/jobs/99"}
-    assert live_jobs.normalize(job, "Anthropic") is None
