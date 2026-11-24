@@ -360,7 +360,7 @@
       'div',
       null,
       hero(
-        'Internship Practicum Platform · Sprint 1 demo',
+        'Internship Practicum Platform · Sprint 3 demo',
         'One placement journey, from opportunity to application',
         'Employers submit opportunities, the university approves them, students apply and faculty follow each application, all on one shared record.',
         {
@@ -1756,7 +1756,7 @@
       else anchor.removeAttribute('aria-current');
     });
     const current = ROUTES.find((item) => item.id === ui.route);
-    document.title = `${current.label} · IPP walking skeleton demo`;
+    document.title = `${current.label} · IPP Sprint 3 demo`;
   }
 
   function route(initial) {

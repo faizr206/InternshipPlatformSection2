@@ -18,6 +18,12 @@ Sprint 1: walking skeleton demo. Local standalone implementation is complete and
 
 **Next step**
 A team member creates the Botpress bot (steps in docs/assistant.md) and sends the two embed URLs; then set `enabled` to true, push, and verify on the live site.
+## 2026-11-24: version label changed to "Sprint 3 demo" (committed on branch sprint3-demo-label, not pushed)
+
+- Changed the user-visible version labels from "Sprint 1 demo" / "Sprint 1 walking skeleton" to **Sprint 3 demo**: the caption above the Overview headline, the footer line, the browser-tab title (now "<page> · IPP Sprint 3 demo") and the page description. Nothing else changed.
+- Left as they were: the repository and URL name (`ipp-walking-skeleton-demo`), the README/PROJECT_DESCRIPTION wording, and the feature ledger.
+- Verification: `npm test` 116/116; in a real browser the Overview caption, footer and tab title all show "Sprint 3 demo" and no "Sprint 1" or "walking skeleton" text remains on the page; no console errors.
+- Branch cut from the live commit on purpose, so the unpushed optional Botpress commit on local `main` cannot be published with it.
 
 ## 2026-11-24: Internship Assistant (FAQ chatbot): published to GitHub Pages
 
