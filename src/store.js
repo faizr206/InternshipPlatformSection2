@@ -5,7 +5,8 @@
   const STORAGE_KEY = 'ipp-demo-v2';
   const SCHEMA_VERSION = 2;
   const ACTIVITY_LIMIT = 60;
-  const OPPORTUNITY_STATUS = Object.freeze({ PENDING: 'Pending Review', APPROVED: 'Approved' });
+  const OPPORTUNITY_STATUS = Object.freeze({ PENDING: 'Pending Review', APPROVED: 'Approved', RETURNED: 'Returned for revision', DECLINED: 'Declined' });
+  const REASON_LIMIT = 300;
   const APPLICATION_STATUS = Object.freeze({ SUBMITTED: 'Submitted' });
   const PLACEMENT_STATUS = 'Not placed';
   const REVIEW_STATUS = Object.freeze({ NOT_STARTED: 'Not started' });
@@ -31,6 +32,7 @@
       applications: [],
       reviews: [],
       activity: [],
+      listing_versions: [],
     });
   }
 
@@ -109,6 +111,7 @@
             if (isValidState(parsed)) {
               // Preserve browser records written before the optional activity feed was added.
               if (!Array.isArray(parsed.activity)) parsed.activity = [];
+              if (!Array.isArray(parsed.listing_versions)) parsed.listing_versions = [];
               parsed.activity = parsed.activity.slice(-ACTIVITY_LIMIT);
               return parsed;
             }
@@ -153,9 +156,10 @@
       if (state.activity.length > ACTIVITY_LIMIT) state.activity.splice(0, state.activity.length - ACTIVITY_LIMIT);
     }
 
-    function submitOpportunity(input, options) {
+    /** Shared by first submissions and resubmissions: authorization, trimming and validation. */
+    function readListingInput(input, options) {
       if (!options || !options.hrAuthorized) {
-        return fail('unauthorized', 'Submission blocked: only an authorized HR representative can submit opportunities. (Simulated control; real authorization is deferred.)');
+        return { failure: fail('unauthorized', 'Submission blocked: only an authorized HR representative can submit opportunities. (Simulated control; real authorization is deferred.)') };
       }
       const values = {
         organization_name: String(input.organization_name ?? input.employer_name ?? '').trim(),
@@ -173,8 +177,15 @@
           errors[field] = (FIELD_LABELS[field] || 'Duration') + ' must be ' + LIMITS[field] + ' characters or fewer.';
         }
       }
-      if (Object.keys(errors).length) return fail('validation', 'Fix the highlighted fields and submit again.', { errors });
+      if (Object.keys(errors).length) return { failure: fail('validation', 'Fix the highlighted fields and submit again.', { errors }) };
       const mode = String(input.work_mode ?? 'hybrid').toLowerCase();
+      return { values, workMode: ['on-site', 'hybrid', 'remote'].includes(mode) ? mode : 'hybrid' };
+    }
+
+    function submitOpportunity(input, options) {
+      const read = readListingInput(input, options);
+      if (read.failure) return read.failure;
+      const values = read.values;
       const opportunity = {
         opportunity_id: nextId('OP', state.published_listings, 'opportunity_id'),
         version: 1,
@@ -184,7 +195,7 @@
         description: values.description,
         sector: '',
         location: values.location,
-        work_mode: ['on-site', 'hybrid', 'remote'].includes(mode) ? mode : 'hybrid',
+        work_mode: read.workMode,
         start_date: null,
         end_date: null,
         duration: values.duration || 'Not specified',
@@ -206,10 +217,75 @@
       const opportunity = state.published_listings.find((item) => item.opportunity_id === opportunityId);
       if (!opportunity) return fail('not_found', 'Opportunity ' + opportunityId + ' does not exist.');
       if (opportunity.publication_status === 'published') return fail('already_approved', opportunityId + ' is already published.');
+      if (opportunity.review_status) return fail('not_pending', opportunityId + ' was already ' + (opportunity.review_status === 'returned' ? 'returned for revision' : 'declined') + '.');
       opportunity.publication_status = 'published';
       log('admin', 'opportunity_approved', 'Administrator approved “' + opportunity.title + '”', opportunity.opportunity_id);
       save();
       return { ok: true, opportunity: clone(opportunity) };
+    }
+
+    /**
+     * Administrator decision on a listing that is still under review. A reason is required for both
+     * outcomes. Returned listings can be resubmitted by the employer; declined listings are final.
+     */
+    function reviewOpportunity(opportunityId, decision, reason) {
+      const opportunity = state.published_listings.find((item) => item.opportunity_id === opportunityId);
+      if (!opportunity) return fail('not_found', 'Opportunity ' + opportunityId + ' does not exist.');
+      if (decision !== 'returned' && decision !== 'declined') return fail('invalid_decision', 'Choose return for revision or decline.');
+      if (opportunity.publication_status === 'published') return fail('already_approved', opportunityId + ' is already published.');
+      if (opportunity.review_status) return fail('not_pending', opportunityId + ' already has a review decision.');
+      const text = String(reason ?? '').trim();
+      if (!text) return fail('validation', 'A reason is required.', { errors: { reason: 'A reason is required.' } });
+      if (text.length > REASON_LIMIT) {
+        const message = 'The reason must be ' + REASON_LIMIT + ' characters or fewer.';
+        return fail('validation', message, { errors: { reason: message } });
+      }
+      opportunity.review_status = decision;
+      opportunity.review_reason = text;
+      opportunity.reviewed_at = new Date().toISOString();
+      const action = decision === 'returned' ? 'returned “' + opportunity.title + '” for revision' : 'declined “' + opportunity.title + '”';
+      log('admin', decision === 'returned' ? 'opportunity_returned' : 'opportunity_declined', 'Administrator ' + action, opportunity.opportunity_id);
+      save();
+      return { ok: true, opportunity: clone(opportunity) };
+    }
+
+    /**
+     * The employer's answer to a return for revision. Same opportunity ID, next version. The version
+     * that was returned is archived untouched (old versions are never edited) and the new one goes
+     * back into the review queue.
+     */
+    function resubmitOpportunity(opportunityId, input, options) {
+      const opportunity = state.published_listings.find((item) => item.opportunity_id === opportunityId);
+      if (!opportunity) return fail('not_found', 'Opportunity ' + opportunityId + ' does not exist.');
+      if (opportunity.review_status !== 'returned') return fail('not_returned', 'Only a listing returned for revision can be resubmitted.');
+      const read = readListingInput(input, options);
+      if (read.failure) return read.failure;
+      const previous = Object.assign(clone(opportunity), { archived_at: new Date().toISOString() });
+      state.listing_versions.push(previous);
+      const values = read.values;
+      Object.assign(opportunity, {
+        version: Number(opportunity.version || 1) + 1,
+        submission_version: Number(opportunity.submission_version || 1) + 1,
+        employer_name: values.organization_name,
+        title: values.title,
+        description: values.description,
+        location: values.location,
+        work_mode: read.workMode,
+        duration: values.duration || 'Not specified',
+        publication_status: 'unpublished',
+        listing_status: 'open',
+      });
+      delete opportunity.review_status;
+      delete opportunity.review_reason;
+      delete opportunity.reviewed_at;
+      log('employer', 'opportunity_resubmitted', 'Employer HR resubmitted “' + opportunity.title + '” as version ' + opportunity.version, opportunity.opportunity_id);
+      save();
+      return { ok: true, opportunity: clone(opportunity), previous: clone(previous) };
+    }
+
+    /** Earlier versions of a listing, oldest first. */
+    function listVersions(opportunityId) {
+      return state.listing_versions.filter((item) => item.opportunity_id === opportunityId).map(clone);
     }
 
     function getStudent(studentId) {
@@ -276,8 +352,10 @@
     function listOpportunities(filter) {
       return state.published_listings.filter((listing) => {
         if (!filter || !filter.status) return true;
-        if (filter.status === OPPORTUNITY_STATUS.PENDING) return listing.publication_status === 'unpublished';
+        if (filter.status === OPPORTUNITY_STATUS.PENDING) return listing.publication_status === 'unpublished' && !listing.review_status;
         if (filter.status === OPPORTUNITY_STATUS.APPROVED) return listing.publication_status === 'published';
+        if (filter.status === OPPORTUNITY_STATUS.RETURNED) return listing.review_status === 'returned';
+        if (filter.status === OPPORTUNITY_STATUS.DECLINED) return listing.review_status === 'declined';
         return false;
       }).map(clone);
     }
@@ -317,9 +395,10 @@
       const tracked = state.published_listings.slice().reverse().find((opportunity) => opportunity.origin === 'demo') || null;
       const application = tracked ? state.applications.find((item) => item.opportunity_id === tracked.opportunity_id) : null;
       const reviewed = Boolean(application && state.reviews.some((review) => review.application_id === application.application_id));
+      const outcome = tracked && !isAvailable(tracked) ? tracked.review_status || null : null;
       const stages = [
         { key: 'submitted', role: 'employer', label: 'Submitted by Employer HR', done: Boolean(tracked) },
-        { key: 'approved', role: 'admin', label: 'Approved by Administrator', done: Boolean(tracked && isAvailable(tracked)) },
+        { key: 'approved', role: 'admin', label: outcome === 'returned' ? 'Returned for revision by Administrator' : outcome === 'declined' ? 'Declined by Administrator' : 'Approved by Administrator', done: Boolean(tracked && isAvailable(tracked)), blocked: Boolean(outcome) },
         { key: 'applied', role: 'student', label: 'Student applied', done: Boolean(application) },
         { key: 'visible', role: 'faculty', label: 'Visible to Employer HR and Faculty', done: reviewed },
       ];
@@ -382,7 +461,7 @@
 
     function counts() {
       return {
-        pending: state.published_listings.filter((listing) => listing.publication_status === 'unpublished').length,
+        pending: state.published_listings.filter((listing) => listing.publication_status === 'unpublished' && !listing.review_status).length,
         approved: state.published_listings.filter(isAvailable).length,
         applications: state.applications.length,
       };
@@ -397,7 +476,7 @@
         return found ? clone(found) : null;
       },
       getFaculty, listActivity, getJourney, listEmployerApplications, applicantCounts,
-      refresh, reset, submitOpportunity, approveOpportunity, submitApplication, updateDisplayName, hasApplied,
+      refresh, reset, submitOpportunity, approveOpportunity, reviewOpportunity, resubmitOpportunity, listVersions, submitApplication, updateDisplayName, hasApplied,
       listOpportunities, searchApproved, getStudent, listStudents, listStudentApplications, listFacultyRecords, counts,
     };
   }

@@ -2104,3 +2104,58 @@ dialog[open] {
     display: none;
   }
 }
+
+/* ================= Sprint 3: review decisions and placeholder labels ================= */
+
+.chip-declined {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.placeholder-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid #ecd28f;
+  border-radius: 999px;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+dialog > .placeholder-tag {
+  margin-bottom: 4px;
+}
+.apply-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.hero .hero-tags .chip {
+  margin-top: 0;
+}
+.reason {
+  padding: 8px 10px;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--amber-bg);
+  color: var(--amber-ink);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.version-history {
+  margin-top: 6px;
+}
+.version-history ul {
+  padding-left: 18px;
+}
+.status-row .body > .btn {
+  margin-top: 8px;
+}

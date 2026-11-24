@@ -24,9 +24,13 @@
     { id: 'employer', label: 'Employer HR', short: 'Employer', hint: '1 · Submit, view applicants', icon: 'briefcase' },
     { id: 'admin', label: 'University Administrator', short: 'Admin', hint: '2 · Review and approve', icon: 'shield' },
     { id: 'student', label: 'Student', short: 'Student', hint: '3 · Browse and apply', icon: 'cap' },
-    { id: 'faculty', label: 'Faculty Reviewer', short: 'Faculty', hint: '4 · View applications', icon: 'book' },
+    { id: 'faculty', label: 'Faculty Reviewer', short: 'Faculty', hint: '4 · P07 placeholder', icon: 'book' },
   ];
-  const ASSISTANT = { id: 'assistant', label: 'Internship Assistant', short: 'Assistant', hint: 'FAQ answers only', icon: 'chat' };
+  const ASSISTANT = { id: 'assistant', label: 'Internship Assistant', short: 'Assistant', hint: 'FAQ prototype · P01–P03', icon: 'chat' };
+  // Parts owned by other teams are labelled so nobody mistakes a placeholder for the real thing.
+  const P04_LABEL = 'P04 placeholder: applications are owned by P04/P05';
+  const P07_LABEL = 'P07 placeholder';
+  const FAQ_LABEL = 'FAQ prototype by P01–P03. Official chatbot: P06';
   const ROUTES = [OVERVIEW, ...ROLES, ASSISTANT];
   const ACTIVITY_ICON = { employer: 'briefcase', admin: 'shield', student: 'cap', faculty: 'book', system: 'reset' };
   const STUDENT_TABS = [
@@ -97,6 +101,8 @@
     focusId: null, // element to focus after the next render
     dialogFocusId: null, // element to focus once a dialog has closed
     pendingApply: null,
+    pendingReview: null, // { id, decision } while the reason dialog is open
+    resubmitOf: null, // opportunity ID being revised and resubmitted
     fresh: new Set(), // record IDs to highlight once, on the next render
     seenActivity: new Set(),
     activityPrimed: false, // false until the first render, so existing entries do not all flash
@@ -129,11 +135,24 @@
   function chip(text, kind, iconName) {
     return h('span', { class: `chip chip-${kind}` }, iconName && icon(iconName, 13), text);
   }
+  const placeholderTag = (text) => h('span', { class: 'placeholder-tag' }, icon('info', 13), text);
   const approvalChip = (status) =>
-    status === OPPORTUNITY_STATUS.APPROVED ? chip(status, 'approved', 'check') : status === 'Closed' ? chip(status, 'neutral', 'lock') : chip(status, 'pending', 'clock');
+    status === OPPORTUNITY_STATUS.APPROVED
+      ? chip(status, 'approved', 'check')
+      : status === 'Closed'
+        ? chip(status, 'neutral', 'lock')
+        : status === OPPORTUNITY_STATUS.RETURNED
+          ? chip(status, 'pending', 'reset')
+          : status === OPPORTUNITY_STATUS.DECLINED
+            ? chip(status, 'declined', 'x')
+            : chip(status, 'pending', 'clock');
 
   function listingLabel(opportunity) {
-    if (opportunity.publication_status !== 'published') return OPPORTUNITY_STATUS.PENDING;
+    if (opportunity.publication_status !== 'published') {
+      if (opportunity.review_status === 'returned') return OPPORTUNITY_STATUS.RETURNED;
+      if (opportunity.review_status === 'declined') return OPPORTUNITY_STATUS.DECLINED;
+      return OPPORTUNITY_STATUS.PENDING;
+    }
     return opportunity.listing_status === 'open' ? OPPORTUNITY_STATUS.APPROVED : 'Closed';
   }
 
@@ -285,7 +304,7 @@
             'span',
             { class: 'step-text' },
             h('span', { class: 'step-label' }, stage.label),
-            h('span', { class: 'step-state' }, stage.done ? 'Done' : index === nextIndex ? 'Next step' : 'Waiting'),
+            h('span', { class: 'step-state' }, stage.done ? 'Done' : stage.blocked ? 'Action needed' : index === nextIndex ? 'Next step' : 'Waiting'),
           ),
         ),
       );
@@ -405,16 +424,22 @@
         'div',
         { class: 'scope-cards' },
         scope('scope-working', 'checkCircle', 'Working', [
-          'One shared record carried through all four roles with the same IDs',
-          'Required-field checks, status changes, duplicate prevention',
-          'Records persist across role changes and reloads in this browser',
+          'Students and listings loaded from data/ipp_sample_data.json (shared P01–P03 data)',
+          'Administrator review: approve, return for revision or decline, with a required reason',
+          'Employer sees the status and reason, and resubmits a new version (old version kept)',
+          'One shared record through all four roles, duplicate prevention, records persist in this browser',
         ]),
-        scope('scope-simulated', 'info', 'Simulated', ['Role switching (no login)', 'HR authorization checkbox', 'Four selectable synthetic students and one faculty reviewer']),
+        scope('scope-simulated', 'info', 'Simulated', [
+          'Role switching (no login)',
+          'HR authorization checkbox',
+          'Four selectable synthetic students and one faculty reviewer',
+          'Placeholders for other teams: applications (P04/P05) and faculty review (P07)',
+        ]),
         scope('scope-deferred', 'clock', 'Deferred', [
           'Real authentication and permissions',
           'Shared central storage',
           'Eligibility verification',
-          'Review and placement decisions',
+          'Faculty review outcomes and placement decisions',
         ]),
       ),
     );
@@ -658,11 +683,16 @@
         applied
           ? h('p', { class: 'applied', id: `applied-${id}`, tabindex: '-1' }, chip('Application submitted', 'submitted', 'check'), applied.application_id)
           : h(
-              'button',
-              { type: 'button', class: 'btn', onClick: (event) => openApplyDialog(opportunity, event.currentTarget) },
-              icon('send', 16),
-              'Apply',
-              h('span', { class: 'sr-only' }, ` to ${opportunity.title} at ${opportunity.employer_name}`),
+              'div',
+              { class: 'apply-group' },
+              h(
+                'button',
+                { type: 'button', class: 'btn', title: P04_LABEL, onClick: (event) => openApplyDialog(opportunity, event.currentTarget) },
+                icon('send', 16),
+                'Apply',
+                h('span', { class: 'sr-only' }, ` to ${opportunity.title} at ${opportunity.employer_name}`),
+              ),
+              placeholderTag(P04_LABEL),
             ),
         isDemo && h('span', { class: 'idtag' }, id),
       ),
@@ -848,6 +878,7 @@
       'form',
       { id: 'opp-form', class: 'card form form-card', novalidate: true, onSubmit: onEmployerSubmit, onInput: onEmployerInput },
       h('h2', { class: 'card-title' }, icon('briefcase', 18), 'Submit an opportunity'),
+      ui.resubmitOf && resubmitBanner(),
       h(
         'div',
         { class: 'authz' },
@@ -876,7 +907,7 @@
       h(
         'div',
         { class: 'form-actions' },
-        h('button', { type: 'submit', id: 'submit-opp', class: 'btn', disabled: !ui.hrAuthorized, 'aria-describedby': 'authz-blocked' }, icon('send', 16), 'Submit for review'),
+        h('button', { type: 'submit', id: 'submit-opp', class: 'btn', disabled: !ui.hrAuthorized, 'aria-describedby': 'authz-blocked' }, icon('send', 16), ui.resubmitOf ? 'Resubmit for review' : 'Submit for review'),
         h('button', { type: 'button', class: 'btn btn-quiet', onClick: fillSample }, 'Fill sample data'),
       ),
     );
@@ -906,14 +937,8 @@
               'div',
               { class: 'body' },
               h('div', { class: 'row-head' }, h('p', { class: 'row-title' }, opportunity.title), approvalChip(listingLabel(opportunity))),
-              h('p', { class: 'muted' }, `${opportunity.employer_name} · ${opportunity.opportunity_id}${opportunity.origin === 'demo' ? ' · submitted in this demo' : ''}`),
-              h(
-                'p',
-                { class: 'muted' },
-                listingLabel(opportunity) === OPPORTUNITY_STATUS.PENDING
-                  ? 'Waiting for university approval. Students cannot see it yet.'
-                  : opportunity.listing_status === 'open' ? 'Published and open. Visible to students.' : 'Closed. Not visible to students.',
-              ),
+              h('p', { class: 'muted' }, `${opportunity.employer_name} · ${opportunity.opportunity_id}${opportunity.origin === 'demo' ? ' · submitted in this demo' : ''}${Number(opportunity.version) > 1 ? ` · version ${opportunity.version}` : ''}`),
+              statusDetail(opportunity),
               applicantCounts[opportunity.opportunity_id] > 0 &&
                 h(
                   'button',
@@ -1020,11 +1045,97 @@
     render();
   }
 
+  /** What the employer sees under a listing: its status, the reason for a return or decline, and earlier versions. */
+  function statusDetail(opportunity) {
+    const label = listingLabel(opportunity);
+    const versions = store.listVersions(opportunity.opportunity_id);
+    const history = versions.length
+      ? h(
+          'div',
+          { class: 'version-history' },
+          h('p', { class: 'muted' }, 'Earlier versions (kept):'),
+          h(
+            'ul',
+            null,
+            versions.map((version) =>
+              h(
+                'li',
+                { class: 'muted' },
+                `Version ${version.version}: ${version.review_status === 'returned' ? 'Returned for revision' : version.review_status === 'declined' ? 'Declined' : 'Submitted'}${version.review_reason ? ` · Reason: ${version.review_reason}` : ''}`,
+              ),
+            ),
+          ),
+        )
+      : null;
+    if (label === OPPORTUNITY_STATUS.RETURNED) {
+      return [
+        h('p', { class: 'reason' }, h('strong', null, 'Returned for revision. '), 'Reason: ', opportunity.review_reason),
+        h(
+          'button',
+          { type: 'button', class: 'btn btn-sm', onClick: () => startResubmit(opportunity) },
+          icon('reset', 16),
+          'Revise and resubmit',
+          h('span', { class: 'sr-only' }, ` ${opportunity.title} (${opportunity.opportunity_id})`),
+        ),
+        history,
+      ];
+    }
+    if (label === OPPORTUNITY_STATUS.DECLINED) {
+      return [h('p', { class: 'reason' }, h('strong', null, 'Declined. '), 'Reason: ', opportunity.review_reason, ' This decision is final; submit a new listing if needed.'), history];
+    }
+    return [
+      h(
+        'p',
+        { class: 'muted' },
+        label === OPPORTUNITY_STATUS.PENDING
+          ? 'Waiting for university approval. Students cannot see it yet.'
+          : opportunity.listing_status === 'open' ? 'Published and open. Visible to students.' : 'Closed. Not visible to students.',
+      ),
+      history,
+    ];
+  }
+
+  function resubmitBanner() {
+    const current = store.listOpportunities().find((item) => item.opportunity_id === ui.resubmitOf);
+    if (!current) return null;
+    return h(
+      'div',
+      { id: 'resubmit-banner', class: 'notice', role: 'status' },
+      icon('info', 18),
+      h('span', null, `Resubmitting ${current.opportunity_id} (version ${current.version}) as version ${Number(current.version) + 1}. The previous version is kept. `, h('button', { type: 'button', class: 'link-btn', onClick: cancelResubmit }, 'Cancel resubmission')),
+    );
+  }
+
+  function startResubmit(opportunity) {
+    const mode = WORK_MODES.find((item) => item.toLowerCase() === String(opportunity.work_mode).toLowerCase()) || 'Hybrid';
+    ui.draft = {
+      organization_name: opportunity.employer_name,
+      title: opportunity.title,
+      description: opportunity.description || opportunity.sector || '',
+      location: opportunity.location || '',
+      work_mode: mode,
+      duration: !opportunity.duration || opportunity.duration === 'Not specified' ? '' : opportunity.duration,
+    };
+    ui.resubmitOf = opportunity.opportunity_id;
+    ui.errors = {};
+    ui.formMessage = '';
+    ui.focusId = 'opp-description';
+    render();
+  }
+
+  function cancelResubmit() {
+    ui.resubmitOf = null;
+    ui.draft = blankDraft();
+    ui.errors = {};
+    ui.formMessage = '';
+    render();
+  }
+
   function onEmployerSubmit(event) {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(event.currentTarget));
     ui.draft = { ...blankDraft(), ...data };
-    const result = act(() => store.submitOpportunity(data, { hrAuthorized: ui.hrAuthorized }));
+    const result = act(() => (ui.resubmitOf ? store.resubmitOpportunity(ui.resubmitOf, data, { hrAuthorized: ui.hrAuthorized }) : store.submitOpportunity(data, { hrAuthorized: ui.hrAuthorized })));
     if (!result.ok) {
       ui.errors = result.errors || {};
       ui.formMessage = result.message;
@@ -1034,12 +1145,14 @@
       return;
     }
     const created = result.opportunity;
+    const resubmitted = Boolean(ui.resubmitOf);
+    ui.resubmitOf = null;
     ui.draft = blankDraft();
     ui.errors = {};
     ui.formMessage = '';
     ui.focusId = 'status-heading';
     ui.fresh = new Set([created.opportunity_id]);
-    showToast(`${created.opportunity_id} “${created.title}” submitted. Status: ${listingLabel(created)}.`, {
+    showToast(resubmitted ? `${created.opportunity_id} “${created.title}” resubmitted as version ${created.version}. The previous version is kept. Status: ${listingLabel(created)}.` : `${created.opportunity_id} “${created.title}” submitted. Status: ${listingLabel(created)}.`, {
       link: { href: '#admin', text: 'Next: review it as University Administrator' },
     });
     render();
@@ -1050,6 +1163,7 @@
   function adminView() {
     const pending = store.listOpportunities({ status: OPPORTUNITY_STATUS.PENDING });
     const approved = store.listOpportunities({ status: OPPORTUNITY_STATUS.APPROVED });
+    const reviewed = [...store.listOpportunities({ status: OPPORTUNITY_STATUS.RETURNED }), ...store.listOpportunities({ status: OPPORTUNITY_STATUS.DECLINED })];
 
     const head = (opportunity) =>
       h(
@@ -1076,11 +1190,29 @@
                 { class: 'opp-foot' },
                 approvalChip(listingLabel(opportunity)),
                 h(
-                  'button',
-                  { type: 'button', class: 'btn', onClick: () => approve(opportunity) },
-                  icon('check', 16),
-                  'Approve',
-                  h('span', { class: 'sr-only' }, ` ${opportunity.title} (${opportunity.opportunity_id})`),
+                  'div',
+                  { class: 'row-actions' },
+                  h(
+                    'button',
+                    { type: 'button', class: 'btn btn-sm', onClick: () => approve(opportunity) },
+                    icon('check', 16),
+                    'Approve',
+                    h('span', { class: 'sr-only' }, ` ${opportunity.title} (${opportunity.opportunity_id})`),
+                  ),
+                  h(
+                    'button',
+                    { type: 'button', class: 'btn btn-quiet btn-sm', onClick: () => openReviewDialog(opportunity, 'returned') },
+                    icon('reset', 16),
+                    'Return for revision',
+                    h('span', { class: 'sr-only' }, ` ${opportunity.title} (${opportunity.opportunity_id})`),
+                  ),
+                  h(
+                    'button',
+                    { type: 'button', class: 'btn btn-danger btn-sm', onClick: () => openReviewDialog(opportunity, 'declined') },
+                    icon('x', 16),
+                    'Decline',
+                    h('span', { class: 'sr-only' }, ` ${opportunity.title} (${opportunity.opportunity_id})`),
+                  ),
                 ),
               ),
             ),
@@ -1111,7 +1243,7 @@
     return h(
       'div',
       null,
-      hero('University Administrator view', 'University Administrator', 'Review submitted opportunities and approve them for students. Rejection and return for revision are deferred.', { icon: 'shield' }),
+      hero('University Administrator view', 'University Administrator', 'Review submitted opportunities: approve them for students, return them for revision, or decline them. A reason is required for return and decline.', { icon: 'shield' }),
       tabBar(ADMIN_TABS, 'Administrator sections', { faq: faqCounts.unanswered + faqCounts.pending }),
       tabPanel('review', [
         stats(
@@ -1123,11 +1255,70 @@
         ),
         h('div', { class: 'section-head' }, h('h2', { id: 'queue-heading', tabindex: '-1' }, 'Review queue')),
         queue,
+        reviewed.length > 0 && h('div', { class: 'section-head' }, h('h2', null, `Returned and declined (${reviewed.length})`)),
+        reviewed.length > 0 &&
+          h(
+            'div',
+            { class: 'grid-2' },
+            reviewed.map((opportunity) =>
+              h(
+                'article',
+                { class: `card opp${ui.fresh.has(opportunity.opportunity_id) ? ' is-new' : ''}` },
+                head(opportunity),
+                h('p', { class: 'reason' }, h('strong', null, `${listingLabel(opportunity)}. `), 'Reason: ', opportunity.review_reason),
+                h('div', { class: 'opp-foot' }, approvalChip(listingLabel(opportunity)), h('span', { class: 'muted' }, 'Reviewed ', timeEl(opportunity.reviewed_at))),
+              ),
+            ),
+          ),
         h('div', { class: 'section-head' }, h('h2', null, 'Published opportunities')),
         approvedList,
       ]),
       tabPanel('faq', faqAdminPanel()),
     );
+  }
+
+  // ---------- return for revision / decline (a reason is required for both) ----------
+
+  function openReviewDialog(opportunity, decision) {
+    ui.pendingReview = { id: opportunity.opportunity_id, decision };
+    const returning = decision === 'returned';
+    $('#review-title').textContent = returning ? 'Return for revision' : 'Decline';
+    $('#review-listing').textContent = `${opportunity.title} · ${opportunity.employer_name} · ${opportunity.opportunity_id}`;
+    $('#review-confirm').textContent = returning ? 'Return for revision' : 'Decline';
+    $('#review-confirm').className = returning ? 'btn' : 'btn btn-danger';
+    $('#review-help').textContent = returning
+      ? 'Employer HR will see this reason and can revise and resubmit a new version.'
+      : 'Employer HR will see this reason. Declining is final for this listing.';
+    $('#review-reason').value = '';
+    $('#review-reason').removeAttribute('aria-invalid');
+    const error = $('#review-error');
+    error.hidden = true;
+    error.textContent = '';
+    $('#review-dialog').showModal();
+  }
+
+  function confirmReview() {
+    const { id, decision } = ui.pendingReview;
+    const result = act(() => store.reviewOpportunity(id, decision, $('#review-reason').value));
+    if (!result.ok) {
+      const error = $('#review-error');
+      error.textContent = (result.errors && result.errors.reason) || result.message;
+      error.hidden = false;
+      $('#review-reason').setAttribute('aria-invalid', 'true');
+      $('#review-reason').focus();
+      return;
+    }
+    ui.pendingReview = null;
+    ui.dialogFocusId = 'queue-heading';
+    ui.fresh = new Set([id]);
+    $('#review-dialog').close();
+    showToast(
+      decision === 'returned'
+        ? `${id} returned for revision. Employer HR can see the reason and resubmit a new version.`
+        : `${id} declined. Employer HR can see the reason.`,
+      { link: { href: '#employer', text: 'Next: see it as Employer HR' } },
+    );
+    render();
   }
 
   function approve(opportunity) {
@@ -1186,7 +1377,7 @@
     return h(
       'div',
       null,
-      hero('Faculty Reviewer view', 'Faculty Reviewer', 'Inspect student application records and their statuses.', { icon: 'book', extra: chip('Read-only', 'neutral', 'lock') }),
+      hero('Faculty Reviewer view', 'Faculty Reviewer', 'Inspect student application records and their statuses.', { icon: 'book', extra: h('div', { class: 'hero-tags' }, chip('Read-only', 'neutral', 'lock'), placeholderTag(P07_LABEL)) }),
       h('p', { class: 'notice' }, icon('info', 18), 'Read-only view. Viewing an application does not approve a placement. Review decisions and placement approval are deferred.'),
       h('div', { class: 'section-head' }, h('h2', null, `Application records (${records.length})`)),
       body,
@@ -1299,6 +1490,7 @@
         { icon: 'chat' },
       ),
       h('p', { class: 'proto-banner', role: 'note' }, icon('alert', 18), h('strong', null, PROTOTYPE_BANNER)),
+      h('p', { class: 'notice', role: 'note' }, icon('info', 18), FAQ_LABEL),
       h(
         'section',
         { class: 'card chat', 'aria-labelledby': 'chat-title' },
@@ -1756,7 +1948,7 @@
       else anchor.removeAttribute('aria-current');
     });
     const current = ROUTES.find((item) => item.id === ui.route);
-    document.title = `${current.label} · IPP Sprint 3 demo`;
+    document.title = `${current.label} · IPP Sprint 3`;
   }
 
   function route(initial) {
@@ -1787,6 +1979,8 @@
 
     $('#apply-cancel').addEventListener('click', () => applyDialog.close());
     $('#apply-confirm').addEventListener('click', confirmApply);
+    $('#review-cancel').addEventListener('click', () => $('#review-dialog').close());
+    $('#review-confirm').addEventListener('click', confirmReview);
     $('#reset-btn').addEventListener('click', () => resetDialog.showModal());
     $('#reset-cancel').addEventListener('click', () => resetDialog.close());
     $('#reset-confirm').addEventListener('click', () => {
@@ -1800,6 +1994,7 @@
       ui.nameError = '';
       ui.hrAuthorized = true;
       ui.sampleIndex = 0;
+      ui.resubmitOf = null;
       ui.seenActivity.clear();
       ui.studentId = store.listStudents()[0].student_id;
       ui.dialogFocusId = 'page-title';
@@ -1817,7 +2012,7 @@
     });
 
     // Focus is handled after close so the browser's own focus restoration cannot override it.
-    for (const dialog of [applyDialog, resetDialog]) {
+    for (const dialog of [applyDialog, resetDialog, $('#review-dialog')]) {
       dialog.addEventListener('close', () => {
         if (!ui.dialogFocusId) return;
         const target = document.getElementById(ui.dialogFocusId);
