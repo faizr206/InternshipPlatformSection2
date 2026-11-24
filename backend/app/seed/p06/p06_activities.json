@@ -1,0 +1,11 @@
+[
+{"activity_id": "MOD-JIRA-101", "skill_id": "SK-JIRA", "title": "Tracking team work in Jira",
+"provider": "P06 preparation module (Team P6/P7)", "status": "full", "estimated_hours": 1.5,
+"evidence_needed": "Submit the simulated team board with a short explanation: at least two work items, an owner on every item, one item moved from To do through In progress to Done, and a reason for each status change. A learning reviewer checks it against a 4-item checklist. Finishing the reading alone does not count, and no live Jira account is needed."},
+{"activity_id": "MOD-SQL-101", "skill_id": "SK-SQL", "title": "Querying operational data with SQL",
+"provider": "P06 preparation module (Team P6/P7)", "status": "outline", "estimated_hours": 2,
+"evidence_needed": "Planned: answer three questions about a synthetic flight-delay table and explain one data-quality issue. Reviewed against a 4-item checklist."},
+{"activity_id": "MOD-VIZ-101", "skill_id": "SK-VIZ", "title": "Building a clear operational dashboard",
+"provider": "P06 preparation module (Team P6/P7)", "status": "outline", "estimated_hours": 2,
+"evidence_needed": "Planned: redesign a cluttered on-time-performance chart and state the headline finding. Reviewed against a 4-item checklist."}
+]
