@@ -34,12 +34,35 @@ def get_student(conn, student_id: str) -> dict | None:
 
 
 def get_opportunity(conn, opportunity_id: str) -> dict | None:
-    row = conn.execute("SELECT data FROM opportunities WHERE opportunity_id = ?", (opportunity_id,)).fetchone()
+    """Effective listing: the platform copy (created by P02 or changed by P03) if it is at least as
+    new as the seed row, else the seed row. Seed rows are never edited."""
+    platform = conn.execute("SELECT version, data FROM listings WHERE opportunity_id = ?", (opportunity_id,)).fetchone()
+    seed = conn.execute("SELECT version, data FROM opportunities WHERE opportunity_id = ?", (opportunity_id,)).fetchone()
+    row = platform if platform and (not seed or platform["version"] >= seed["version"]) else seed
     return json.loads(row["data"]) if row else None
 
 
 def all_opportunities(conn) -> list[dict]:
-    return [json.loads(r["data"]) for r in conn.execute("SELECT data FROM opportunities ORDER BY opportunity_id")]
+    ids = sorted({r[0] for r in conn.execute("SELECT opportunity_id FROM opportunities UNION "
+                                             "SELECT opportunity_id FROM listings")})
+    return [get_opportunity(conn, i) for i in ids]
+
+
+def next_id(conn, prefix: str, queries: list[str], width: int = 3) -> str:
+    """Next ID after the highest numeric suffix across the given ID queries, e.g. OP-040."""
+    highest = 0
+    for query in queries:
+        for (value,) in conn.execute(query):
+            tail = str(value).rsplit("-", 1)[-1]
+            if tail.isdigit():
+                highest = max(highest, int(tail))
+    return f"{prefix}-{highest + 1:0{width}d}"
+
+
+def log_event(conn, module: str, actor_role: str, actor_name: str, action: str, text: str, ref: str = "") -> None:
+    """Platform activity feed shared by every module (who did what, when, to which record)."""
+    conn.execute("INSERT INTO events (at, module, actor_role, actor_name, action, ref, text) VALUES (?,?,?,?,?,?,?)",
+                 (now(), module, actor_role, actor_name, action, ref, text))
 
 
 def student_view(opp: dict) -> dict:

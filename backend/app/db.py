@@ -155,6 +155,58 @@ CREATE TABLE IF NOT EXISTS skill_gap_handoffs (
     completed_at TEXT,
     UNIQUE (recommendation_id, skill_id)
 );
+CREATE TABLE IF NOT EXISTS events (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at TEXT NOT NULL,
+    module TEXT NOT NULL,
+    actor_role TEXT NOT NULL,
+    actor_name TEXT NOT NULL,
+    action TEXT NOT NULL,
+    ref TEXT NOT NULL DEFAULT '',
+    text TEXT NOT NULL
+);
+-- P02/P03: listings created or changed in the platform. A row here takes precedence over the
+-- seed row with the same opportunity_id (the seed table is reloaded on every start).
+CREATE TABLE IF NOT EXISTS listings (
+    opportunity_id TEXT PRIMARY KEY,
+    version INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+-- Earlier listing versions, archived untouched when an employer resubmits (P02).
+CREATE TABLE IF NOT EXISTS listing_versions (
+    opportunity_id TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    archived_at TEXT NOT NULL,
+    PRIMARY KEY (opportunity_id, version)
+);
+-- P03 decisions with actor, time and reason (approve / return / decline / publish / close).
+CREATE TABLE IF NOT EXISTS listing_decisions (
+    decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    opportunity_id TEXT NOT NULL,
+    version INTEGER NOT NULL,
+    decision TEXT NOT NULL,
+    reason TEXT,
+    checklist TEXT,
+    actor_name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+-- P01: one working draft per student, and coordinator reviews of submitted versions.
+CREATE TABLE IF NOT EXISTS profile_drafts (
+    student_id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS profile_reviews (
+    review_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id TEXT NOT NULL,
+    profile_version INTEGER NOT NULL,
+    decision TEXT NOT NULL CHECK (decision IN ('clarification_requested', 'reviewed')),
+    comment TEXT,
+    actor_name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
 """
 
 

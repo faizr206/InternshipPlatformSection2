@@ -61,8 +61,8 @@ CI runs both on every push and pull request.
 | Step | Status |
 |---|---|
 | 1. Repo bootstrap: team histories, CI, CODEOWNERS | Done |
-| 2. Backend core + P04/P05 moved into modules (108 tests) | Done |
-| 3. P01–P03 rules ported to the backend | Planned |
+| 2. Backend core + P04/P05 moved into modules | Done |
+| 3. P01–P03 rules ported to the backend (profiles, submission, review, publish, close) | Done |
 | 4. P06/P07 rules ported to the backend | Planned |
 | 5. Live handoffs + one co-op assistant | Planned |
 | 6. Frontend shell + design system | Planned |

@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app import db
-from app.core.common import get_student, new_profile_version as _new_profile_version, now, require_role
+from app.core.common import get_student, log_event, new_profile_version as _new_profile_version, now, require_role
 from app.modules.matching.router import _run_matching
 
 router = APIRouter(tags=["P01 profiles"])
@@ -99,3 +99,162 @@ def profile_versions(student_id: str):
             out.append({"profile_version": r["profile_version"], "source": r["source"],
                         "created_at": r["created_at"], "profile": json.loads(r["data"])})
         return out
+
+
+# --- P01 profile workflow: draft, submit, coordinator clarification and review ---
+# Ported from legacy/p01-p03-ipp/src/store.js (latestSubmitted, updateDisplayName: corrections
+# append a version, an unchanged profile creates none) and extended to the binder's P01 scope:
+# draft / submitted / clarification requested / reviewed, required fields and date ranges checked,
+# self-declared skills stay self-declared until a separate evidence review (P06) is recorded.
+PROFILE_LIMITS = {"display_name": 60, "goals": 400, "preferred_location": 80}
+EDITABLE_FIELDS = ("display_name", "goals", "interests", "preferred_location", "availability_start",
+                   "availability_end", "skills")
+
+
+class ProfileDraftIn(BaseModel):
+    actor_role: str
+    display_name: str | None = None
+    goals: str | None = None
+    interests: list[str] | None = None
+    preferred_location: str | None = None
+    availability_start: str | None = None
+    availability_end: str | None = None
+    skills: list[str] | None = None  # skill IDs the student declares
+
+
+class ProfileSubmitIn(BaseModel):
+    actor_role: str
+
+
+class ProfileReviewIn(BaseModel):
+    decision: str  # clarification_requested | reviewed
+    actor_role: str
+    actor_name: str | None = None
+    comment: str | None = None
+
+
+def _latest_review(conn, student_id: str, profile_version: int) -> dict | None:
+    row = conn.execute("SELECT * FROM profile_reviews WHERE student_id = ? AND profile_version = ? "
+                       "ORDER BY review_id DESC LIMIT 1", (student_id, profile_version)).fetchone()
+    return dict(row) if row else None
+
+
+def _profile_state(conn, student_id: str) -> dict:
+    current = get_student(conn, student_id)
+    if not current:
+        raise HTTPException(404, "Student not found")
+    draft = conn.execute("SELECT data, updated_at FROM profile_drafts WHERE student_id = ?", (student_id,)).fetchone()
+    review = _latest_review(conn, student_id, current["profile_version"])
+    return {
+        "student_id": student_id,
+        "profile": current,
+        "status": review["decision"] if review else "submitted",
+        "review": review,
+        "draft": {**json.loads(draft["data"]), "updated_at": draft["updated_at"]} if draft else None,
+    }
+
+
+def _validate_profile(values: dict) -> dict:
+    errors = {}
+    name = (values.get("display_name") or "").strip()
+    if not name:
+        errors["display_name"] = "Display name is required."
+    for field, limit in PROFILE_LIMITS.items():
+        if field not in errors and len((values.get(field) or "").strip()) > limit:
+            errors[field] = f"{field.replace('_', ' ').capitalize()} must be {limit} characters or fewer."
+    if not [i for i in values.get("interests") or [] if i.strip()]:
+        errors["interests"] = "Add at least one interest (a sector or role you want to explore)."
+    start, end = values.get("availability_start"), values.get("availability_end")
+    if not start or not end:
+        errors["availability"] = "Availability start and end dates are required."
+    elif start > end:
+        errors["availability"] = "Availability start must be on or before the end date."
+    unknown = [s for s in values.get("skills") or [] if s not in db.skill_names()]
+    if unknown:
+        errors["skills"] = f"Unknown skill IDs: {', '.join(unknown)}. Use the shared skill vocabulary."
+    if errors:
+        raise HTTPException(422, {"message": "Fix the highlighted fields before submitting.", "errors": errors})
+    return values
+
+
+@router.get("/api/students/{student_id}/profile")
+def read_profile(student_id: str):
+    """Current submitted profile, its review status and comment, and any working draft."""
+    with db.connect() as conn:
+        return _profile_state(conn, student_id)
+
+
+@router.put("/api/students/{student_id}/profile/draft")
+def save_profile_draft(student_id: str, body: ProfileDraftIn):
+    """Save a working draft. Saving never submits; the current version stays what P04/P05 read."""
+    require_role(body.actor_role, "student", "edit a profile")
+    with db.connect() as conn:
+        state = _profile_state(conn, student_id)
+        base = state["draft"] or {f: state["profile"].get(f) for f in EDITABLE_FIELDS}
+        if base.get("skills") and isinstance(base["skills"][0], dict):
+            base["skills"] = [s["skill_id"] for s in base["skills"]]
+        base.pop("updated_at", None)
+        for field in EDITABLE_FIELDS:
+            value = getattr(body, field)
+            if value is not None:
+                base[field] = value.strip() if isinstance(value, str) else value
+        conn.execute("INSERT OR REPLACE INTO profile_drafts (student_id, data, updated_at) VALUES (?,?,?)",
+                     (student_id, json.dumps(base), now()))
+        return _profile_state(conn, student_id)
+
+
+@router.post("/api/students/{student_id}/profile/submit", status_code=201)
+def submit_profile(student_id: str, body: ProfileSubmitIn):
+    """Submit the draft as the next profile version. Earlier versions are never edited. Reviewed
+    skill evidence is kept; newly declared skills are self-declared (P01 AC3)."""
+    require_role(body.actor_role, "student", "submit a profile")
+    with db.connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        state = _profile_state(conn, student_id)
+        if not state["draft"]:
+            raise HTTPException(409, "There is no draft to submit. Edit your profile first.")
+        values = _validate_profile({k: v for k, v in state["draft"].items() if k in EDITABLE_FIELDS})
+        current = state["profile"]
+        held = {s["skill_id"]: s for s in current.get("skills", [])}
+        skills = [held.get(skill_id) or {"skill_id": skill_id, "evidence_status": "self_declared",
+                                         "reviewed_by": None, "reviewed_at": None, "evidence_id": None}
+                  for skill_id in dict.fromkeys(values.get("skills") or [])]
+        new_profile = {**json.loads(json.dumps(current)),
+                       "display_name": values["display_name"].strip(),
+                       "goals": (values.get("goals") or "").strip() or None,
+                       "interests": [i.strip() for i in values["interests"] if i.strip()],
+                       "preferred_location": (values.get("preferred_location") or "").strip() or None,
+                       "availability_start": values["availability_start"],
+                       "availability_end": values["availability_end"],
+                       "skills": skills, "profile_status": "submitted"}
+        conn.execute("DELETE FROM profile_drafts WHERE student_id = ?", (student_id,))
+        compare = lambda p: {k: p.get(k) for k in EDITABLE_FIELDS}  # noqa: E731
+        if compare(new_profile) == compare(current):
+            return {**_profile_state(conn, student_id), "new_version": False}
+        version = _new_profile_version(conn, new_profile, "P01:student-submission")
+        log_event(conn, "P01", "student", new_profile["display_name"], "profile_submitted",
+                  f"{new_profile['display_name']} submitted profile version {version}", student_id)
+        return {**_profile_state(conn, student_id), "new_version": True}
+
+
+@router.post("/api/students/{student_id}/profile/review", status_code=201)
+def review_profile(student_id: str, body: ProfileReviewIn):
+    """Coordinator asks for clarification (comment required) or marks the current version reviewed."""
+    require_role(body.actor_role, "coordinator", "review a student profile")
+    if body.decision not in ("clarification_requested", "reviewed"):
+        raise HTTPException(422, "decision must be 'clarification_requested' or 'reviewed'.")
+    comment = (body.comment or "").strip()
+    if body.decision == "clarification_requested" and not comment:
+        raise HTTPException(422, "Write what the student should clarify.")
+    actor = (body.actor_name or "COORD-01 (simulated coordinator)").strip()
+    with db.connect() as conn:
+        state = _profile_state(conn, student_id)
+        version = state["profile"]["profile_version"]
+        conn.execute("INSERT INTO profile_reviews (student_id, profile_version, decision, comment, actor_name, "
+                     "created_at) VALUES (?,?,?,?,?,?)",
+                     (student_id, version, body.decision, comment or None, actor, now()))
+        text = (f"Coordinator asked {state['profile']['display_name']} to clarify profile v{version}"
+                if body.decision == "clarification_requested"
+                else f"Coordinator reviewed {state['profile']['display_name']}'s profile v{version}")
+        log_event(conn, "P01", "coordinator", actor, f"profile_{body.decision}", text, student_id)
+        return _profile_state(conn, student_id)

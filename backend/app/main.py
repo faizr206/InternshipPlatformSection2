@@ -14,6 +14,8 @@ from app import db
 from app.modules.applications.router import router as applications_router
 from app.modules.matching.router import router as matching_router
 from app.modules.profiles.router import router as profiles_router
+from app.modules.review.router import router as review_router
+from app.modules.submissions.router import router as submissions_router
 
 FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
@@ -27,8 +29,19 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Coop Platform (P01-P07)", lifespan=lifespan)
 
 app.include_router(profiles_router)
+app.include_router(submissions_router)
+app.include_router(review_router)
 app.include_router(applications_router)
 app.include_router(matching_router)
+
+
+@app.get("/api/events")
+def list_events(limit: int = 60, module: str = ""):
+    """Platform activity feed, newest first (every module logs who did what to which record)."""
+    with db.connect() as conn:
+        query = "SELECT * FROM events" + (" WHERE module = ?" if module else "") + " ORDER BY event_id DESC LIMIT ?"
+        rows = conn.execute(query, ((module,) if module else ()) + (max(1, min(limit, 500)),)).fetchall()
+    return [dict(r) for r in rows]
 
 
 @app.get("/api/health", include_in_schema=False)
