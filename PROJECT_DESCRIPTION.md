@@ -52,4 +52,4 @@ Use HTTP hosting, not file://, because the app fetches its seed JSON. No offline
 
 ## Deferred work and constraints
 
-Real authentication and permissions, central storage, AI recommendations, eligibility verification, return-for-revision, review outcomes, and placement decisions remain deferred. No new dependencies are required. Changes to the cross-team schema must be confirmed before changing the shared fixture. Course R-number traceability, prompt log and Scrum-of-Scrums evidence remain separate handoff work.
+Real authentication and permissions, central storage, AI recommendations, eligibility verification, faculty review outcomes, and placement decisions remain deferred. Administrator return for revision, decline (reason required) and employer resubmission as a new version are implemented. Applications (P04/P05), faculty review (P07) and the official chatbot (P06) belong to other teams and are labelled as placeholders. No new dependencies are required. Changes to the cross-team schema must be confirmed before changing the shared fixture. Course R-number traceability, prompt log and Scrum-of-Scrums evidence remain separate handoff work.

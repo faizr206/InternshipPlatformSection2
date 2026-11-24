@@ -6,6 +6,15 @@ Authoritative planning lives in the course's Lab 3 – Sprint 1 walking-skeleton
 
 Sprint 1: walking skeleton demo. Local standalone implementation is complete and verified; the shared Lovable/GitHub build is a separate class activity.
 
+## 2026-11-24: Sprint 3 updates: return for revision, decline, resubmit, placeholder labels (published)
+
+- **Admin review (P3):** Return for revision and Decline sit next to Approve; a reason is required for both (dialog blocks an empty reason). Returned and declined listings leave the queue and show with their reason. Employer HR sees the status and reason; a returned listing can be revised and resubmitted as a **new version of the same opportunity ID** (version +1, back in the queue); the returned version is archived untouched (`listing_versions`), matching the shared data rule "corrections create a new version; old versions are never edited". Declined is final. The journey tracker shows "Action needed" instead of "Next step" for a returned or declined listing.
+- **Labels:** Student Apply "P04 placeholder: applications are owned by P04/P05" (cards and dialog); Faculty Reviewer "P07 placeholder" (hero and sidebar); Internship Assistant "FAQ prototype by P01–P03. Official chatbot: P06".
+- **Sprint 3 naming and lists:** title, meta description and footer say "Sprint 3"; Working / Simulated / Deferred updated (banner and Overview); return for revision removed from Deferred.
+- **Shared data (item 4):** confirmed, not changed: the app already loads `data/ipp_sample_data.json` (Layla Hassan COOP-B001; OP-028, OP-031, OP-034 shown; OP-036 closed and unpublished or returned listings hidden); the page's copy is byte-identical to the repo file.
+- **Not done (item 5):** matching the P04/P05 and P06 colours and app name needs their links or palettes.
+- Verification: a real-browser run of the whole flow (24 checks; the one failed check was a bug in my test script, not the app) and 116/116 tests. Screenshots are in `screenshots/` (local only, not published).
+
 ## 2026-11-24: optional Botpress mode (committed locally, waiting for the team's Botpress embed URLs)
 
 **Work done**
@@ -18,7 +27,8 @@ Sprint 1: walking skeleton demo. Local standalone implementation is complete and
 
 **Next step**
 A team member creates the Botpress bot (steps in docs/assistant.md) and sends the two embed URLs; then set `enabled` to true, push, and verify on the live site.
-## 2026-11-24: version label changed to "Sprint 3 demo" (committed on branch sprint3-demo-label, not pushed)
+
+## 2026-11-24: version label changed to "Sprint 3 demo" (earlier the same day)
 
 - Changed the user-visible version labels from "Sprint 1 demo" / "Sprint 1 walking skeleton" to **Sprint 3 demo**: the caption above the Overview headline, the footer line, the browser-tab title (now "<page> · IPP Sprint 3 demo") and the page description. Nothing else changed.
 - Left as they were: the repository and URL name (`ipp-walking-skeleton-demo`), the README/PROJECT_DESCRIPTION wording, and the feature ledger.
