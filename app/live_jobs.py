@@ -16,30 +16,48 @@ FEED_URL = "https://remotive.com/api/remote-jobs?limit=100"
 CACHE_SECONDS = 6 * 60 * 60
 _lock = threading.Lock()
 log = logging.getLogger(__name__)
-TOPICS = re.compile(r"\b(ai|ml|machine learning|data|python|research|software|nlp|vision|cloud|engineer|analyst)\b", re.I)
 SENIOR = re.compile(r"\b(senior|sr\.?|principal|staff|lead|director|head|manager)\b", re.I)
+ENGINEERING = re.compile(
+    r"\b(machine learning|artificial intelligence|deep learning|mlops|llm|nlp|"
+    r"computer vision|applied scientist|data scien\w*|data engineer\w*|"
+    r"(?:ai|ml)[ /-](?:engineer\w*|research\w*|scientist|developer|safety|systems)|"
+    r"research (?:engineer|scientist))\b", re.I
+)
+BUSINESS = re.compile(r"\b(product|business|strategy|strategic|consult\w*|economics|policy|governance|responsible|analyst)\b", re.I)
+AI_CONTEXT = re.compile(r"\b(ai|ml|artificial intelligence|machine learning|llm)\b", re.I)
+EARLY_CAREER = re.compile(r"\b(intern(?:ship)?s?|graduate|junior|entry[ -]level|fellows?(?:hip)?s?|resident|residency|university)\b", re.I)
+
+
+def career_area(title: str, company: str = "") -> str | None:
+    """A title must describe AI/data work, not merely carry an AI-related tag."""
+    if BUSINESS.search(title) and (AI_CONTEXT.search(title) or (company == "Anthropic" and EARLY_CAREER.search(title))):
+        return "AI business & policy"
+    if ENGINEERING.search(title) or (EARLY_CAREER.search(title) and AI_CONTEXT.search(title)):
+        return "AI engineering & research"
+    return None
 
 
 def plain_text(value: str) -> str:
+    value = unescape(value)
     return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
 
 
 def safe_link(value: str, source: str = "Remotive") -> bool:
     parsed = urlparse(value)
     host = parsed.hostname or ""
-    if source == "Canonical":
-        return parsed.scheme == "https" and host == "job-boards.greenhouse.io" and parsed.path.startswith("/canonical/jobs/")
+    if source in ("Canonical", "Anthropic"):
+        return parsed.scheme == "https" and host == "job-boards.greenhouse.io" and parsed.path.startswith("/" + source.lower() + "/jobs/")
     return parsed.scheme == "https" and host == "remotive.com"
 
 
 def normalize(job: dict, source: str = "Remotive") -> dict | None:
     title, company, url = (str(job.get(key) or "").strip() for key in ("title", "company_name", "url"))
-    tags = [str(tag) for tag in job.get("tags") or []]
     if not title or not company or not safe_link(url, source) or not job.get("id"):
         return None
-    if not TOPICS.search(" ".join([title, *tags])) or SENIOR.search(title):
+    area = career_area(title, company)
+    if not area or SENIOR.search(title):
         return None
-    if source == "Canonical" and not re.search(r"\b(graduate|junior|intern)\b", title, re.I):
+    if source in ("Canonical", "Anthropic") and not EARLY_CAREER.search(title):
         return None
     description = plain_text(str(job.get("description") or ""))
     kind = {"full_time": "full-time", "part_time": "part-time", "internship": "internship",
@@ -47,9 +65,10 @@ def normalize(job: dict, source: str = "Remotive") -> dict | None:
     skills = {"SK-PY": r"\bpython\b", "SK-SQL": r"\bsql\b", "SK-EXCEL": r"\bexcel\b"}
     mentions = [skill for skill, pattern in skills.items() if re.search(pattern, description, re.I)]
     return {
-        "opportunity_id": f"{'CAN' if source == 'Canonical' else 'REM'}-{job['id']}", "version": 1,
+        "opportunity_id": f"{ {'Canonical': 'CAN', 'Anthropic': 'ANT'}.get(source, 'REM') }-{job['id']}", "version": 1,
         "employer_name": company, "title": title,
-        "sector": str(job.get("category") or "Technology"),
+        "sector": area, "career_area": area,
+        "experience_label": "Student / early career" if EARLY_CAREER.search(title) else "Check experience requirements",
         "location": str(job.get("candidate_required_location") or "Location not specified"),
         "country_code": None, "work_mode": job.get("_work_mode", "remote"), "job_type": kind,
         "degree_levels": [], "description": description[:5000],
@@ -69,7 +88,8 @@ def provider_catalogue(source: str, feed_url: str) -> dict:
         current = datetime.now(timezone.utc)
         checked = datetime.fromisoformat(row["checked_at"]) if row else None
         if row and (current - checked).total_seconds() < CACHE_SECONDS:
-            return json.loads(row["payload"])
+            payload = json.loads(row["payload"])
+            return filter_catalogue(payload)
         previous = json.loads(row["payload"]) if row else None
         try:
             response = httpx.get(feed_url, timeout=12, follow_redirects=False)
@@ -81,13 +101,13 @@ def provider_catalogue(source: str, feed_url: str) -> dict:
             for job in jobs:
                 if not isinstance(job, dict):
                     continue
-                if source == "Canonical":
+                if source in ("Canonical", "Anthropic"):
                     location = str((job.get("location") or {}).get("name") or "")
-                    job = {**job, "company_name": "Canonical", "url": job.get("absolute_url"),
+                    job = {**job, "company_name": source, "url": job.get("absolute_url"),
                            "candidate_required_location": location,
                            "description": unescape(str(job.get("content") or "")),
                            "category": "Software engineering",
-                           "_work_mode": "remote" if re.search("home based", location, re.I) else "unknown",
+                           "_work_mode": "remote" if re.search("home based|remote", location, re.I) else "unknown",
                            "publication_date": job.get("updated_at")}
                 if result := normalize(job, source):
                     normalized[result["opportunity_id"]] = result
@@ -101,16 +121,34 @@ def provider_catalogue(source: str, feed_url: str) -> dict:
         with db.connect() as conn:
             conn.execute("INSERT OR REPLACE INTO external_job_cache VALUES (?, ?, ?)",
                          (source, current.isoformat(), json.dumps(payload)))
-        return payload
+        return filter_catalogue(payload)
+
+
+def filter_catalogue(payload: dict) -> dict:
+    # Apply today's discovery rules to cached rows without increasing provider requests.
+    jobs = []
+    for job in payload["jobs"]:
+        area = career_area(job["title"], job["employer_name"])
+        if area and not SENIOR.search(job["title"]):
+            if job.get("source") in ("Canonical", "Anthropic") and not EARLY_CAREER.search(job["title"]):
+                continue
+            jobs.append({**job, "career_area": area, "sector": area,
+                         "experience_label": "Student / early career" if EARLY_CAREER.search(job["title"])
+                         else "Check experience requirements"})
+    return {**payload, "jobs": jobs}
 
 
 def catalogue() -> dict:
-    feeds = [provider_catalogue("Canonical", "https://boards-api.greenhouse.io/v1/boards/canonical/jobs?content=true"),
-             provider_catalogue("Remotive", FEED_URL)]
+    feeds = [
+        provider_catalogue("Anthropic", "https://boards-api.greenhouse.io/v1/boards/anthropic/jobs?content=true"),
+        provider_catalogue("Canonical", "https://boards-api.greenhouse.io/v1/boards/canonical/jobs?content=true"),
+        provider_catalogue("Remotive", FEED_URL),
+    ]
     dates = [feed["fetched_at"] for feed in feeds if feed.get("fetched_at")]
+    jobs = [job for feed in feeds for job in feed["jobs"]]
+    jobs.sort(key=lambda job: (not EARLY_CAREER.search(job["title"]), job["employer_name"], job["title"]))
     return {
-        "jobs": [job for feed in feeds for job in feed["jobs"]],
-        "source": "Canonical + Remotive",
+        "jobs": jobs, "source": "Anthropic + Canonical + Remotive",
         "status": "current" if all(feed["status"] == "current" for feed in feeds) else "stale" if dates else "unavailable",
         "fetched_at": min(dates) if dates else None,
         "sources": [{key: feed.get(key) for key in ("source", "status", "fetched_at")} for feed in feeds],

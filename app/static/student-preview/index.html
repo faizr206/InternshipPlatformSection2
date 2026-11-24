@@ -638,6 +638,7 @@
 }
 
 </style>
+<link rel="stylesheet" href="/student-preview/assets/refinement.css">
 <div id="coop-preview">
 
 <div class="shell">
@@ -647,7 +648,7 @@
       <button type="button" data-go="recs" class="wordmark" aria-label="Coop home"><span class="brand-symbol" aria-hidden="true"></span>Coop</button>
       <nav class="public-links" aria-label="Main navigation">
         <button type="button" data-tab="recs" aria-current="page">For you</button>
-        <button type="button" data-tab="browse">Explore</button>
+        <button type="button" data-tab="browse">Find jobs</button>
         <button type="button" data-tab="saved">Saved</button>
         <button type="button" data-tab="apps">Applications <span id="appCount"></span></button>
         <button type="button" data-tab="guide">Career guide</button>
@@ -697,13 +698,13 @@
             <div id="tab-recs">
               <header class="feature feature-home">
                 <div class="feature-content">
-                  <h2>Find your next<br> placement.</h2>
-                  <p>Find internships, part-time work, and graduate roles that fit your skills.</p>
+                  <h2 id="studentGreeting">Your next step.</h2>
+                  <p>Review your university matches, prepare for interviews, and keep your applications moving.</p>
                   <button class="cp-btn" data-go="browse" type="button">Explore opportunities</button>
                 </div>
                 <img src="/student-preview/assets/7c42d6ba469072fd.webp" alt="" class="feature-photo">
               </header>
-              <div class="section-head"><h2>Your matches</h2><button class="inline-action" id="recommend" type="button">Refresh matches</button></div>
+              <div class="section-head"><h2>University matches</h2><button class="inline-action" id="recommend" type="button">Refresh matches</button></div>
               <div class="cp-toolbar">
 
                 <span class="msg" aria-live="polite" id="recMsg"></span>
@@ -712,9 +713,9 @@
               <div id="recs"></div>
             </div>
 
-            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2><p>Explore current roles and university placements.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
-<div class="source-tools"><label for="catalogueSource">Show<select id="catalogueSource"><option value="live">Live opportunities</option><option value="university">University listings</option></select></label></div>
-<p id="feedStatus" role="status">Loading live opportunities…</p>
+            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Find work in AI.</h2><p>Engineering, research, and business roles for your next step.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
+<div class="source-tools"><label for="catalogueSource">Catalogue<select id="catalogueSource"><option value="live">Live opportunities</option><option value="university">University listings</option></select></label><label for="careerPath">Career path<select id="careerPath"><option value="">All AI careers</option><option value="AI engineering &amp; research">AI engineering &amp; research</option><option value="AI business &amp; policy">AI business &amp; policy</option></select></label>
+<details class="feed-detail"><summary id="feedShortStatus">Connecting to job boards</summary><p id="feedStatus" role="status">Loading live opportunities…</p></details></div>
 <form id="opportunitySearch" class="opportunity-search" aria-label="Search opportunities">
   <div class="basic-search">
     <label class="keyword-field" for="q">Search
@@ -739,6 +740,7 @@
     <button type="button" class="inline-action" id="clearFilters" hidden>Clear all</button>
   </div>
   <fieldset id="advancedFilters" class="advanced-filters" hidden aria-label="Advanced search filters">
+    <label for="careerLevel">Experience<select id="careerLevel"><option value="">Any experience</option><option value="early">Student / early career</option><option value="check">Check requirements</option></select></label>
     <label for="jobType">Job type<select id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance</option></select></label>
     <label for="mode">Work mode
       <select id="mode">
@@ -947,14 +949,14 @@ const rolePhotos = {"OP-101": {"image": "/student-preview/assets/93c7e737742d126
 function employerPhoto(o) {
   if (o.external) return "";
   const photo = rolePhotos[o.opportunity_id];
-  if (photo) return `<img class="employer-photo" loading="lazy" src="${photo.image}" alt="${esc(photo.alt)}">`;
+  if (photo) return `<img class="employer-photo" loading="eager" src="${photo.image}" alt="${esc(photo.alt)}">`;
   const url = visualAssets[o.visual || o.opportunity_id];
   if (!url) return "";
   const label = o.opportunity_id === "OP-028" ? "Emirates Airbus A380" : {
     "OP-031":"Laptop displaying data charts", "OP-032":"Designer sketching on a sticky note",
     "OP-033":"Software developer at a coding workstation"
   }[o.visual || o.opportunity_id];
-  return `<img class="employer-photo" loading="lazy" src="${url}" alt="${label}">`;
+  return `<img class="employer-photo" loading="eager" src="${url}" alt="${label}">`;
 }
 
 // Public discovery and university application records have distinct source ownership.
@@ -983,15 +985,8 @@ function saveButton(o) {
 }
 function renderSaved() {
   const saved = open.filter(o => savedIds().includes(o.opportunity_id));
-  $("savedList").innerHTML = saved.length ? saved.map(o => `
-    <article class="cp-card saved-item">
-      ${employerPhoto(o)}<div class="listing-content"><div class="cp-title"><b>${esc(o.title)}</b></div>
-      ${oppSummary(o)}
-      <div class="actions">${applyButton(o)}
-        <button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">View opportunity</button>
-        <button class="cp-btn quick-save" type="button" data-save="${esc(o.opportunity_id)}">Remove</button>
-      </div></div>
-    </article>`).join("") : '<div class="empty">No saved opportunities yet. Use Save on a match or catalogue listing to start your shortlist.</div>';
+  $("savedList").innerHTML = saved.length ? saved.map(o => catalogueCard(o, true)).join("")
+    : '<div class="empty">Save a role while browsing to keep it here.</div>';
 }
 function renderGuide() {
   const recs = Object.values(state.recs);
@@ -1236,33 +1231,46 @@ async function renderRecs(recs) {
 }
 
 // ================= Browse & compare (P04-01) =================
+function sourceDate(o) {
+  if (!o.published_at || Number.isNaN(new Date(o.published_at).getTime())) return "";
+  const date = new Intl.DateTimeFormat("en", {day:"numeric",month:"short"}).format(new Date(o.published_at));
+  return `<span class="job-date">${o.source === "Remotive" ? "Posted" : "Updated"} ${esc(date)}</span>`;
+}
+
+function catalogueCard(o, saved = false) {
+  const rec = state.recs[o.opportunity_id];
+  const id = esc(o.opportunity_id);
+  const facts = [o.location, o.work_mode === "unknown" ? null : o.work_mode, o.job_type === "unknown" || !o.job_type ? null : jobType(o)];
+  return `<article class="cp-card" id="${saved ? "saved" : "opp"}-${id}">
+    <div class="listing-content">
+      <div class="job-employer">${employerBadge(o.employer_name)}<strong>${esc(o.employer_name)}</strong>${sourceDate(o)}</div>
+      <div class="cp-title">${esc(o.title)}</div>
+      <div class="job-facts">
+        <p>${facts.filter(Boolean).map(esc).join(" · ")}</p>
+        ${o.career_area ? `<p class="job-path">${esc(o.career_area)}</p>` : ""}
+        ${o.experience_label ? `<p class="job-experience">${esc(o.experience_label)}</p>` : ""}
+        ${o.salary ? `<p>${esc(o.salary)}</p>` : ""}
+      </div>
+      <div class="job-footer">
+        ${applyButton(o)} ${saveButton(o)}
+        ${!saved ? `<label class="compare-pick"><input type="checkbox" data-compare="${id}" ${state.compare.includes(o.opportunity_id) ? "checked" : ""}> Compare</label>` : ""}
+      </div>
+      <details class="fit-details"><summary>Role details</summary>
+        ${listingFacts(o)}${degreeFact(o)}
+        ${o.description ? `<p class="cp-muted desc">${esc(o.description)}</p>` : ""}
+        ${o.external ? `<p class="source-line">Listed by <a href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">${esc(o.source)}</a>. Review the full requirements before applying.</p>` : skillChips(o)}
+        ${rec ? `<div class="actions"><button class="inline-action" data-viewrec="${id}">See university match</button></div>` : ""}
+      </details>
+    </div>
+  </article>`;
+}
+
 async function searchOpps() {
   const opps = searchCatalogue();
   setSearchSummary(opps.length);
   opps.forEach(o => state.opps[o.opportunity_id] = o);
-  $("opps").innerHTML = opps.length ? opps.map(o => {
-    const rec = state.recs[o.opportunity_id];
-    return `
-    <article class="cp-card" id="opp-${esc(o.opportunity_id)}">
-      ${employerPhoto(o)}<div class="listing-content">
-      <div class="card-head">
-        <div class="cp-title" style="font-weight:600">${esc(o.title)}</div>
-        <label class="compare-pick"><input type="checkbox" data-compare="${esc(o.opportunity_id)}"
-          ${state.compare.includes(o.opportunity_id) ? "checked" : ""}> Compare</label>
-      </div>
-      ${oppSummary(o)}
-      <div class="actions">${applyButton(o)} ${saveButton(o)}
-        ${rec ? `<button class="linkish" data-viewrec="${esc(o.opportunity_id)}">See match</button>` : ""}
-        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
-
-      <details class="fit-details"><summary>Role details &amp; requirements</summary>${listingFacts(o)}${degreeFact(o)}
-        ${o.description ? `<p class="cp-muted desc">${esc(o.description)}</p>` : ""}
-        ${o.external ? `<p class="cp-muted">${o.salary ? "Pay: "+esc(o.salary) : "Pay not specified"}</p><p class="source-line">Source: <a href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">${esc(o.source)}</a> · Apply on the provider’s website</p>` : skillChips(o)}
-        <details class="history-tools"><summary>Record information</summary><div class="meta"><span>${esc(o.opportunity_id)}</span><span>version ${esc(o.version)}</span></div></details>
-      </details></div>
-    </article>`;
-  }).join("")
-    : `<div class="empty">No opportunities match these filters. Try fewer filters or use Clear all.</div>`;
+  $("opps").innerHTML = opps.length ? opps.map(o => catalogueCard(o)).join("")
+    : `<div class="empty">${liveFeed.status === "loading" && $("catalogueSource").value === "live" ? "Looking for opportunities…" : "No roles match these choices. Try another filter or use Clear all."}</div>`;
   renderCompare();
 }
 
@@ -1914,6 +1922,7 @@ async function onStudentChange() {
   state.student = await api(`/api/students/${studentId()}`);
   state.compare = [];
   renderProfile(state.student);
+  $("studentGreeting").textContent = `Your next step, ${state.student.display_name.split(" ")[0]}.`;
   await refreshLists();
 }
 
@@ -1945,7 +1954,7 @@ const listingDegrees = {};
 const places = {"Dubai":"AE", "Abu Dhabi":"AE", "Sharjah":"AE"};
 const countryCode = o => o.country_code || places[o.location] || "unknown";
 const countryName = o => countryCode(o) === "unknown" ? "Country not listed" : regionNames.of(countryCode(o));
-const advancedFields = ["jobType","mode","sector","requiredSkill","startBy"];
+const advancedFields = ["careerPath","careerLevel","jobType","mode","sector","requiredSkill","startBy"];
 const allFilterFields = ["q","country","degree",...advancedFields];
 const listingLevels = o => o.degree_levels || [];
 function matchesCountry(o, selected) {
@@ -1992,6 +2001,9 @@ function searchCatalogue() {
   return catalogue.filter(o=>{
     const code = countryCode(o);
     const degreeLevels = listingLevels(o);
+    if ($("careerPath").value && o.career_area !== $("careerPath").value) return false;
+    if ($("careerLevel").value === "early" && o.experience_label !== "Student / early career") return false;
+    if ($("careerLevel").value === "check" && o.experience_label !== "Check experience requirements") return false;
     if (country && !matchesCountry(o,country)) return false;
     if (degree && (degree==="unknown" ? degreeLevels.length>0 : !degreeLevels.includes(degree))) return false;
     if ($("jobType").value && o.job_type !== $("jobType").value) return false;
@@ -2020,6 +2032,7 @@ function setSearchSummary(count) {
 
 function clearSearchFilters() {
   $("opportunitySearch").reset();
+  $("careerPath").value = "";
 }
 
 function degreeFact(o) {
@@ -2129,14 +2142,19 @@ function renderFeedStatus() {
   const university = $("catalogueSource").value === "university";
   const label = $("feedStatus");
   if (university) {
+    $("feedShortStatus").textContent = "University test catalogue";
     label.textContent = "University listings from the P03 team export. Internal applications are available for testing.";
     return;
   }
+  $("feedShortStatus").textContent = liveFeed.status === "loading" ? "Connecting to job boards" :
+    liveFeed.status === "unavailable" ? "Job boards unavailable" :
+    liveFeed.status === "stale" ? "Some sources are delayed" : "Connected to job boards";
+  const sourceList = (liveFeed.sources || []).filter(source=>source.status !== "unavailable").map(source=>source.source).join(", ");
   const date = liveFeed.fetched_at ? new Date(liveFeed.fetched_at).toLocaleString(undefined,
     {dateStyle:"medium",timeStyle:"short"}) : "";
   label.textContent = liveFeed.status === "loading" ? "Loading live opportunities…" :
     liveFeed.status === "unavailable" ? "Live opportunities are unavailable. University listings are available in the source selector." :
-    `Sources: Canonical and Remotive · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
+    `Sources: ${sourceList} · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
 }
 
 async function loadLiveCatalogue() {
@@ -2238,7 +2256,7 @@ $("interviewSave").onclick = async () => {
   $("evStudent").innerHTML = options;
   $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
   await onStudentChange();
-  showTab("recs");
+  showTab("browse");
   loadLiveCatalogue();
 })().catch(err => setMsg("recMsg", err.message, "error"));
 
