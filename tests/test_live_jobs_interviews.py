@@ -94,16 +94,23 @@ def test_external_normalization_preserves_unknowns_and_safe_links():
 
 def test_live_feed_cache_stale_and_unavailable(client, monkeypatch):
     calls = []
-    def fetch(*args, **kwargs):
+    def fetch(url, **kwargs):
         calls.append(1)
-        return httpx.Response(200, request=httpx.Request("GET", live_jobs.FEED_URL), json={
-            "jobs": [{"id": 1, "title": "Python Research Intern", "company_name": "Company",
-                      "url": "https://remotive.com/remote-jobs/software-dev/intern-1"}]})
+        if "remoteok.com" in url:
+            payload = []
+        elif "arbeitnow.com" in url:
+            payload = {"data": []}
+        elif "remotive.com" in url:
+            payload = {"jobs": [{"id": 1, "title": "Python Research Intern", "company_name": "Company",
+                                 "url": "https://remotive.com/remote-jobs/software-dev/intern-1"}]}
+        else:
+            payload = {"jobs": []}
+        return httpx.Response(200, request=httpx.Request("GET", url), json=payload)
     monkeypatch.setattr(live_jobs.httpx, "get", fetch)
     response = client.get("/api/external-opportunities").json()
     assert response["status"] == "current" and len(response["jobs"]) == 1
     client.get("/api/external-opportunities")
-    assert len(calls) == 2
+    assert len(calls) == 5
     with db.connect() as conn:
         conn.execute("UPDATE external_job_cache SET checked_at = '2000-01-01T00:00:00+00:00'")
     def fail(*args, **kwargs):
@@ -135,3 +142,37 @@ def test_canonical_student_roles_and_link_boundary():
     assert row["location"] == job["candidate_required_location"]
     assert live_jobs.normalize({**job, "title": "Senior Software Engineer"}, "Canonical") is None
     assert live_jobs.normalize({**job, "url": "https://job-boards.greenhouse.io/other/jobs/1"}, "Canonical") is None
+
+
+@pytest.mark.parametrize("source, raw, prefix, mode", [
+    ("Arbeitnow", {"slug": "python-intern", "title": "Python Intern", "company_name": "A",
+                   "url": "https://www.arbeitnow.com/view/python-intern",
+                   "location": "Berlin, Germany", "remote": False, "job_types": ["full_time"],
+                   "created_at": 1795500000}, "ARB", "unknown"),
+    ("Remote OK", {"id": "42", "position": "Data Analyst", "company": "B",
+                   "url": "https://remoteok.com/remote-jobs/42", "location": "USA",
+                   "date": "2026-11-24T00:00:00Z"}, "ROK", "remote"),
+    ("Jobicy", {"id": 43, "jobTitle": "Machine Learning Intern", "companyName": "C",
+                "url": "https://jobicy.com/jobs/43", "jobGeo": "Europe",
+                "jobType": ["Part-Time"], "jobIndustry": ["Data Science"],
+                "jobDescription": "&lt;p&gt;Python&lt;/p&gt;",
+                "pubDate": "2026-11-24"}, "JOB", "remote"),
+])
+def test_additional_provider_fields(source, raw, prefix, mode):
+    from app.job_feeds import adapt
+    row = live_jobs.normalize(adapt(source, raw), source)
+    assert row["opportunity_id"].startswith(prefix + "-")
+    assert row["source"] == source and row["work_mode"] == mode
+    assert row["source_url"] == raw["url"]
+    assert row["degree_levels"] == [] and row["country_code"] is None
+    assert not live_jobs.safe_link("https://evil.test/jobs/43", source)
+    assert not live_jobs.safe_link("https://jobicy.com.evil.test/jobs/43", source)
+
+
+def test_remoteok_metadata_and_feed_shapes():
+    from app.job_feeds import adapt, feed_rows
+    assert live_jobs.normalize(adapt("Remote OK", {"legal": "Attribution required"}), "Remote OK") is None
+    assert feed_rows("Remote OK", []) == []
+    assert feed_rows("Arbeitnow", {"data": []}) == []
+    with pytest.raises(ValueError):
+        feed_rows("Jobicy", {"jobs": {}})

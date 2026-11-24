@@ -6,22 +6,24 @@ import logging
 import re
 import threading
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse
 
 import httpx
 
 from app import db
+from app.job_feeds import FEEDS, HOSTS, PREFIXES, adapt, feed_rows
 
 FEED_URL = "https://remotive.com/api/remote-jobs?limit=100"
 CACHE_SECONDS = 6 * 60 * 60
-_lock = threading.Lock()
+_locks = {source: threading.Lock() for source, _ in FEEDS}
 log = logging.getLogger(__name__)
 TOPICS = re.compile(r"\b(ai|ml|machine learning|data|python|research|software|nlp|vision|cloud|engineer|analyst)\b", re.I)
 SENIOR = re.compile(r"\b(senior|sr\.?|principal|staff|lead|director|head|manager)\b", re.I)
 
 
 def plain_text(value: str) -> str:
-    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
+    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", unescape(value)))).strip()
 
 
 def safe_link(value: str, source: str = "Remotive") -> bool:
@@ -29,7 +31,7 @@ def safe_link(value: str, source: str = "Remotive") -> bool:
     host = parsed.hostname or ""
     if source == "Canonical":
         return parsed.scheme == "https" and host == "job-boards.greenhouse.io" and parsed.path.startswith("/canonical/jobs/")
-    return parsed.scheme == "https" and host == "remotive.com"
+    return parsed.scheme == "https" and host in HOSTS.get(source, set())
 
 
 def normalize(job: dict, source: str = "Remotive") -> dict | None:
@@ -47,7 +49,7 @@ def normalize(job: dict, source: str = "Remotive") -> dict | None:
     skills = {"SK-PY": r"\bpython\b", "SK-SQL": r"\bsql\b", "SK-EXCEL": r"\bexcel\b"}
     mentions = [skill for skill, pattern in skills.items() if re.search(pattern, description, re.I)]
     return {
-        "opportunity_id": f"{'CAN' if source == 'Canonical' else 'REM'}-{job['id']}", "version": 1,
+        "opportunity_id": f"{PREFIXES[source]}-{job['id']}", "version": 1,
         "employer_name": company, "title": title,
         "sector": str(job.get("category") or "Technology"),
         "location": str(job.get("candidate_required_location") or "Location not specified"),
@@ -63,7 +65,7 @@ def normalize(job: dict, source: str = "Remotive") -> dict | None:
 
 def provider_catalogue(source: str, feed_url: str) -> dict:
     """At most one refresh per six hours, including failed attempts. Last good data survives outages."""
-    with _lock:
+    with _locks[source]:
         with db.connect() as conn:
             row = conn.execute("SELECT * FROM external_job_cache WHERE cache_key = ?", (source,)).fetchone()
         current = datetime.now(timezone.utc)
@@ -72,14 +74,17 @@ def provider_catalogue(source: str, feed_url: str) -> dict:
             return json.loads(row["payload"])
         previous = json.loads(row["payload"]) if row else None
         try:
-            response = httpx.get(feed_url, timeout=12, follow_redirects=False)
+            response = httpx.get(feed_url, timeout=12, follow_redirects=True,
+                                 headers={"User-Agent": "Coop-Career-Discovery/1.0"})
             response.raise_for_status()
-            jobs = response.json()["jobs"]
-            if not isinstance(jobs, list):
-                raise ValueError("Provider returned an invalid jobs list")
+            jobs = feed_rows(source, response.json())
             normalized = {}
             for job in jobs:
                 if not isinstance(job, dict):
+                    continue
+                try:
+                    job = adapt(source, job)
+                except (ValueError, TypeError, OverflowError, OSError):
                     continue
                 if source == "Canonical":
                     location = str((job.get("location") or {}).get("name") or "")
@@ -105,13 +110,14 @@ def provider_catalogue(source: str, feed_url: str) -> dict:
 
 
 def catalogue() -> dict:
-    feeds = [provider_catalogue("Canonical", "https://boards-api.greenhouse.io/v1/boards/canonical/jobs?content=true"),
-             provider_catalogue("Remotive", FEED_URL)]
+    with ThreadPoolExecutor(max_workers=len(FEEDS)) as executor:
+        feeds = list(executor.map(lambda feed: provider_catalogue(*feed), FEEDS))
     dates = [feed["fetched_at"] for feed in feeds if feed.get("fetched_at")]
     return {
         "jobs": [job for feed in feeds for job in feed["jobs"]],
-        "source": "Canonical + Remotive",
+        "source": " + ".join(source for source, _ in FEEDS),
         "status": "current" if all(feed["status"] == "current" for feed in feeds) else "stale" if dates else "unavailable",
         "fetched_at": min(dates) if dates else None,
-        "sources": [{key: feed.get(key) for key in ("source", "status", "fetched_at")} for feed in feeds],
+        "sources": [{**{key: feed.get(key) for key in ("source", "status", "fetched_at")},
+                     "job_count": len(feed["jobs"])} for feed in feeds],
     }

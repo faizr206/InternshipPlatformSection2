@@ -1951,7 +1951,7 @@ const listingLevels = o => o.degree_levels || [];
 function matchesCountry(o, selected) {
   if (!o.external) return countryCode(o) === selected;
   const location = o.location.toLowerCase();
-  const worldwide = /worldwide|anywhere in the world/.test(location);
+  const worldwide = /worldwide|anywhere in the world/.test(location) || location.trim() === "anywhere";
   if (selected === "unknown") return !worldwide && !countryCodes.some(code => explicitCountry(location, code));
   if (worldwide) return true;
   return explicitCountry(location, selected);
@@ -2132,11 +2132,13 @@ function renderFeedStatus() {
     label.textContent = "University listings from the P03 team export. Internal applications are available for testing.";
     return;
   }
+  const sourceList = (liveFeed.sources || []).filter(source => source.status !== "unavailable")
+    .map(source => source.source).join(", ");
   const date = liveFeed.fetched_at ? new Date(liveFeed.fetched_at).toLocaleString(undefined,
     {dateStyle:"medium",timeStyle:"short"}) : "";
   label.textContent = liveFeed.status === "loading" ? "Loading live opportunities…" :
     liveFeed.status === "unavailable" ? "Live opportunities are unavailable. University listings are available in the source selector." :
-    `Sources: Canonical and Remotive · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
+    `Sources: ${sourceList} · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
 }
 
 async function loadLiveCatalogue() {

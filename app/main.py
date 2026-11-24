@@ -225,7 +225,7 @@ def external_opportunities():
 def data_sources():
     return {
         "profiles": {"mode": db.data_source(), "label": "P01/P03 team export" if db.data_source() != "fixtures" else "Test fixtures"},
-        "listings": {"mode": "public-feed", "label": "Canonical + Remotive"},
+        "listings": {"mode": "public-feed", "label": " + ".join(source for source, _ in live_jobs.FEEDS)},
         "team_connections": {"P01": "file export", "P03": "file export", "P06": "file export", "P07": "mock outbox"},
     }
 

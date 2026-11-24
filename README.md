@@ -199,3 +199,28 @@ compatible with previous callers.
 
 Business rules and proposed alignment with the teams are documented in
 [docs/business-rules.md](docs/business-rules.md). Team approval remains pending.
+
+### Additional public discovery feeds
+
+Live discovery also reads Arbeitnow, Remote OK, and Jobicy alongside Canonical and
+Remotive. Each provider has an independent six-hour cache and fetch status.
+Feeds refresh concurrently; an unavailable provider does not discard the other
+providers' results. Provider names and original listing links remain visible.
+
+Arbeitnow contributes Europe-focused roles; Remote OK and Jobicy contribute
+remote listings with their stated location restrictions. Missing degree,
+employment type, pay, or location eligibility stays unspecified. The existing
+technology/research keyword filter and senior-title exclusions still apply.
+
+Jooble requires a country-specific key. Adzuna requires an application ID/key,
+and JSearch requires a subscription/API credential. They are not enabled in this
+configuration because those credentials have not been supplied. Obtain keys
+through each provider's official developer portal before integrating them.
+
+Provider documentation:
+- https://www.arbeitnow.com/blog/job-board-api
+- https://remoteok.com/faq
+- https://github.com/Jobicy/remote-jobs-api
+- https://jooblehelpcenter.freshdesk.com/en/support/solutions/articles/60001448238-rest-api-documentation
+- https://developer.adzuna.com/
+- https://www.openwebninja.com/api/jsearch

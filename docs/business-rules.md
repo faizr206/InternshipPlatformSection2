@@ -15,7 +15,7 @@ not reviewed these additions.
 | P05 | Recommendations and gap handoffs | SQLite and matching API | Keep rules and input versions with every result. Preserve earlier runs. |
 | P06 | Preparation activities and demonstration outcomes | Team activity file | Completing a resource does not verify a skill. The P06 → P01 demonstration flow requires a new profile version. |
 | P07 | Placement learning records | Local mock outbox | Send a confirmed placement once. Receipt currently represents a local mock, not confirmed remote delivery. |
-| Canonical / Remotive | External job advertisements | Live public API | Attribute and link to the provider. Applications happen on the provider’s website. |
+| Canonical / Remotive / Arbeitnow / Remote OK / Jobicy | External job advertisements | Live public API | Attribute and link to the provider. Applications happen on the provider’s website. |
 
 No live team endpoints or credentials were supplied. The app does not claim a
 network connection to those teams. Existing exported fields and handoff IDs remain
@@ -32,7 +32,7 @@ been inferred and no messages have been sent to the teams.
 2. Show the provider's actual candidate location restrictions. Remote work never
    implies worldwide eligibility. Missing country, degree, pay, or dates remain
    unknown. Never manufacture requirements, availability, or employer approval.
-3. Provider content is converted to plain text. Only HTTPS Remotive and Canonical Greenhouse listing URLs
+3. Provider content is converted to plain text. Only HTTPS URLs on each configured provider’s domain
    are accepted. Every external card links back to its provider and names its source.
 4. Cache successful feed responses for six hours, respecting the provider's
    suggested maximum of four fetches per day. Failed refresh attempts are also
@@ -120,3 +120,16 @@ https://github.com/remotive-com/remote-jobs-api
 
 Canonical graduate/junior technology roles also use its public Greenhouse board. Each provider has an independent cache and freshness status.
 https://docs.greenhouse.io/job-board.html
+
+
+## Additional public sources
+
+Arbeitnow, Remote OK, and Jobicy share the external discovery boundary: each job
+retains its source and original link; application submission stays with that
+provider. Arbeitnow's remote=false flag is not interpreted as an on-site or
+hybrid guarantee. Remote-only feeds retain their candidate geography rather than
+being labelled eligible worldwide. Unknown employment types remain unknown.
+The Remote OK metadata/legal first row is excluded from listings. Every provider
+has a separate six-hour cache, and independent refresh failures preserve the
+other providers' successful responses. Jooble, Adzuna, and JSearch need account
+credentials before they can be integrated.
