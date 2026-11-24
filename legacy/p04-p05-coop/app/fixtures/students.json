@@ -1,0 +1,72 @@
+[
+  {
+    "student_id": "COOP-B001",
+    "profile_version": 1,
+    "display_name": "Layla Hassan",
+    "interests": ["aviation", "analytics"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-06-30",
+    "skills": [
+      {"skill_id": "SK-SQL", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null},
+      {"skill_id": "SK-EXCEL", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0001"},
+      {"skill_id": "SK-VIZ", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}
+    ]
+  },
+  {
+    "student_id": "COOP-B002",
+    "profile_version": 1,
+    "display_name": "Omar Saleh",
+    "interests": ["software"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-04-30",
+    "skills": [
+      {"skill_id": "SK-PY", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0002"},
+      {"skill_id": "SK-JIRA", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null}
+    ]
+  },
+  {
+    "student_id": "COOP-B003",
+    "profile_version": 2,
+    "display_name": "Mei Chen",
+    "interests": ["design"],
+    "availability_start": null,
+    "availability_end": null,
+    "skills": [
+      {"skill_id": "SK-FIGMA", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0003"}
+    ]
+  },
+  {
+    "student_id": "COOP-B004",
+    "profile_version": 1,
+    "display_name": "Daniel Okafor",
+    "interests": ["marketing", "retail"],
+    "availability_start": "2027-07-01",
+    "availability_end": "2027-12-31",
+    "skills": [
+      {"skill_id": "SK-DMKT", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null},
+      {"skill_id": "SK-COMM", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0004"}
+    ]
+  },
+  {
+    "student_id": "COOP-B005",
+    "profile_version": 1,
+    "display_name": "Sara Novak",
+    "interests": ["analytics", "finance"],
+    "availability_start": "2027-01-01",
+    "availability_end": "2027-12-31",
+    "skills": [
+      {"skill_id": "SK-PY", "evidence_status": "self_declared", "reviewed_by": null, "reviewed_at": null, "evidence_id": null},
+      {"skill_id": "SK-SQL", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0005"},
+      {"skill_id": "SK-JIRA", "evidence_status": "reviewed", "reviewed_by": "COORD-01", "reviewed_at": "2026-10-15T10:00:00Z", "evidence_id": "EV-0006"}
+    ]
+  },
+  {
+    "student_id": "COOP-B006",
+    "profile_version": 1,
+    "display_name": "Ravi Patel",
+    "interests": [],
+    "availability_start": "2027-02-01",
+    "availability_end": "2027-05-31",
+    "skills": []
+  }
+]

@@ -221,3 +221,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Coop Platform (integrated app) ---
+# Local SQLite databases and demo data
+*.db
+backend/app.db
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/coverage/
+playwright-report/
+test-results/
+# Course material kept out of the repo
+references/
+artifacts/*.zip
+.DS_Store
+.claude/settings.local.json

@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coop Platform · P04 / P05</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0C2840; --navy-2: #12355a; --blue: #144673; --gold: #D9BA82; --gold-2: #c9a564; --cream: #F7EBDB;
+    --paper: #F4F6F9; --surface: #ffffff; --border: #e3e8ef; --border-2: #d2dae4;
+    --text: #172434; --muted: #627285; --blue-soft: #eaf1f8;
+    --ok: #17734a; --ok-soft: #e3f4ea; --warn: #8a5a00; --warn-soft: #fdf1d8;
+    --bad: #b42318; --bad-soft: #fde8e6;
+    --ai: #5b4bd6; --ai-2: #8a5cf6; --ai-soft: #f1efff; --ai-border: #d9d3ff;
+    --radius: 14px; --shadow: 0 1px 2px rgba(16, 32, 56, .05), 0 4px 14px rgba(16, 32, 56, .06);
+    --shadow-lg: 0 2px 4px rgba(16, 32, 56, .06), 0 12px 32px rgba(16, 32, 56, .12);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font: 14.5px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--paper); color: var(--text); -webkit-font-smoothing: antialiased; }
+  code { font-size: 12.5px; background: var(--blue-soft); padding: 1px 5px; border-radius: 4px; }
+
+  .shell { display: grid; grid-template-columns: 264px 1fr; min-height: 100vh; }
+  @media (max-width: 920px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static !important; height: auto !important; flex-direction: row; flex-wrap: wrap; align-items: center; }
+    .nav { display: flex; flex-wrap: wrap; flex: 1; padding: 6px; gap: 4px; }
+    .nav button { width: auto; } .nav small, .side-note { display: none; }
+  }
+
+  /* ---------- Sidebar (role switcher) ---------- */
+  .sidebar { background: linear-gradient(180deg, var(--navy) 0%, #0a2136 100%); color: #d7e1ec;
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+  .brand { padding: 22px 20px 18px; display: flex; gap: 12px; align-items: center; }
+  .logo { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, var(--gold), #f0d8a8);
+    color: var(--navy); display: grid; place-items: center; font-weight: 800; font-size: 15px; flex: none; }
+  .brand h1 { color: #fff; font-size: 16px; margin: 0; letter-spacing: -.01em; }
+  .brand .sub { color: var(--gold); font-size: 11.5px; }
+  .nav-label { padding: 6px 22px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: #7f96ad; }
+  .nav { padding: 4px 12px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .nav button { display: block; width: 100%; text-align: left; padding: 10px 12px; background: none;
+    border: 0; border-radius: 10px; color: #c4d1e0; font: inherit; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; }
+  .nav button:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+  .nav button[aria-current="true"] { background: rgba(217, 186, 130, .16); color: #fff; box-shadow: inset 0 0 0 1px rgba(217, 186, 130, .35); }
+  .nav .ico { margin-right: 9px; }
+  .nav small { display: block; color: #8fa5bb; font-weight: 400; font-size: 11.5px; margin: 2px 0 0 27px; }
+  .side-note { margin: 12px; padding: 12px 14px; font-size: 11.5px; color: #9db1c6; border-radius: 10px;
+    background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08); }
+
+  /* ---------- Top bar & banner ---------- */
+  .main-col { min-width: 0; }
+  .topbar { position: sticky; top: 0; z-index: 5; background: rgba(255, 255, 255, .88); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .topbar h2 { margin: 0; font-size: 19px; color: var(--navy); letter-spacing: -.01em; }
+  .role-chip { background: var(--cream); color: var(--navy); font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+  .topbar label { margin-left: auto; font-size: 13px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
+  select, input[type="text"], input[type="date"], input:not([type]), textarea {
+    font: inherit; padding: 8px 11px; border-radius: 9px; border: 1px solid var(--border-2); background: #fff; color: var(--text); }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(20, 70, 115, .14); }
+  .banner { margin: 18px 28px 0; background: var(--surface); color: var(--muted); padding: 9px 14px; font-size: 12.5px;
+    border: 1px solid var(--border); border-radius: 10px; display: flex; gap: 8px; align-items: baseline; }
+  .banner b { color: var(--navy); white-space: nowrap; }
+
+  .content { padding: 20px 28px 48px; max-width: 1360px; }
+  .view[hidden] { display: none; }
+  .view-intro { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; max-width: 860px; }
+
+  /* ---------- Student view ---------- */
+  .student-grid { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 1080px) { .student-grid { grid-template-columns: 1fr; } #profile { position: static; } }
+  .student-grid > * { min-width: 0; }
+  @media (max-width: 640px) { .chip { white-space: normal; } .content { padding: 16px; } .banner { margin: 12px 16px 0; } .topbar { padding: 12px 16px; } }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  #profile { position: sticky; top: 84px; }
+  #profile .chip { white-space: normal; }
+  .profile-head { display: flex; gap: 12px; align-items: center; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--navy));
+    color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; }
+  h2 { font-size: 16px; margin: 0 0 2px; letter-spacing: -.01em; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 18px 0 8px; font-weight: 600; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; background: #eef1f5; color: #34465a; white-space: nowrap; }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .chip.accent { background: var(--blue-soft); color: var(--blue); }
+  .chip.ai { background: var(--ai-soft); color: var(--ai); }
+  .chip.s-draft { background: var(--cream); color: #7a5410; font-weight: 600; }
+  .chip.s-submitted { background: var(--blue-soft); color: var(--blue); }
+  .chip.s-review { background: var(--warn-soft); color: var(--warn); }
+  .chip.s-shortlisted { background: var(--ok-soft); color: var(--ok); }
+  .chip.s-declined { background: var(--bad-soft); color: var(--bad); }
+  .chip.s-offered { background: var(--ai-soft); color: var(--ai); font-weight: 600; }
+  .chip.s-accepted { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+  .chip.s-offerdeclined, .chip.s-withdrawn { background: #eef0f3; color: #4b5563; }
+  .chip.p-awaiting { background: var(--warn-soft); color: var(--warn); }
+  .chip.p-confirmed { background: var(--ok); color: #fff; font-weight: 600; }
+  ol.timeline { list-style: none; margin: 10px 0 0; padding: 0 0 0 18px; border-left: 2px solid var(--border); }
+  ol.timeline li { position: relative; margin: 0 0 10px; }
+  ol.timeline li::before { content: ""; position: absolute; left: -24px; top: 5px; width: 10px; height: 10px;
+    border-radius: 50%; background: var(--blue); border: 2px solid var(--surface); }
+  ol.timeline li.last::before { background: var(--gold); }
+  .gap-list { list-style: none; padding: 0; margin: 0; }
+  .gap-list li { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .p06 { border: 1px dashed var(--border); border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .inline-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 8px; }
+  .inline-form label { font-size: 12.5px; }
+  .inline-form input, .inline-form select { display: block; margin-top: 4px; }
+
+  .tabs { max-width: 100%; overflow-x: auto; display: inline-flex; gap: 2px; margin-bottom: 16px; padding: 4px; background: #e8edf3; border-radius: 12px; }
+  .tabs button { white-space: nowrap; font: inherit; font-weight: 500; background: none; border: 0; padding: 7px 16px; cursor: pointer;
+    color: var(--muted); border-radius: 9px; transition: background .15s, color .15s; }
+  .tabs button:hover { color: var(--navy); }
+  .tabs button[aria-selected="true"] { background: #fff; color: var(--navy); font-weight: 600; box-shadow: 0 1px 3px rgba(16, 32, 56, .12); }
+
+  .btn { font: inherit; font-weight: 600; font-size: 13.5px; border: 1px solid var(--blue); background: var(--blue); color: #fff;
+    padding: 7px 15px; border-radius: 9px; cursor: pointer; transition: transform .08s, box-shadow .15s, background .15s;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { background: var(--navy-2); box-shadow: 0 2px 8px rgba(20, 70, 115, .25); }
+  .btn:active { transform: translateY(1px); }
+  .btn.gold { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+  .btn.gold:hover { background: var(--gold-2); }
+  .btn.secondary { background: var(--surface); color: var(--blue); border-color: var(--border-2); }
+  .btn.secondary:hover { background: var(--blue-soft); box-shadow: none; }
+  .btn.danger { background: var(--surface); color: var(--bad); border-color: #f1b7b1; }
+  .btn.danger:hover { background: var(--bad-soft); box-shadow: none; }
+  .btn.ai { background: linear-gradient(135deg, var(--ai), var(--ai-2)); border-color: transparent; }
+  .btn.ai:hover { box-shadow: 0 3px 12px rgba(91, 75, 214, .35); }
+  .btn.small { padding: 4px 11px; font-size: 12.5px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .seg { display: inline-flex; border: 1px solid var(--border-2); border-radius: 9px; overflow: hidden; background: #fff; }
+  .seg button { font: inherit; font-size: 12.5px; border: 0; background: none; padding: 6px 11px; cursor: pointer; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px;
+    margin-bottom: 14px; box-shadow: var(--shadow); transition: box-shadow .2s; }
+  .card:hover { box-shadow: var(--shadow-lg); }
+  .card.conflict { background: linear-gradient(0deg, #fffafa, #fff); border-color: #f3cdc8; }
+  .card.unknown { border-color: #f0dfb8; }
+  .card.highlight { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .card-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+  .card-head .title { font-weight: 700; font-size: 16px; letter-spacing: -.01em; color: var(--navy); }
+  .card .desc { margin: 8px 0 0; }
+  .rank { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--navy);
+    color: #fff; font-size: 11.5px; font-weight: 700; margin-right: 8px; vertical-align: 2px; }
+  .gauges { display: flex; gap: 10px; flex: none; }
+  .score { min-width: 64px; text-align: center; border-radius: 12px; padding: 8px 10px;
+    background: var(--cream); color: var(--navy); font-weight: 800; font-size: 22px; line-height: 1.05; }
+  .score small { display: block; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-top: 3px; }
+  .ring { --v: 0; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; position: relative;
+    background: conic-gradient(var(--ai) calc(var(--v) * 1%), #e9e6fb 0); }
+  .ring::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
+  .ring span { position: relative; font-weight: 800; font-size: 15px; color: var(--ai); line-height: 1; text-align: center; }
+  .ring small { display: block; font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
+  .skills-row { margin-top: 12px; display: grid; gap: 6px; }
+  .skills-row .lbl { font-size: 12px; color: var(--muted); min-width: 70px; }
+  .why { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  @media (max-width: 640px) { .why { grid-template-columns: 1fr; } .card-head { flex-direction: column; } }
+  .why ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .why li { margin: 2px 0; }
+  .why h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+  /* ---------- AI panel ---------- */
+  .ai { margin-top: 14px; border-radius: 12px; padding: 1px; background: linear-gradient(135deg, var(--ai-border), #f3dfc0); }
+  .ai-inner { background: linear-gradient(180deg, #faf9ff, #fff); border-radius: 11px; padding: 14px 16px; }
+  .ai-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .ai-head h4 { margin: 0; font-size: 13.5px; color: var(--ai); display: flex; align-items: center; gap: 6px; }
+  .ai-head .ver { margin-left: auto; font-size: 11px; color: var(--muted); }
+  .ai-summary { margin: 8px 0 0; font-size: 14px; color: var(--text); }
+  .ai-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; margin-top: 12px; }
+  @media (max-width: 760px) { .ai-grid { grid-template-columns: 1fr; } }
+  .ai h5 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #6d63b8; }
+  .ai ul { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+  .ai li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; }
+  .gain { flex: none; min-width: 30px; text-align: center; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 6px;
+    background: var(--ok-soft); color: var(--ok); }
+  .gain.zero { background: var(--blue-soft); color: var(--blue); }
+  .ai .fine { margin: 10px 0 0; color: var(--muted); font-size: 11.5px; }
+  .sim { font: inherit; font-size: 12.5px; border: 1px solid var(--ai-border); background: #fff; color: var(--ai);
+    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .sim:hover { background: var(--ai-soft); }
+
+  /* ---------- Summary tiles ---------- */
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .tile .n { font-size: 24px; font-weight: 800; color: var(--navy); line-height: 1.1; }
+  .tile .l { font-size: 12px; color: var(--muted); }
+  .tile.ai-tile { background: linear-gradient(135deg, #f4f2ff, #fff); border-color: var(--ai-border); }
+  .tile.ai-tile .n { color: var(--ai); font-size: 15px; line-height: 1.3; padding: 4px 0 2px; }
+
+  .meta { margin-top: 12px; font-size: 11.5px; color: #8593a3; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .actions label { display: flex; flex-direction: column; gap: 4px; }
+  .actions label input { width: 100%; }
+  .actions { margin-top: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  .empty { padding: 32px; text-align: center; color: var(--muted); background: var(--surface);
+    border: 1.5px dashed var(--border-2); border-radius: var(--radius); }
+  .msg { font-size: 13px; }
+  .msg.error { color: var(--bad); }
+  .msg.success { color: var(--ok); }
+
+  details.hist { margin-top: 8px; font-size: 13px; }
+  details.hist summary { cursor: pointer; color: var(--blue); font-weight: 500; }
+  details.hist ul { margin: 8px 0 0; padding-left: 18px; }
+  details.hist .reason { color: var(--bad); }
+
+  .compare-pick { font-size: 12.5px; display: inline-flex; gap: 6px; align-items: center; color: var(--muted); cursor: pointer; }
+  .compare th { width: 150px; }
+  details.rules { font-size: 13px; margin-bottom: 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 14px; }
+  details.rules summary { cursor: pointer; color: var(--blue); font-weight: 600; }
+
+  .linkish { font: inherit; font-size: 13px; background: none; border: 0; color: var(--blue); text-decoration: underline; cursor: pointer; padding: 0; }
+  .stack-title { margin: 26px 0 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; }
+
+  dialog { border: 0; border-radius: 16px; padding: 24px; width: min(520px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(12, 40, 64, .35); }
+  dialog::backdrop { background: rgba(12, 40, 64, .5); backdrop-filter: blur(3px); }
+  dialog h2 { margin-bottom: 6px; font-size: 18px; }
+  dialog textarea, dialog select, dialog input { width: 100%; margin-top: 6px; }
+  dialog label { display: block; font-size: 13.5px; font-weight: 500; margin-top: 14px; }
+  .ai-draft-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .sidebar :focus-visible { outline-color: var(--gold); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">IPP</div>
+      <div><h1>Coop Platform</h1>
+      <div class="sub">P04 Applications · P05 Matching · Sprint 3</div></div>
+    </div>
+    <div class="nav-label">Simulated roles</div>
+    <nav class="nav" aria-label="Simulated roles">
+      <button type="button" data-role="student" aria-current="true"><span class="ico">🎓</span>Student
+        <small>Recommendations · skill gaps · applications &amp; offers</small></button>
+      <button type="button" data-role="employer" aria-current="false"><span class="ico">🏢</span>Employer reviewer
+        <small>Review · shortlist · offer · decline</small></button>
+      <button type="button" data-role="coordinator" aria-current="false"><span class="ico">🏛️</span>Coordinator
+        <small>Placements · P07 handoff · corrections</small></button>
+      <button type="button" data-role="faculty" aria-current="false"><span class="ico">📋</span>Faculty reviewer
+        <small>Skill evidence review · applications</small></button>
+    </nav>
+    <div class="side-note">Simulated role switching — there is no login. Real access control is a deferred task and is recorded as a gap.</div>
+  </aside>
+
+  <div class="main-col">
+    <header class="topbar">
+      <h2 id="viewTitle">Student view</h2>
+      <span class="role-chip" id="roleChip">Student · simulated</span>
+      <label id="studentPicker">Viewing as student (simulated)
+        <select id="student" aria-label="Student"></select>
+      </label>
+    </header>
+    <div class="banner"><b>Demo only</b><span>Synthetic data · simulated role switching (no login) ·
+      AI assistance is bounded, deterministic and labelled — it never overrides the rules baseline ·
+      an application is not a placement.</span></div>
+
+    <main class="content">
+
+      <!-- ================= STUDENT ================= -->
+      <section class="view" id="view-student">
+        <div class="student-grid">
+          <aside>
+            <section class="panel" id="profile" aria-label="Student profile"></section>
+          </aside>
+          <section>
+            <div class="tabs" role="tablist">
+              <button role="tab" data-tab="recs" aria-selected="true">Recommendations</button>
+              <button role="tab" data-tab="browse" aria-selected="false">Browse opportunities</button>
+              <button role="tab" data-tab="apps" aria-selected="false">My applications <span id="appCount"></span></button>
+            </div>
+
+            <div id="tab-recs">
+              <div class="toolbar">
+                <button class="btn" id="recommend">↻ Run matching</button>
+                <div class="seg" role="group" aria-label="Order recommendations by">
+                  <button type="button" data-sort="rules" aria-pressed="true">Rules ranking</button>
+                  <button type="button" data-sort="ai" aria-pressed="false">✨ AI relevance</button>
+                </div>
+                <span class="msg" id="recMsg"></span>
+              </div>
+              <div id="recTiles"></div>
+              <details class="rules"><summary>How matching works</summary><div id="rules"></div></details>
+              <p class="muted" id="recInfo"></p>
+              <div id="recs"></div>
+            </div>
+
+            <div id="tab-browse" hidden>
+              <div class="toolbar">
+                <input id="q" placeholder="Search title or employer" aria-label="Search">
+                <select id="mode" aria-label="Work mode">
+                  <option value="">Any work mode</option><option>on-site</option><option>hybrid</option><option>remote</option>
+                </select>
+                <button class="btn secondary" id="search">Search</button>
+                <span class="muted">Tick two opportunities to compare them.</span>
+              </div>
+              <div id="compare"></div>
+              <div id="opps"></div>
+            </div>
+
+            <div id="tab-apps" hidden><div id="apps"></div></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= EMPLOYER ================= -->
+      <section class="view" id="view-employer" hidden>
+        <p class="view-intro">Simulated employer reviewer. Submitted applications are reviewed here; each decision
+          records the actor, time and a next action for the student. A decline requires a reason.
+          A shortlisted application can receive an offer; an offer can never follow a decline.</p>
+        <span class="msg" id="employerMsg"></span>
+        <div id="queue"></div>
+      </section>
+
+      <!-- ================= COORDINATOR ================= -->
+      <section class="view" id="view-coordinator" hidden>
+        <p class="view-intro">Simulated university coordinator (COORD-01). A student flags a recommendation; the
+          coordinator sees the reason, affected field and the input versions used, records a correction
+          request for the owning module (P01 / P03) and, for profile corrections, applies it as a new
+          input version that can be rematched. The original recommendation stays traceable.</p>
+        <h2 class="stack-title">Accepted offers awaiting confirmation</h2>
+        <p class="muted">Only the coordinator turns an accepted offer into a placement. Confirming creates one
+          placement ID and one handoff to P07 (mock outbox); confirming again creates neither.</p>
+        <span class="msg" id="plMsg"></span>
+        <div id="awaiting"></div>
+        <h2 class="stack-title">Confirmed placements · P07 handoff (mock)</h2>
+        <div id="placements"></div>
+
+        <span class="msg" id="crMsg"></span>
+        <h2 class="stack-title">Correction requests</h2>
+        <div id="corrections"></div>
+
+        <h2 class="stack-title">Matching runs (traceability)</h2>
+        <div class="toolbar">
+          <label class="muted">Student
+            <select id="runsStudent" aria-label="Student for matching runs"></select>
+          </label>
+          <button class="btn secondary small" id="runsRefresh">Refresh</button>
+          <button class="btn small" id="rerun">Re-run matching</button>
+          <span class="msg" id="runsMsg"></span>
+        </div>
+        <div id="runs"></div>
+      </section>
+
+      <!-- ================= FACULTY ================= -->
+      <section class="view" id="view-faculty" hidden>
+        <p class="view-intro">Simulated faculty reviewer (FAC-01). Reviewing a student's skill evidence creates a
+          <b>new profile version</b> and re-runs matching against it; earlier recommendations keep their original
+          versions and reasons. Applications are read-only here, and viewing one never implies a placement.</p>
+        <h2 class="stack-title">Review skill evidence</h2>
+        <div class="card">
+          <div class="inline-form">
+            <label>Student <select id="evStudent"></select></label>
+            <label>Skill <select id="evSkill"></select></label>
+            <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
+            <button class="btn" id="evReview">Mark reviewed &amp; rematch</button>
+          </div>
+          <p class="msg" id="evMsg"></p>
+          <div id="evVersions"></div>
+        </div>
+        <h2 class="stack-title">Applications (read-only)</h2>
+        <div id="facultyApps"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Apply / draft dialog -->
+<dialog id="applyDialog">
+  <h2 id="applyTitle">Apply</h2>
+  <p class="muted" id="applyContext"></p>
+  <label>Statement <span class="muted">(required before submission; drafts may leave it empty)</span>
+    <textarea id="applyStatement" rows="5" placeholder="One or two sentences: why does this role fit you?"></textarea>
+  </label>
+  <div class="ai-draft-row">
+    <button type="button" class="btn ai small" id="aiDraft">✨ Draft with AI</button>
+    <span class="muted" id="aiDraftNote">Starter text from your profile — you review and edit it; nothing is sent.</span>
+  </div>
+  <p class="msg" id="applyMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn" id="applySubmit">Submit application</button>
+    <button type="button" class="btn gold" id="applyDraftBtn">Save as draft</button>
+    <button type="button" class="btn secondary" id="applyCancel">Cancel</button>
+  </div>
+</dialog>
+
+<!-- Decline dialog (employer) -->
+<dialog id="declineDialog">
+  <h2>Decline application</h2>
+  <p class="muted" id="declineContext"></p>
+  <label>Reason (required — the student will see it with the decision)
+    <textarea id="declineReason" rows="3" placeholder="e.g. requires reviewed SQL evidence we could not verify"></textarea>
+  </label>
+  <p class="msg" id="declineMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn danger" id="declineYes">Decline</button>
+    <button type="button" class="btn secondary" id="declineNo">Cancel</button>
+  </div>
+</dialog>
+
+<!-- Withdraw dialog (student) -->
+<dialog id="withdrawDialog">
+  <h2>Withdraw application?</h2>
+  <p class="muted" id="withdrawContext"></p>
+  <label>Reason <span class="muted">(optional, kept in the history)</span>
+    <textarea id="withdrawReason" rows="2" placeholder="e.g. accepted a different placement"></textarea>
+  </label>
+  <p class="msg" id="withdrawMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn danger" id="withdrawYes">Withdraw</button>
+    <button type="button" class="btn secondary" id="withdrawNo">Cancel (keep application)</button>
+  </div>
+</dialog>
+
+<!-- Skill gap → P06 dialog (student) -->
+<dialog id="gapDialog">
+  <h2 id="gapTitle">Prepare for this gap</h2>
+  <div id="gapBody"></div>
+  <p class="msg" id="gapMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn" id="gapDone" hidden>Mark activity done</button>
+    <button type="button" class="btn secondary" id="gapClose">Close</button>
+  </div>
+</dialog>
+
+<!-- Flag dialog (student) -->
+<dialog id="flagDialog">
+  <h2>Flag this result</h2>
+  <p class="muted" id="flagContext"></p>
+  <label>What looks wrong?
+    <select id="flagField">
+      <optgroup label="Student profile (owned by P01)">
+        <option value="availability">Availability dates</option>
+        <option value="interests">Interests</option>
+        <option value="skills">Skills / evidence</option>
+      </optgroup>
+      <optgroup label="Opportunity listing (owned by P03)">
+        <option value="listing dates">Listing dates</option>
+        <option value="required skills">Required skills</option>
+        <option value="listing status">Listing status</option>
+      </optgroup>
+    </select>
+  </label>
+  <label>Why should the coordinator check this?
+    <textarea id="flagReason" rows="3" placeholder="e.g. my availability was updated in the P01 profile but the recommendation still uses the old dates"></textarea>
+  </label>
+  <p class="msg" id="flagMsg"></p>
+  <div class="actions">
+    <button type="button" class="btn" id="flagSend">Send to coordinator</button>
+    <button type="button" class="btn secondary" id="flagCancel">Cancel</button>
+  </div>
+</dialog>
+
+<dialog id="interviewDialog" aria-labelledby="interviewTitle">
+  <h2 id="interviewTitle">Schedule interview</h2>
+  <p class="muted" id="interviewContext"></p>
+  <div class="interview-fields">
+    <label>Interview time<input type="datetime-local" id="interviewTime" required></label>
+    <label>Duration<select id="interviewDuration"><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
+    <label>Format<select id="interviewMode"><option value="online">Online</option><option value="in-person">In person</option></select></label>
+    <label>Meeting link or location<input type="text" id="interviewLocation" maxlength="500" required placeholder="Meeting link or office address"></label>
+  </div>
+  <p class="muted" id="interviewZone"></p>
+  <p class="msg" role="alert" id="interviewMsg"></p>
+  <div class="actions"><button class="btn" id="interviewSave" type="button">Save interview</button><button class="btn secondary" id="interviewCancel" type="button">Cancel</button></div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const state = {
+  role: "student", skills: {}, student: null, students: [], opps: {}, apps: [], recs: {},
+  compare: [], corrections: [], allApps: [], runs: [], lastAccepted: null, recList: [], sort: "rules",
+};
+const skillName = id => state.skills[id] || id;
+const studentId = () => $("student").value;
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed"];
+const json = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+const ROLES = {
+  student: { title: "Student view", chip: "Student · simulated" },
+  employer: { title: "Employer review", chip: "Employer reviewer · simulated" },
+  coordinator: { title: "University coordinator", chip: "Coordinator · simulated" },
+  faculty: { title: "Faculty reviewer", chip: "Faculty · simulated" },
+};
+
+async function api(path, opts = {}) {
+  // ngrok's free tier answers browser requests with an HTML warning page unless this
+  // header is present; without it res.json() fails with "unexpected character".
+  const headers = { "ngrok-skip-browser-warning": "1", ...(opts.headers || {}) };
+  const res = await fetch(path, { ...opts, headers });
+  const text = await res.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Server returned a non-JSON response for ${path} (HTTP ${res.status}). ` +
+      "Is the backend / ngrok tunnel still running?");
+  }
+  if (!res.ok) throw new Error((body && body.detail) || res.statusText);
+  return body;
+}
+
+async function opp(id) {
+  if (!state.opps[id]) state.opps[id] = await api(`/api/opportunities/${id}`);
+  return state.opps[id];
+}
+
+function setMsg(id, text, kind) {
+  const el = typeof id === "string" ? $(id) : id;
+  if (!el) return;
+  el.className = "msg" + (kind ? " " + kind : "");
+  el.textContent = text || "";
+}
+
+// ================= Role switching (simulated) =================
+async function switchRole(role) {
+  state.role = role;
+  document.querySelectorAll(".nav button").forEach(b => b.setAttribute("aria-current", String(b.dataset.role === role)));
+  for (const r of Object.keys(ROLES)) $(`view-${r}`).hidden = r !== role;
+  $("viewTitle").textContent = ROLES[role].title;
+  $("roleChip").textContent = ROLES[role].chip;
+  $("studentPicker").hidden = role !== "student";
+  if (role === "student" && state.student) await refreshLists();
+  if (role === "employer" || role === "faculty") await loadAllApps();
+  if (role === "faculty") await loadEvidence();
+  if (role === "coordinator") {
+    try { await loadPlacements(); await loadCorrections(); await loadRuns(); }
+    catch (err) { setMsg("crMsg", err.message, "error"); }
+  }
+}
+document.querySelectorAll(".nav button").forEach(btn => btn.onclick = () => switchRole(btn.dataset.role));
+
+// ================= Profile =================
+function renderProfile(s) {
+  const skills = s.skills || [];
+  const avail = s.availability_start && s.availability_end
+    ? `${esc(s.availability_start)} → ${esc(s.availability_end)}`
+    : `<span class="chip warn">Not provided</span>`;
+  const initials = (s.display_name || "?").split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  const reviewed = skills.filter(sk => sk.evidence_status === "reviewed").length;
+  $("profile").innerHTML = `
+    <div class="profile-head">
+      <div class="avatar" aria-hidden="true">${esc(initials)}</div>
+      <div><h2>${esc(s.display_name)}</h2>
+        <div class="muted">${esc(s.student_id)} · profile v${esc(s.profile_version)}</div></div>
+    </div>
+    <div class="chips" style="margin-top:12px">
+      <span class="chip ok">${reviewed} reviewed</span>
+      <span class="chip">${skills.length - reviewed} self-declared</span>
+    </div>
+    <h3>Interests</h3>
+    <div class="chips">${(s.interests || []).length
+      ? s.interests.map(i => `<span class="chip accent">${esc(i)}</span>`).join("")
+      : `<span class="chip warn">Not provided</span>`}</div>
+    <h3>Availability</h3>
+    <div>${avail}</div>
+    <h3>Skills</h3>
+    <div class="chips">${skills.length
+      ? skills.map(sk => sk.evidence_status === "reviewed"
+          ? `<span class="chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
+          : `<span class="chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
+      : `<span class="chip warn">None listed</span>`}</div>
+    <details class="hist" style="margin-top:14px"><summary>Update my availability</summary>
+      <div class="inline-form">
+        <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
+        <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
+        <button class="btn small" id="avSave">Save &amp; rematch</button>
+      </div>
+      <p class="muted">Creates profile v${esc((s.profile_version || 0) + 1)} (simulated P01 update) and a new matching
+        run; earlier runs keep their versions.</p>
+      <p class="msg" id="avMsg"></p>
+    </details>
+    <p class="muted" style="margin-top:14px">P01 record (fixture, plus corrections and updates stored as new
+      versions). ✓ means reviewed evidence; self-declared skills are not treated as verified.</p>`;
+  $("avSave").onclick = async () => {
+    try {
+      const r = await api(`/api/students/${s.student_id}/profile-updates`, json({ kind: "availability",
+        actor_role: "student", availability_start: $("avStart").value, availability_end: $("avEnd").value }));
+      await onStudentChange();
+      setMsg("recMsg", `Availability saved as profile v${r.new_profile_version}; matching re-ran against it.`, "success");
+    } catch (err) { setMsg("avMsg", err.message, "error"); }
+  };
+}
+
+// ================= Skill chips relative to the student =================
+function chip(id, required) {
+  const held = Object.fromEntries((state.student.skills || []).map(s => [s.skill_id, s.evidence_status]));
+  const name = esc(skillName(id));
+  if (!held[id]) return required ? `<span class="chip bad">✗ ${name}</span>` : `<span class="chip">${name}</span>`;
+  return held[id] === "reviewed" ? `<span class="chip ok">✓ ${name}</span>` : `<span class="chip ok">${name} · self-declared</span>`;
+}
+
+function skillChips(o) {
+  return `
+    <div class="skills-row">
+      <div class="chips"><span class="lbl">Required</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="muted">none</span>'}</div>
+      <div class="chips"><span class="lbl">Desirable</span> ${o.desirable_skills.map(id => chip(id, false)).join("") || '<span class="muted">none</span>'}</div>
+    </div>`;
+}
+
+function oppSummary(o) {
+  const dates = o.start_date ? `${esc(o.start_date)} → ${esc(o.end_date)}` : "dates not provided";
+  return `<div class="muted">${esc(o.employer_name)} · ${esc(o.location)} · ${esc(o.work_mode)} · ${dates} · sector: ${esc(o.sector)}</div>`;
+}
+
+function statusChip(status) {
+  const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
+                Shortlisted: "s-shortlisted", "Interview scheduled":"s-review", "Interview completed":"s-review", Declined: "s-declined", Offered: "s-offered",
+                "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
+  return `<span class="chip ${cls}">${esc(status)}</span>`;
+}
+function placementChip(p) {
+  const cls = { "Awaiting university confirmation": "p-awaiting", Confirmed: "p-confirmed" }[p] || "";
+  return `<span class="chip ${cls}">${p === "Confirmed" ? "✓ " : ""}${esc(p)}</span>`;
+}
+const gapSkill = g => (g.match(/\((SK-[A-Z]+)\)$/) || [])[1];
+
+function applyButton(o) {
+  const active = state.apps.find(a => a.opportunity_id === o.opportunity_id && ACTIVE.includes(a.application_status));
+  if (active) return `<span class="chip ok">Applied · ${esc(active.application_id)}</span>`;
+  const draft = state.apps.find(a => a.opportunity_id === o.opportunity_id && a.application_status === "Draft");
+  if (draft) return `<button class="btn gold" data-editdraft="${esc(draft.application_id)}">Resume draft · ${esc(draft.application_id)}</button>`;
+  return `<button class="btn" data-apply="${esc(o.opportunity_id)}">Apply</button>`;
+}
+
+// ================= Recommendations (rules + bounded AI) =================
+function aiBox(r) {
+  const ins = r.ai_insights;
+  const terms = (r.ai_matches || []).map(m =>
+    `<li><span class="chip ai">“${esc(m.term)}”</span><span>in the ${esc(m.field)} ≈ your <b>${esc(m.skill_name)}</b>
+      <span class="muted">(${esc(m.evidence_status)})</span></span></li>`).join("");
+  const steps = (ins?.next_steps || []).slice(0, 3).map(t =>
+    `<li><span class="gain ${t.score_gain ? "" : "zero"}">${t.score_gain ? `+${t.score_gain}` : "✓"}</span><span>${esc(t.tip)}</span></li>`).join("");
+  const similar = (ins?.similar || []).map(x =>
+    `<button class="sim" data-view="${esc(x.opportunity_id)}" title="${esc(x.employer_name || "")} · ${x.similarity}% similar skill set">${esc(x.title)}</button>`).join("");
+  return `
+  <div class="ai"><div class="ai-inner">
+    <div class="ai-head">
+      <h4>✨ AI assistant</h4><span class="chip ai">simulated · deterministic</span>
+      <span class="ver">${esc(r.ai_method_version || "ai-termmatch-v1")}${ins ? ` · ${esc(ins.version)}` : ""}</span>
+    </div>
+    ${ins ? `<p class="ai-summary">${esc(ins.summary)}</p>` : `<p class="ai-summary muted">This run predates AI insights — run matching again to see them.</p>`}
+    <div class="ai-grid">
+      <div><h5>Skill terms it recognised</h5>
+        ${terms ? `<ul>${terms}</ul>` : `<div class="muted">No equivalent skill terms in this listing.</div>`}</div>
+      <div><h5>Next steps to strengthen this match</h5>
+        ${steps ? `<ul>${steps}</ul>` : `<div class="muted">Nothing to add — every listed skill is on your profile and reviewed.</div>`}</div>
+    </div>
+    ${similar ? `<div style="margin-top:12px"><h5>Similar open listings</h5><div class="chips">${similar}</div></div>` : ""}
+    ${ins?.top_terms?.length ? `<p class="fine">AI relevance ${ins.relevance}% — text similarity driven by: ${ins.top_terms.map(esc).join(", ")}.</p>` : ""}
+    <p class="fine">Assistance only: it never changes eligibility, score, gaps or unknowns, and never invents a
+      qualification. The rules result stays the decision baseline.</p>
+  </div></div>`;
+}
+
+function renderTiles(recs) {
+  if (!recs.length) { $("recTiles").innerHTML = ""; return; }
+  const count = e => recs.filter(r => r.eligibility === e).length;
+  const best = recs.filter(r => r.eligibility !== "ineligible" && r.ai_insights)
+    .sort((a, b) => b.ai_insights.relevance - a.ai_insights.relevance)[0];
+  const bestOpp = best && state.opps[best.opportunity_id];
+  $("recTiles").innerHTML = `<div class="tiles">
+    <div class="tile"><div class="n">${count("eligible")}</div><div class="l">Meet mandatory conditions</div></div>
+    <div class="tile"><div class="n">${count("unknown")}</div><div class="l">Need checking</div></div>
+    <div class="tile"><div class="n">${count("ineligible")}</div><div class="l">Mandatory conflicts</div></div>
+    <div class="tile ai-tile"><div class="n">${bestOpp ? `✨ ${esc(bestOpp.title)}` : "—"}</div>
+      <div class="l">${best ? `Top AI relevance · ${best.ai_insights.relevance}%` : "Run matching for AI insights"}</div></div>
+  </div>`;
+}
+
+async function renderRecs(recs) {
+  state.recList = recs;
+  state.recs = Object.fromEntries(recs.map(r => [r.opportunity_id, r]));
+  if (!recs.length) {
+    $("recInfo").textContent = "";
+    $("recTiles").innerHTML = "";
+    $("recs").innerHTML = `<div class="empty">No recommendations yet. Click <b>Run matching</b> to score open opportunities against this profile.</div>`;
+    return;
+  }
+  $("recInfo").textContent = `Last run ${recs[0].created_at} · rules ${recs[0].method_version} · AI ${recs[0].ai_method_version || "—"} · profile v${recs[0].profile_version}`
+    + (state.sort === "ai" ? " · ordered by AI relevance (view only — the stored rules ranking is unchanged)" : "");
+  await Promise.all(recs.map(r => opp(r.opportunity_id)));
+  renderTiles(recs);
+  const ordered = state.sort === "ai"
+    ? [...recs].sort((a, b) => (b.ai_insights?.relevance ?? -1) - (a.ai_insights?.relevance ?? -1))
+    : recs;
+  const list = (items, empty) => items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : `<div class="muted">${empty}</div>`;
+  $("recs").innerHTML = ordered.map((r, i) => {
+    const o = state.opps[r.opportunity_id];
+    const eligibilityBadge = {
+      eligible: `<span class="chip ok">● Meets mandatory conditions</span>`,
+      unknown: `<span class="chip warn">● Eligibility needs checking</span>`,
+      ineligible: `<span class="chip bad">● Mandatory conflict</span>`,
+    }[r.eligibility];
+    const rel = r.ai_insights?.relevance;
+    return `
+    <article class="card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}" id="rec-${esc(o.opportunity_id)}">
+      <div class="card-head">
+        <div style="min-width:0">
+          <div class="title"><span class="rank">${i + 1}</span>${esc(o.title)}</div>
+          ${oppSummary(o)}
+          ${o.description ? `<p class="muted desc">${esc(o.description)}</p>` : ""}
+          <div class="chips" style="margin-top:10px">
+            ${eligibilityBadge}
+            ${r.unknowns.length && r.eligibility !== "unknown" ? `<span class="chip warn">Needs checking</span>` : ""}
+            ${r.gaps.length ? `<span class="chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : `<span class="chip ok">No required-skill gaps</span>`}
+          </div>
+        </div>
+        <div class="gauges">
+          <div class="score" title="Rules score (${esc(r.method_version)})">${r.score}<small>Rules score</small></div>
+          ${rel != null ? `<div class="ring" style="--v:${rel}" title="AI relevance: text similarity between your profile and this listing"><span>${rel}%<small>AI match</small></span></div>` : ""}
+        </div>
+      </div>
+      ${skillChips(o)}
+      <div class="why">
+        <div><h4>Why it matches · rules ${esc(r.method_version)}</h4>${list(r.reasons, "No matching interests or skills")}</div>
+        <div>
+          <h4>Gaps</h4>${r.gaps.length ? `<ul class="gap-list">${r.gaps.map(g => `<li><span>${esc(g)}</span>
+            ${gapSkill(g) ? `<button class="btn small secondary" data-gap="${esc(r.recommendation_id)}" data-skill="${esc(gapSkill(g))}">Prepare →</button>` : ""}</li>`).join("")}</ul>`
+            : `<div class="muted">No missing required skills</div>`}
+          <h4 style="margin-top:10px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
+        </div>
+      </div>
+      ${aiBox(r)}
+      <div class="actions">${applyButton(o)}
+        <button class="btn secondary" data-view="${esc(o.opportunity_id)}">Open in catalogue</button>
+        <button class="btn secondary" data-flag="${esc(r.recommendation_id)}">⚑ Flag this result</button>
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta">
+        <span>${esc(r.recommendation_id)}</span><span>${esc(o.opportunity_id)} v${esc(r.opportunity_version)}</span>
+        <span>profile v${esc(r.profile_version)}</span><span>rules ${esc(r.method_version)}</span>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+document.querySelectorAll("[data-sort]").forEach(b => b.onclick = () => {
+  state.sort = b.dataset.sort;
+  document.querySelectorAll("[data-sort]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  renderRecs(state.recList);
+});
+
+// ================= Browse & compare (P04-01) =================
+async function searchOpps() {
+  const params = new URLSearchParams({ q: $("q").value, work_mode: $("mode").value });
+  const opps = await api(`/api/opportunities?${params}`);
+  opps.forEach(o => state.opps[o.opportunity_id] = o);
+  $("opps").innerHTML = opps.length ? opps.map(o => {
+    const rec = state.recs[o.opportunity_id];
+    return `
+    <article class="card" id="opp-${esc(o.opportunity_id)}">
+      <div class="card-head">
+        <div class="title" style="font-weight:600">${esc(o.title)}</div>
+        <label class="compare-pick"><input type="checkbox" data-compare="${esc(o.opportunity_id)}"
+          ${state.compare.includes(o.opportunity_id) ? "checked" : ""}> Compare</label>
+      </div>
+      ${oppSummary(o)}
+      ${o.description ? `<p class="muted desc">${esc(o.description)}</p>` : ""}
+      ${skillChips(o)}
+      <div class="actions">${applyButton(o)}
+        ${rec ? `<button class="linkish" data-viewrec="${esc(o.opportunity_id)}">View recommendation (score ${rec.score}, ${esc(rec.recommendation_id)})</button>` : ""}
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta"><span>${esc(o.opportunity_id)}</span><span>approved version v${esc(o.version)}</span><span>published · open</span></div>
+    </article>`;
+  }).join("")
+    : `<div class="empty">No opportunities match your search.</div>`;
+  renderCompare();
+}
+
+async function renderCompare() {
+  if (state.compare.length < 2) {
+    $("compare").innerHTML = state.compare.length ? `<p class="muted">Selected ${esc(state.compare[0])}. Tick one more to compare.</p>` : "";
+    return;
+  }
+  const [a, b] = await Promise.all(state.compare.map(opp));
+  const skills = (ids, required) => ids.length
+    ? `<div class="chips">${ids.map(id => chip(id, required)).join("")}</div>` : "none";
+  const recCell = o => state.recs[o.opportunity_id]
+    ? `score ${state.recs[o.opportunity_id].score} · ${esc(state.recs[o.opportunity_id].eligibility)}`
+    : "not in last matching run";
+  const rows = [
+    ["Opportunity", o => `${esc(o.opportunity_id)} · approved version v${esc(o.version)}`],
+    ["Employer", o => esc(o.employer_name)],
+    ["Location / mode", o => `${esc(o.location)} · ${esc(o.work_mode)}`],
+    ["Dates", o => o.start_date ? `${esc(o.start_date)} → ${esc(o.end_date)}` : "not provided"],
+    ["Sector", o => esc(o.sector)],
+    ["Required skills", o => skills(o.required_skills, true)],
+    ["Desirable skills", o => skills(o.desirable_skills, false)],
+    ["Recommendation", recCell],
+  ];
+  $("compare").innerHTML = `<div class="card" style="overflow-x:auto">
+    <div class="card-head"><h2>Compare</h2><button class="linkish" id="clearCompare">Clear</button></div>
+    <table class="compare">
+      <tr><th></th><th>${esc(a.title)}</th><th>${esc(b.title)}</th></tr>
+      ${rows.map(([label, f]) => `<tr><th>${label}</th><td>${f(a)}</td><td>${f(b)}</td></tr>`).join("")}
+    </table></div>`;
+  $("clearCompare").onclick = () => { state.compare = []; searchOpps(); };
+}
+
+document.addEventListener("change", e => {
+  const id = e.target.dataset?.compare;
+  if (!id) return;
+  state.compare = state.compare.filter(x => x !== id);
+  if (e.target.checked) state.compare.push(id);
+  if (state.compare.length > 2) state.compare.shift();
+  document.querySelectorAll("[data-compare]").forEach(cb => cb.checked = state.compare.includes(cb.dataset.compare));
+  renderCompare();
+});
+
+// ================= Tabs & cross-links =================
+function showTab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => {
+    b.setAttribute("aria-selected", String(b.dataset.tab === name));
+    $(`tab-${b.dataset.tab}`).hidden = b.dataset.tab !== name;
+  });
+}
+async function focusCard(tab, elementId) {
+  showTab(tab);
+  if (tab === "browse") { $("q").value = ""; $("mode").value = ""; await searchOpps(); }
+  const el = $(elementId);
+  if (!el) return;
+  document.querySelectorAll(".card.highlight").forEach(c => c.classList.remove("highlight"));
+  el.classList.add("highlight");
+  el.setAttribute("tabindex", "-1");
+  el.focus({ preventScroll: true });
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function renderRules(rules) {
+  const m = rules.mandatory || {};
+  $("rules").innerHTML = `
+    <p><b>Rules baseline ${esc(rules.version)}</b> (transparent, editable in <code>app/rules.json</code>; no AI).
+      A separate bounded AI assistant (<code>ai-termmatch-v1</code> + <code>ai-insights-v1</code>, simulated and
+      labelled) runs alongside it: recognised skill terms, a plain-language summary, an AI relevance % (TF-IDF text
+      similarity), next steps and similar listings. It never changes eligibility, score or the stored ranking;
+      "AI relevance" ordering is a view-only option.</p>
+    <p><b>Mandatory condition</b> (decides eligibility, not score):
+      availability must cover the opportunity dates — ${m.availability_covers_dates === false ? "switched off" : "on"}.
+      Missing dates give "Eligibility needs checking", never a pass.</p>
+    <p><b>Preferences</b> (add to score): interest matches sector +${rules.weights.interest},
+      each required skill held +${rules.weights.required_skill}, each desirable skill held +${rules.weights.desirable_skill}.</p>
+    <p>Only published, open opportunities are matched. Self-declared skills count but are labelled as not verified.</p>`;
+}
+
+// ================= My applications (drafts, decisions, history) =================
+function historyHtml(a, open = false) {
+  if (!a.history?.length) return "";
+  const n = a.history.length;
+  const items = a.history.map((e, i) => `
+    <li class="${i === n - 1 ? "last" : ""}"><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}, simulated) at ${esc(e.created_at)}
+      ${e.reason ? `<div class="reason">Reason: ${esc(e.reason)}</div>` : ""}
+      <div class="muted">Next action: ${esc(e.next_action)}</div></li>`).join("");
+  return `<details class="hist"${open ? " open" : ""}><summary>History (${n})</summary><ol class="timeline">${items}</ol></details>`;
+}
+
+function studentActions(a) {
+  const id = esc(a.application_id);
+  if (a.application_status === "Draft") return `<button class="btn small gold" data-editdraft="${id}">Edit &amp; submit</button>`;
+  if (a.application_status === "Offered") return `<button class="btn small" data-offer="accept" data-app="${id}">Accept offer</button>
+    <button class="btn small danger" data-offer="decline" data-app="${id}">Decline offer</button>`;
+  if (WITHDRAWABLE.includes(a.application_status)) return `<button class="btn small danger" data-withdraw="${id}">Withdraw…</button>`;
+  return "";
+}
+
+async function loadApps() {
+  state.apps = await api(`/api/students/${studentId()}/applications`);
+  $("appCount").textContent = state.apps.length ? `(${state.apps.length})` : "";
+  if (!state.apps.length) { $("apps").innerHTML = `<div class="empty">No applications or drafts yet.</div>`; return; }
+  const opps = await Promise.all(state.apps.map(a => opp(a.opportunity_id)));
+  $("apps").innerHTML = `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Application</th><th>Opportunity</th><th>Profile</th><th>Application status</th><th>Placement status</th><th>Statement</th><th>Saved / Submitted</th><th></th></tr>
+    ${state.apps.map((a, i) => `<tr>
+      <td>${esc(a.application_id)}</td>
+      <td>${esc(opps[i].title)}<div class="muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
+      <td>v${esc(a.profile_version)}</td>
+      <td>${statusChip(a.application_status)}</td>
+      <td>${placementChip(a.placement_status)}</td>
+      <td class="muted" style="max-width:260px">${esc((a.statement || "").slice(0, 120)) || "—"}</td>
+      <td class="muted">${esc(a.submitted_at)}</td>
+      <td><div class="actions" style="margin:0">${studentActions(a)}</div></td></tr>
+      <tr><td colspan="8" style="border-bottom:1px solid var(--border)">${historyHtml(a)}</td></tr>`).join("")}
+  </table></div>
+  <p class="muted">Accepting an offer is not a placement: it waits for university confirmation. You can withdraw
+    while an application is Submitted, Under review or Shortlisted; an offer is declined instead.</p>
+  <span class="msg" id="appsMsg"></span>`;
+}
+
+// ================= Apply / draft dialog =================
+let applyCtx = null; // { mode: "apply" | "draft", opportunity_id?, application? }
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.apply) {
+    const o = await opp(d.apply);
+    applyCtx = { mode: "apply", opportunityId: d.apply };
+    $("applyTitle").textContent = `Apply to ${o.title}`;
+    $("applyContext").innerHTML = `<b>${esc(state.student.display_name)}</b> (${esc(state.student.student_id)},
+      profile v${esc(state.student.profile_version)}) → <b>${esc(o.title)}</b> at ${esc(o.employer_name)}
+      (${esc(o.opportunity_id)} v${esc(o.version)}). Submitting creates an application with status Submitted —
+      it is not a placement.`;
+    $("applyStatement").value = "";
+    $("applyDraftBtn").textContent = "Save as draft";
+    setMsg("applyMsg", "");
+    $("applyDialog").showModal();
+  }
+  if (d.editdraft) {
+    const a = state.apps.find(x => x.application_id === d.editdraft);
+    if (!a) return;
+    applyCtx = { mode: "draft", application: a };
+    $("applyTitle").textContent = `Draft ${a.application_id}`;
+    $("applyContext").innerHTML = `Draft for <b>${esc(a.opportunity_id)}</b> — still a Draft until you submit.
+      The statement is required before submission; your text is preserved if submission is blocked.`;
+    $("applyStatement").value = a.statement || "";
+    $("applyDraftBtn").textContent = "Save changes (keeps Draft)";
+    setMsg("applyMsg", "");
+    $("applyDialog").showModal();
+  }
+});
+$("aiDraft").onclick = async () => {
+  const oid = applyCtx?.opportunityId || applyCtx?.application?.opportunity_id;
+  if (!oid) return;
+  const ta = $("applyStatement");
+  if (ta.value.trim() && !confirm("Replace your current text with an AI starter draft?")) return;
+  $("aiDraft").disabled = true;
+  try {
+    const d = await api("/api/ai/statement-draft", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ student_id: studentId(), opportunity_id: oid }),
+    });
+    ta.value = d.draft;
+    ta.focus();
+    setMsg("applyMsg", `AI draft inserted (${d.version}) — edit it so it sounds like you before submitting.`, "success");
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");
+  } finally {
+    $("aiDraft").disabled = false;
+  }
+};
+$("applyCancel").onclick = () => { applyCtx = null; $("applyDialog").close(); };
+$("applyDraftBtn").onclick = async () => {
+  if (!applyCtx) return;
+  const statement = $("applyStatement").value;
+  try {
+    if (applyCtx.mode === "apply") {
+      const a = await api("/api/applications/draft", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId(), opportunity_id: applyCtx.opportunityId,
+                               statement, actor_role: "student" }),
+      });
+      setMsg("applyMsg", `Saved as draft ${a.application_id} — still a Draft, not submitted.`, "success");
+    } else {
+      const a = await api(`/api/applications/${applyCtx.application.application_id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statement, actor_role: "student" }),
+      });
+      setMsg("applyMsg", `Draft ${a.application_id} saved — still a Draft, not submitted.`, "success");
+    }
+    $("applyDialog").close();
+    applyCtx = null;
+    await refreshLists();
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");
+  }
+};
+$("applySubmit").onclick = async () => {
+  if (!applyCtx) return;
+  const statement = $("applyStatement").value;
+  try {
+    let a;
+    if (applyCtx.mode === "apply") {
+      a = await api("/api/applications", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId(), opportunity_id: applyCtx.opportunityId,
+                               statement, actor_role: "student" }),
+      });
+    } else {
+      a = await api(`/api/applications/${applyCtx.application.application_id}/submit`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statement, actor_role: "student" }),
+      });
+    }
+    setMsg("applyMsg", `Submitted as ${a.application_id}. Status: Submitted · Placement: Not placed.`, "success");
+    $("applyDialog").close();
+    applyCtx = null;
+    await refreshLists();
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");  // draft/entered data stays in the textarea
+  }
+};
+
+// ================= Offer response & withdrawal (P04-05, P04-07) =================
+let withdrawCtx = null;
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.offer) {
+    try {
+      const a = await api(`/api/applications/${d.app}/offer-response`, json({ response: d.offer, actor_role: "student" }));
+      await refreshLists();
+      showTab("apps");
+      setMsg("appsMsg", d.offer === "accept"
+        ? `${a.application_id}: offer accepted — placement is now “${a.placement_status}”. The coordinator confirms it.`
+        : `${a.application_id}: offer declined.`, "success");
+    } catch (err) { setMsg("appsMsg", err.message, "error"); }
+  }
+  if (d.withdraw) {
+    const a = state.apps.find(x => x.application_id === d.withdraw);
+    withdrawCtx = d.withdraw;
+    $("withdrawContext").textContent = a
+      ? `${a.application_id} · ${a.opportunity_title} (${a.application_status}). Withdrawing is final; the history is kept.`
+      : d.withdraw;
+    $("withdrawReason").value = "";
+    setMsg("withdrawMsg", "");
+    $("withdrawDialog").showModal();
+  }
+});
+$("withdrawNo").onclick = () => { withdrawCtx = null; $("withdrawDialog").close(); };  // no request: record unchanged
+$("withdrawYes").onclick = async () => {
+  if (!withdrawCtx) return;
+  try {
+    const a = await api(`/api/applications/${withdrawCtx}/withdraw`,
+      json({ actor_role: "student", reason: $("withdrawReason").value }));
+    $("withdrawDialog").close();
+    withdrawCtx = null;
+    await refreshLists();
+    showTab("apps");
+    setMsg("appsMsg", `${a.application_id} withdrawn. Earlier history is kept below.`, "success");
+  } catch (err) { setMsg("withdrawMsg", err.message, "error"); }
+};
+
+// ================= Skill gap → P06 (P05-06) =================
+let gapCtx = null;
+function renderGap(g) {
+  gapCtx = g;
+  $("gapTitle").textContent = `Prepare: ${g.skill_name} (${g.gap_id})`;
+  const act = g.activity;
+  $("gapBody").innerHTML = `
+    <p class="muted">Sent to P06 with: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
+      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}).</p>
+    ${act ? `<div class="p06"><span class="chip accent">P06 fixture</span>
+        <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
+        <div class="muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
+        <p><b>Evidence needed:</b> ${esc(act.evidence_needed)}</p></div>`
+      : `<div class="p06"><span class="chip warn">No P06 activity</span></div>`}
+    <p class="${act ? "muted" : "msg"}" style="margin-top:10px"><b>Next action:</b> ${esc(g.next_action)}</p>
+    ${g.completed_at ? `<p class="msg success">Activity marked done at ${esc(g.completed_at)}. Your recommendation is unchanged until a faculty reviewer reviews the evidence.</p>` : ""}`;
+  $("gapDone").hidden = !act || !!g.completed_at;
+}
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.gap) return;
+  try {
+    renderGap(await api(`/api/recommendations/${d.gap}/gaps/${d.skill}/handoff`, json({ actor_role: "student" })));
+    setMsg("gapMsg", "");
+    $("gapDialog").showModal();
+  } catch (err) { setMsg("recMsg", err.message, "error"); }
+});
+$("gapClose").onclick = () => { gapCtx = null; $("gapDialog").close(); };
+$("gapDone").onclick = async () => {
+  try { renderGap(await api(`/api/skill-gaps/${gapCtx.gap_id}/complete`, json({ actor_role: "student" }))); }
+  catch (err) { setMsg("gapMsg", err.message, "error"); }
+};
+
+// ================= Flag dialog (student → coordinator) =================
+let flagCtx = null;
+document.addEventListener("click", e => {
+  const id = e.target.dataset?.flag;
+  if (!id) return;
+  flagCtx = id;
+  const r = Object.values(state.recs).find(x => x.recommendation_id === id);
+  $("flagContext").textContent = r
+    ? `Flagging ${r.recommendation_id} (${r.opportunity_id} v${r.opportunity_version}, profile v${r.profile_version}, ${r.method_version}). The coordinator sees your reason, the affected field and these input versions.`
+    : `Flagging ${id}.`;
+  $("flagReason").value = "";
+  setMsg("flagMsg", "");
+  $("flagDialog").showModal();
+});
+$("flagCancel").onclick = () => { flagCtx = null; $("flagDialog").close(); };
+$("flagSend").onclick = async () => {
+  if (!flagCtx) return;
+  try {
+    const cr = await api(`/api/recommendations/${flagCtx}/flags`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: $("flagReason").value, affected_field: $("flagField").value, actor_role: "student" }),
+    });
+    setMsg("recMsg", `Flagged as ${cr.correction_id} — visible in the Coordinator view.`, "success");
+    $("flagDialog").close();
+    flagCtx = null;
+  } catch (err) {
+    setMsg("flagMsg", err.message, "error");
+  }
+};
+
+// ================= Employer view =================
+async function loadAllApps() {
+  state.allApps = await api("/api/applications");
+  if (state.role === "employer") renderEmployer();
+  if (state.role === "faculty") renderFaculty();
+}
+
+function employerCard(a) {
+  const actions = {
+    "Submitted": `<button class="btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
+    "Under review": `<button class="btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
+                     <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Shortlisted": `<button class="btn small" type="button" data-interview="${esc(a.application_id)}">Schedule interview</button><button class="btn small secondary" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+                    <button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview scheduled": `<button class="btn small secondary" data-interview="${esc(a.application_id)}">Reschedule</button><button class="btn small" data-complete-interview="${esc(a.application_id)}">Mark completed</button><button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview completed": `<button class="btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button><button class="btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Offered": `<span class="muted">Waiting for the student to accept or decline.</span>`,
+    "Offer accepted": `<span class="muted">Accepted — the university coordinator confirms the placement.</span>`,
+    "Declined": `<span class="muted">Final — an offer can never follow a decline.</span>`,
+  }[a.application_status] || "";
+  return `
+  <article class="card">
+    <div class="card-head">
+      <div>
+        <div class="title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="muted">${esc(a.application_id)} · ${esc(a.student_id)} → ${esc(a.opportunity_id)} v${esc(a.opportunity_version)}
+          · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
+    </div>
+    <p class="muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
+    ${interviewDetails(a)}
+    ${historyHtml(a)}
+    <div class="actions">${actions}</div>
+  </article>`;
+}
+
+function renderEmployer() {
+  const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
+                  [["Shortlisted"], "Shortlisted"], [["Interview scheduled", "Interview completed"], "Interviews"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
+  $("queue").innerHTML = groups.map(([statuses, label]) => {
+    const rows = state.allApps.filter(a => statuses.includes(a.application_status));
+    return `<h3 class="stack-title">${label} (${rows.length})</h3>` +
+      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">Nothing here.</div>`);
+  }).join("");
+}
+
+let declineCtx = null;
+document.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.decline) {
+    declineCtx = d.decline;
+    const a = state.allApps.find(x => x.application_id === d.decline);
+    $("declineContext").textContent = a
+      ? `Declining ${a.application_id} (${a.student_name} → ${a.opportunity_title}). The student sees this reason with the decision.`
+      : `Declining ${d.decline}.`;
+    $("declineReason").value = "";
+    setMsg("declineMsg", "");
+    $("declineDialog").showModal();
+  }
+});
+$("declineNo").onclick = () => { declineCtx = null; $("declineDialog").close(); };
+$("declineYes").onclick = async () => {
+  if (!declineCtx) return;
+  try {
+    await api(`/api/applications/${declineCtx}/decisions`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "Declined", actor_role: "employer",
+                             actor_name: "Employer reviewer (simulated)", reason: $("declineReason").value }),
+    });
+    $("declineDialog").close();
+    declineCtx = null;
+    setMsg("employerMsg", "", "");
+    await loadAllApps();
+  } catch (err) {
+    setMsg("declineMsg", err.message, "error");
+  }
+};
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.decide) return;
+  try {
+    await api(`/api/applications/${d.app}/decisions`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: d.decide, actor_role: "employer", actor_name: "Employer reviewer (simulated)" }),
+    });
+    setMsg("employerMsg", "", "");
+    await loadAllApps();
+  } catch (err) {
+    setMsg("employerMsg", err.message, "error");
+  }
+});
+
+// ================= Coordinator view =================
+async function loadPlacements() {
+  const [apps, placements] = await Promise.all([api("/api/applications"), api("/api/placements")]);
+  const awaiting = apps.filter(a => a.application_status === "Offer accepted" && a.placement_status !== "Confirmed");
+  $("awaiting").innerHTML = awaiting.length ? awaiting.map(a => `
+    <article class="card">
+      <div class="card-head"><div>
+        <div class="title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div><div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      ${historyHtml(a)}
+      <div class="actions"><button class="btn" data-confirm="${esc(a.application_id)}">Confirm placement &amp; hand to P07</button></div>
+    </article>`).join("") : `<div class="empty">No accepted offers waiting. An employer makes an offer, then the student accepts it.</div>`;
+  $("placements").innerHTML = placements.length ? `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Placement</th><th>Student</th><th>Opportunity</th><th>Application</th><th>Confirmed</th><th>P07 handoff</th></tr>
+    ${placements.map(p => `<tr>
+      <td><b>${esc(p.placement_id)}</b></td>
+      <td>${esc(p.student_name)}<div class="muted">${esc(p.student_id)} · profile v${esc(p.profile_version)}</div></td>
+      <td>${esc(p.opportunity_title)}<div class="muted">${esc(p.opportunity_id)} v${esc(p.opportunity_version)}</div></td>
+      <td>${esc(p.application_id)}</td>
+      <td class="muted">${esc(p.confirmed_by)}<div>${esc(p.confirmed_at)}</div></td>
+      <td>${p.p07_handoff ? `<span class="chip ok">${esc(p.p07_handoff.handoff_id)} · ${esc(p.p07_handoff.receipt_status)}</span>
+        <details class="hist"><summary>Payload sent to P07</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(JSON.stringify(p.p07_handoff.payload, null, 2))}</pre></details>` : "—"}</td>
+    </tr>`).join("")}</table></div>
+    <p class="muted">P07 is not live yet: handoffs go to a labelled mock outbox (<code>/api/p07/handoffs</code>). Supervisor contact goes to P07 only, never to the student.</p>`
+    : `<div class="empty">No confirmed placements yet.</div>`;
+}
+document.addEventListener("click", async e => {
+  const id = e.target.dataset?.confirm;
+  if (!id) return;
+  try {
+    const p = await api(`/api/applications/${id}/confirm-placement`,
+      json({ actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }));
+    setMsg("plMsg", p.already_confirmed
+      ? `${id} was already confirmed as ${p.placement_id}; no second placement or handoff was created.`
+      : `Confirmed ${p.placement_id} for ${id} and handed it to P07 (${p.p07_handoff.handoff_id}).`, "success");
+    await loadPlacements();
+  } catch (err) { setMsg("plMsg", err.message, "error"); }
+});
+async function loadCorrections() {
+  state.corrections = await api("/api/corrections");
+  renderCorrections();
+}
+
+function acceptForm(cr) {
+  if (cr.source_module === "P03")
+    return `<p class="muted">Recorded for the P03 owning module. Applying a new listing version needs the
+      live P03 interface (deferred — this request stays recorded).</p>`;
+  if (cr.affected_field === "availability")
+    return `<div class="actions" style="align-items:flex-end">
+        <label class="muted">New availability start <input type="date" data-crstart="${esc(cr.correction_id)}"></label>
+        <label class="muted">New availability end <input type="date" data-crend="${esc(cr.correction_id)}"></label>
+        <button class="btn small" data-accept="${esc(cr.correction_id)}">Accept &amp; apply as new version</button>
+      </div>`;
+  if (cr.affected_field === "interests")
+    return `<div class="actions">
+        <label class="muted" style="flex:1">Corrected interests (comma-separated)
+          <input type="text" placeholder="e.g. aviation, analytics" data-crinterests="${esc(cr.correction_id)}"></label>
+        <button class="btn small" data-accept="${esc(cr.correction_id)}">Accept &amp; apply as new version</button>
+      </div>`;
+  return `<p class="muted">Skill-evidence corrections are reviewed by P01/P06 with evidence; applying one here
+    is deferred (recorded only).</p>`;
+}
+
+function renderCorrections() {
+  const crs = state.corrections;
+  if (state.lastAccepted)
+    setMsg("crMsg", `Correction ${state.lastAccepted.correction_id} applied as profile
+      v${state.lastAccepted.new_profile_version} for ${state.lastAccepted.student_id}. Re-run matching below or in the Student view.`, "success");
+  if (!crs.length) {
+    $("corrections").innerHTML = `<div class="empty">No correction requests. A student flags a recommendation
+      from the Recommendations tab (“Flag this result”).</div>`;
+    return;
+  }
+  const statusChips = { flagged: "chip warn", recorded: "chip accent", accepted: "chip ok" };
+  $("corrections").innerHTML = crs.map(cr => `
+    <article class="card">
+      <div class="card-head">
+        <div>
+          <div class="title">${esc(cr.correction_id)} · ${esc(cr.student_name)} · field: ${esc(cr.affected_field)}</div>
+          <div class="muted">Flagged at ${esc(cr.created_at)} · owning module <b>${esc(cr.source_module)}</b>
+            · input versions: profile v${esc(cr.source_version.profile_version)},
+            ${esc(cr.source_version.opportunity_id)} v${esc(cr.source_version.opportunity_version)},
+            ${esc(cr.source_version.method_version)}</div>
+        </div>
+        <span class="${statusChips[cr.status] || "chip"}">${esc(cr.status)}</span>
+      </div>
+      <p style="margin:8px 0 0"><b>Student's reason:</b> ${esc(cr.reason)}</p>
+      ${cr.note ? `<p class="muted"><b>Coordinator note:</b> ${esc(cr.note)}${cr.coordinator ? ` — ${esc(cr.coordinator)}` : ""}</p>` : ""}
+      ${cr.status === "flagged" ? `
+        <div class="actions">
+          <label class="muted" style="flex:1">Note to the owning module
+            <input type="text" placeholder="e.g. availability looks stale; please supply corrected dates"
+              data-crnote="${esc(cr.correction_id)}"></label>
+          <button class="btn small" data-record="${esc(cr.correction_id)}">Record correction request</button>
+        </div>` : ""}
+      ${cr.status === "recorded" ? acceptForm(cr) : ""}
+      ${cr.status === "accepted" ? `<p class="msg success">Applied as a new input version; the original
+        recommendation stays traceable in Matching runs.</p>` : ""}
+    </article>`).join("");
+}
+
+document.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  try {
+    if (d.record) {
+      const note = document.querySelector(`[data-crnote="${d.record}"]`)?.value || "";
+      await api(`/api/corrections/${d.record}/record`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note, actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }),
+      });
+      state.lastAccepted = null;
+      await loadCorrections();
+    }
+    if (d.accept) {
+      const cr = state.corrections.find(x => x.correction_id === d.accept);
+      const body = { actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" };
+      if (cr.affected_field === "availability") {
+        body.availability_start = document.querySelector(`[data-crstart="${d.accept}"]`)?.value || "";
+        body.availability_end = document.querySelector(`[data-crend="${d.accept}"]`)?.value || "";
+      } else if (cr.affected_field === "interests") {
+        body.interests = (document.querySelector(`[data-crinterests="${d.accept}"]`)?.value || "")
+          .split(",").map(s => s.trim()).filter(Boolean);
+      }
+      state.lastAccepted = await api(`/api/corrections/${d.accept}/accept`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await loadCorrections();
+      $("runsStudent").value = state.lastAccepted.student_id;
+      await loadRuns();
+    }
+  } catch (err) {
+    setMsg("crMsg", err.message, "error");
+  }
+});
+
+async function loadRuns() {
+  const id = $("runsStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  state.runs = await api(`/api/students/${id}/recommendation-runs`);
+  $("runs").innerHTML = state.runs.length ? `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Run</th><th>Created</th><th>Profile version</th><th>Rules method</th><th>AI method</th><th>Results</th><th>Eligible</th></tr>
+    ${state.runs.map(r => `<tr>
+      <td>${esc(r.run_id)}</td><td class="muted">${esc(r.created_at)}</td><td>v${esc(r.profile_version)}</td>
+      <td>${esc(r.method_version)}</td><td>${esc(r.ai_method_version || "—")}</td>
+      <td>${esc(r.results)}</td><td>${esc(r.eligible)}</td></tr>`).join("")}
+  </table></div>`
+    : `<div class="empty">No matching runs yet for this student.</div>`;
+}
+
+$("runsRefresh").onclick = () => loadRuns();
+$("runsStudent").onchange = () => { state.lastAccepted = null; setMsg("crMsg", ""); loadRuns(); };
+$("rerun").onclick = async () => {
+  const id = $("runsStudent").value;
+  try {
+    await api(`/api/students/${id}/recommendations`, { method: "POST" });
+    setMsg("runsMsg", `Matching re-run for ${id} with the latest profile version. Earlier runs stay unchanged above.`, "success");
+    await loadRuns();
+  } catch (err) {
+    setMsg("runsMsg", err.message, "error");
+  }
+};
+
+// ================= Faculty view: evidence review (P05-07) =================
+async function loadEvidence() {
+  const id = $("evStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  const versions = await api(`/api/students/${id}/profile-versions`);
+  $("evVersions").innerHTML = `<h3 style="margin-top:14px">Profile versions</h3><div style="overflow-x:auto"><table>
+    <tr><th>Version</th><th>Source</th><th>Created</th><th>Reviewed skills</th><th>Availability</th></tr>
+    ${versions.map(v => `<tr><td>v${esc(v.profile_version)}</td><td>${esc(v.source)}</td><td class="muted">${esc(v.created_at || "—")}</td>
+      <td>${(v.profile.skills || []).filter(s => s.evidence_status === "reviewed").map(s => `<span class="chip ok">✓ ${esc(skillName(s.skill_id))}</span>`).join(" ") || "—"}</td>
+      <td class="muted">${esc(v.profile.availability_start || "?")} → ${esc(v.profile.availability_end || "?")}</td></tr>`).join("")}
+  </table></div>`;
+}
+$("evStudent").onchange = () => { setMsg("evMsg", ""); loadEvidence(); };
+$("evReview").onclick = async () => {
+  const id = $("evStudent").value;
+  try {
+    const r = await api(`/api/students/${id}/profile-updates`, json({ kind: "skill_evidence", actor_role: "faculty",
+      actor_name: "FAC-01 (simulated faculty reviewer)", skill_id: $("evSkill").value, evidence_id: $("evId").value }));
+    setMsg("evMsg", `${skillName($("evSkill").value)} marked reviewed for ${id} → profile v${r.new_profile_version}; matching re-ran (${r.recommendations.length} results). Earlier runs keep their versions.`, "success");
+    await loadEvidence();
+  } catch (err) { setMsg("evMsg", err.message, "error"); }
+};
+
+// ================= Faculty view (read-only applications) =================
+function renderFaculty() {
+  const rows = state.allApps;
+  $("facultyApps").innerHTML = rows.length ? `<div class="card" style="overflow-x:auto"><table>
+    <tr><th>Application</th><th>Student</th><th>Opportunity</th><th>Application status</th><th>Placement status</th><th>Latest event</th><th>Submitted</th></tr>
+    ${rows.map(a => {
+      const last = a.history?.[a.history.length - 1];
+      return `<tr>
+        <td>${esc(a.application_id)}</td>
+        <td>${esc(a.student_name)}<div class="muted">${esc(a.student_id)}</div></td>
+        <td>${esc(a.opportunity_title)}<div class="muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
+        <td>${statusChip(a.application_status)}</td>
+        <td>${placementChip(a.placement_status)}</td>
+        <td class="muted">${last ? `${esc(last.action)} by ${esc(last.actor_name)} at ${esc(last.created_at)}` : "—"}</td>
+        <td class="muted">${esc(a.submitted_at)}</td></tr>`;
+    }).join("")}
+  </table></div>` : `<div class="empty">No applications yet.</div>`;
+}
+
+function interviewDetails(a) {
+  if (!a.interview) return "";
+  const i = a.interview;
+  const when = new Date(i.starts_at).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `<section class="interview-info" aria-label="Interview details">
+    <strong>${a.application_status === "Interview completed" ? "Interview completed" : "Interview"}</strong>
+    <p>${esc(when)} · ${i.duration_minutes} min · ${esc(zone)}</p>
+    <p>${i.mode === "online" ? "Online" : "In person"} · ${esc(i.location)}</p>
+  </section>`;
+}
+
+let interviewApp;
+document.addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.interview) {
+    interviewApp = button.dataset.interview;
+    const application = state.allApps.find(a=>a.application_id===interviewApp);
+    const existing = application.interview;
+    $("interviewTitle").textContent = existing ? "Reschedule interview" : "Schedule interview";
+    $("interviewContext").textContent = `${application.student_name} · ${application.opportunity_title}`;
+    const when = existing ? new Date(existing.starts_at) : new Date(Date.now()+86400000);
+    const offset = when.getTimezoneOffset()*60000;
+    $("interviewTime").value = new Date(when.getTime()-offset).toISOString().slice(0,16);
+    $("interviewZone").textContent = `Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+    $("interviewDuration").value = existing?.duration_minutes || 30;
+    $("interviewMode").value = existing?.mode || "online";
+    $("interviewLocation").value = existing?.location || "";
+    setMsg("interviewMsg","");
+    $("interviewDialog").showModal();
+  }
+  if (button.dataset.completeInterview) {
+    button.disabled = true;
+    try {
+      await api(`/api/applications/${button.dataset.completeInterview}/interview/complete`,json({actor_role:"employer"}));
+      await loadAllApps();
+    } catch (error) {
+      setMsg("employerMsg",error.message,"error");
+      button.disabled = false;
+    }
+  }
+});
+
+$("interviewCancel").onclick = () => $("interviewDialog").close();
+$("interviewSave").onclick = async () => {
+  const time = $("interviewTime");
+  const location = $("interviewLocation");
+  if (!time.reportValidity() || !location.reportValidity()) return;
+  const save = $("interviewSave");
+  save.disabled = true;
+  try {
+    await api(`/api/applications/${interviewApp}/interview`, json({
+      starts_at:new Date(time.value).toISOString(),
+      duration_minutes:Number($("interviewDuration").value),
+      mode:$("interviewMode").value, location:location.value, actor_role:"employer"
+    }));
+    $("interviewDialog").close();
+    await loadAllApps();
+  } catch (error) {
+    setMsg("interviewMsg",error.message,"error");
+  } finally {
+    save.disabled = false;
+  }
+};
+
+// ================= Wiring =================
+async function refreshLists() {
+  await loadApps();
+  await renderRecs(await api(`/api/students/${studentId()}/recommendations`));
+  await searchOpps();  // after recs, so catalogue cards can link back to their recommendation
+}
+
+async function onStudentChange() {
+  state.student = await api(`/api/students/${studentId()}`);
+  renderProfile(state.student);
+  await refreshLists();
+}
+
+document.querySelectorAll(".tabs button").forEach(btn => btn.onclick = () => showTab(btn.dataset.tab));
+document.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.view) focusCard("browse", `opp-${d.view}`);
+  if (d.viewrec) focusCard("recs", `rec-${d.viewrec}`);
+});
+$("student").onchange = onStudentChange;
+$("recommend").onclick = async () => {
+  setMsg("recMsg", "");
+  await renderRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+  await searchOpps();
+};
+$("search").onclick = searchOpps;
+$("q").onkeydown = e => { if (e.key === "Enter") searchOpps(); };
+
+(async () => {
+  state.skills = await api("/api/skills");
+  renderRules(await api("/api/rules"));
+  state.students = await api("/api/students");
+  const options = state.students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
+  $("student").innerHTML = options;
+  $("runsStudent").innerHTML = options;
+  $("evStudent").innerHTML = options;
+  $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
+  await onStudentChange();
+})();
+</script>
+</body>
+</html>

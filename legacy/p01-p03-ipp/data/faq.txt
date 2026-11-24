@@ -1,0 +1,8 @@
+Section: Placements | Q: Are placements on site? | A: Yes. Placements are on site; remote roles are not approved.
+Section: Placements | Q: Can I work abroad? | A: It is difficult to approve. Exceptions are reviewed case by case by the coordinator.
+Section: Grading | Q: Who enters my final grade? | A: The faculty member assigned to your internship.
+Section: Employer submissions | Q: What must an employer include? | A: Title, dates, location, work mode, a named supervisor, required skills, and the learning opportunities.
+Section: Review | Q: How is an opportunity approved? | A: The coordinator checks it against a review checklist: completeness, on-site, duration, supervisor, learning value, employer reliability, and workplace safety.
+Section: Review | Q: Why was my opportunity returned? | A: The reason is shown on its status. Fix the issue and resubmit.
+Section: Review | Q: How do I resubmit? | A: Submit a new version. The old version is kept and never overwritten.
+Section: Students | Q: Does applying mean I got the placement? | A: No. Applying only shows interest. Placements need coordinator approval.

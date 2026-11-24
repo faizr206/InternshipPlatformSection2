@@ -1,0 +1,11 @@
+{
+  "_note": "P05-owned alias map for the bounded AI term-matching feature (ai-termmatch-v1). Extending the shared skill vocabulary itself (skills.json) needs Scrum of Scrums agreement with P01/P03/P06; this local map is the labelled fallback. Lowercase terms; matched case-insensitively on word boundaries.",
+  "SK-JIRA": ["jira", "agile board", "scrum"],
+  "SK-SQL": ["sql", "database", "query"],
+  "SK-PY": ["python", "scripting"],
+  "SK-EXCEL": ["excel", "spreadsheet"],
+  "SK-VIZ": ["tableau", "dashboard", "data visualisation"],
+  "SK-FIGMA": ["figma", "wireframe", "prototype"],
+  "SK-COMM": ["stakeholder", "communication", "presentation"],
+  "SK-DMKT": ["digital marketing", "campaign", "social media"]
+}

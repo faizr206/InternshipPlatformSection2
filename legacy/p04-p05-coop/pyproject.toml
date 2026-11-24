@@ -1,0 +1,22 @@
+[project]
+name = "coop-p04-p05-skeleton"
+version = "0.1.0"
+description = "Walking skeleton for Coop Platform P04 (applications) and P05 (matching)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn==0.34.0",
+    "httpx==0.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "pytest==8.3.4",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

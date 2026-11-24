@@ -1,0 +1,2250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coop | Student career preview</title>
+<style>body {margin:0;background:#f8eed8}</style>
+</head>
+<body>
+<style>
+
+  #coop-preview {
+    --navy: #0C2840; --blue: #144673; --gold: #D9BA82; --cream: #F2D9BB; --paper: #F2F2F2;
+    --surface: #ffffff; --border: #d9dee5; --text: #1d2a38; --muted: #5d6b7a;
+    --blue-soft: #e7eef6;
+    --ok: #1e6b45; --ok-soft: #e2f3ea; --warn: #7a5200; --warn-soft: #fbeed3;
+    --bad: #b02318; --bad-soft: #fde7e4;
+  }
+  #coop-preview * { box-sizing: border-box; }
+  #coop-preview { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--paper); color: var(--text); }
+
+  #coop-preview .shell { display: grid; grid-template-columns: 252px 1fr; min-height: 0; }
+
+
+
+  #coop-preview .sidebar { background: var(--navy); color: #d7e1ec; display: flex; flex-direction: column; }
+  #coop-preview .brand { padding: 18px 18px 14px; border-bottom: 1px solid rgba(217, 186, 130, .35); }
+  #coop-preview .brand h1 { color: #fff; font-size: 17px; margin: 0 0 2px; }
+  #coop-preview .brand .sub { color: var(--gold); font-size: 12px; }
+  #coop-preview .cp-nav { padding: 10px 0; flex: 1; }
+  #coop-preview .cp-nav button { display: block; width: 100%; text-align: left; padding: 11px 16px; background: none;
+    border: 0; border-left: 3px solid transparent; color: #c4d1e0; font: inherit; cursor: pointer; }
+  #coop-preview .cp-nav button:hover { background: rgba(242, 217, 187, .09); color: #fff; }
+  #coop-preview .cp-nav button[aria-current="true"] { background: var(--blue); border-left-color: var(--gold); color: #fff; font-weight: 600; }
+  #coop-preview .cp-nav .ico { margin-right: 9px; }
+  #coop-preview .cp-nav small { display: block; color: #9db1c6; font-weight: 400; font-size: 11.5px; margin-left: 27px; }
+  #coop-preview .side-note { padding: 14px 16px; font-size: 12px; color: #9db1c6; border-top: 1px solid rgba(217, 186, 130, .25); }
+
+
+  #coop-preview .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 22px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #coop-preview .topbar h2 { margin: 0; font-size: 18px; color: var(--navy); }
+  #coop-preview .role-chip { background: var(--gold); color: var(--navy); font-size: 11.5px; font-weight: 700;
+    padding: 3px 11px; border-radius: 999px; text-transform: uppercase; letter-spacing: .04em; }
+  #coop-preview .topbar label { margin-left: auto; font-size: 13px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
+  #coop-preview .topbar select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); }
+  #coop-preview .banner { background: var(--cream); color: var(--navy); padding: 8px 22px; font-size: 13px; border-bottom: 1px solid #e6cbA4; }
+  #coop-preview .banner b { font-weight: 700; }
+
+  #coop-preview .content { padding: 20px 22px 40px; }
+  #coop-preview .view[hidden] { display: none; }
+
+
+  #coop-preview .student-grid { display: grid; grid-template-columns: 305px 1fr; gap: 20px; }
+
+  #coop-preview .cp-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  #coop-preview h2 { font-size: 16px; margin: 0 0 4px; }
+  #coop-preview h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
+  #coop-preview .cp-muted { color: var(--muted); font-size: 13px; }
+  #coop-preview .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  #coop-preview .cp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px;
+    font-size: 12.5px; background: var(--cream); color: var(--navy); white-space: nowrap; }
+  #coop-preview .cp-chip.ok { background: var(--ok-soft); color: var(--ok); }
+  #coop-preview .cp-chip.warn { background: var(--warn-soft); color: var(--warn); }
+  #coop-preview .cp-chip.bad { background: var(--bad-soft); color: var(--bad); }
+  #coop-preview .cp-chip.accent { background: var(--blue-soft); color: var(--blue); }
+  #coop-preview .cp-chip.s-draft { background: var(--gold); color: var(--navy); font-weight: 600; }
+  #coop-preview .cp-chip.s-submitted { background: var(--blue-soft); color: var(--blue); }
+  #coop-preview .cp-chip.s-review { background: var(--warn-soft); color: var(--warn); }
+  #coop-preview .cp-chip.s-shortlisted { background: var(--ok-soft); color: var(--ok); }
+  #coop-preview .cp-chip.s-declined { background: var(--bad-soft); color: var(--bad); }
+
+  #coop-preview .cp-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
+  #coop-preview .cp-tabs button { font: inherit; background: none; border: 0; padding: 8px 14px; cursor: pointer;
+    color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  #coop-preview .cp-tabs button[aria-selected="true"] { color: var(--blue); border-color: var(--gold); font-weight: 600; }
+
+  #coop-preview .cp-btn { font: inherit; border: 1px solid var(--blue); background: var(--blue); color: #fff;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+  #coop-preview .cp-btn.gold { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 600; }
+  #coop-preview .cp-btn.secondary { background: var(--surface); color: var(--blue); }
+  #coop-preview .cp-btn.danger { background: var(--surface); color: var(--bad); border-color: var(--bad); }
+  #coop-preview .cp-btn.small { padding: 3px 10px; font-size: 13px; }
+  #coop-preview .cp-btn:disabled { opacity: .5; cursor: not-allowed; }
+  #coop-preview .cp-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  #coop-preview .cp-toolbar input, #coop-preview .cp-toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; }
+
+  #coop-preview .cp-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+  #coop-preview .cp-card.conflict { border-color: var(--bad); }
+  #coop-preview .cp-card.unknown { border-color: var(--gold); }
+  #coop-preview .cp-card.highlight { outline: 3px solid var(--gold); }
+  #coop-preview .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  #coop-preview .card-head .cp-title { font-weight: 600; font-size: 15.5px; }
+  #coop-preview .cp-card .desc { margin: 6px 0 0; }
+  #coop-preview .score { min-width: 56px; text-align: center; border-radius: 8px; padding: 4px 8px;
+    background: var(--cream); color: var(--navy); font-weight: 700; font-size: 18px; line-height: 1.1; }
+  #coop-preview .score small { display: block; font-size: 10px; font-weight: 500; text-transform: uppercase; }
+  #coop-preview .why { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-top: 10px; }
+  @media (max-width: 640px) { #coop-preview .why { grid-template-columns: 1fr; } }
+  #coop-preview .why ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  #coop-preview .why h4 { margin: 0 0 4px; font-size: 13px; }
+
+  #coop-preview .ai { border: 1px dashed var(--gold); background: #fdf6ea; border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 13px; }
+  #coop-preview .ai h4 { margin: 0 0 4px; color: var(--warn); font-size: 13px; }
+  #coop-preview .ai ul { margin: 4px 0; padding-left: 18px; }
+  #coop-preview .ai p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+  #coop-preview .meta { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  #coop-preview .actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #coop-preview table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  #coop-preview th, #coop-preview td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  #coop-preview th { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+  #coop-preview .empty { padding: 24px; text-align: center; color: var(--muted); background: var(--surface);
+    border: 1px dashed var(--border); border-radius: 10px; }
+  #coop-preview .msg { font-size: 13.5px; }
+  #coop-preview .msg.error { color: var(--bad); }
+  #coop-preview .msg.success { color: var(--ok); }
+
+  #coop-preview details.hist { margin-top: 6px; font-size: 13px; }
+  #coop-preview details.hist summary { cursor: pointer; color: var(--blue); }
+  #coop-preview details.hist ul { margin: 6px 0 0; padding-left: 18px; }
+  #coop-preview details.hist .reason { color: var(--bad); }
+
+  #coop-preview .compare-pick { font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+  #coop-preview .compare th { width: 140px; }
+  #coop-preview details.rules { font-size: 13px; margin-bottom: 12px; }
+  #coop-preview details.rules summary { cursor: pointer; color: var(--blue); }
+
+  #coop-preview .linkish { font: inherit; font-size: 13px; background: none; border: 0; color: var(--blue); text-decoration: underline; cursor: pointer; padding: 0; }
+
+  #coop-preview .stack-title { margin: 22px 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--navy); }
+
+  #coop-preview dialog { border: 0; border-radius: 12px; padding: 20px; max-width: 460px; box-shadow: 0 10px 40px rgba(12, 40, 64, .3); }
+  #coop-preview dialog::backdrop { background: rgba(12, 40, 64, .45); }
+  #coop-preview dialog h2 { margin-bottom: 6px; }
+  #coop-preview dialog textarea, #coop-preview dialog select, #coop-preview dialog input { width: 100%; font: inherit; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; }
+  #coop-preview dialog label { display: block; font-size: 13.5px; margin-top: 12px; }
+
+  #coop-preview :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+  #coop-preview .sidebar :focus-visible { outline-color: var(--gold); }
+#coop-preview {
+  color-scheme: light;
+  font-family: "DM Sans", system-ui, sans-serif;
+  --navy:#0C2840; --blue:#144673; --gold:#D9BA82; --cream:#F2D9BB; --paper:#F2F2F2;
+  --surface:#fff; --border:#d9dee5; --text:#1d2a38; --muted:#526474;
+  font-size:14px; color:var(--text); background:#f6f6f5; overflow:hidden;
+  border-radius:16px;
+}
+#coop-preview [hidden] {display:none!important}
+#coop-preview button, #coop-preview input, #coop-preview select {font-family:inherit}
+#coop-preview .shell {grid-template-columns:192px minmax(0,1fr);min-height:0}
+#coop-preview .sidebar {padding:22px 13px;gap:22px;min-width:0}
+#coop-preview .brand {display:flex;gap:11px;align-items:center;padding:0 5px 19px;border-color:#ffffff28}
+#coop-preview .brand h1 {font-size:17px;letter-spacing:-.025em}
+#coop-preview .brand .sub {font-size:11px;line-height:1.2}
+#coop-preview .monogram {display:grid;place-items:center;border:1px solid var(--gold);color:var(--gold);font:25px/1 Georgia,serif;border-radius:11px;width:39px;height:39px;flex:none}
+#coop-preview .cp-nav, #coop-preview .cp-tabs {padding:0;margin:0;display:grid;gap:4px;flex:0;border:0}
+#coop-preview .cp-nav button, #coop-preview .cp-tabs button {
+  color:#e5edf6;margin:0;text-align:left;display:block;width:100%;border:0;
+  border-left:2px solid transparent;border-radius:7px;padding:9px 10px;font-size:13px
+}
+#coop-preview .cp-nav button[aria-current=true], #coop-preview .cp-tabs button[aria-selected=true] {background:var(--blue);border-left-color:var(--gold);color:white}
+#coop-preview .cp-nav button[aria-current=true][data-role=student] {background:#ffffff13}
+#coop-preview .cp-nav button:hover, #coop-preview .cp-tabs button:hover {background:#ffffff19}
+#coop-preview .side-label {display:block;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin:0 0 8px 10px}
+#coop-preview .side-note {border:0;padding:0 9px;margin-top:auto}
+#coop-preview .side-note summary {cursor:pointer;color:#c9d8e7}
+#coop-preview .topbar {padding:16px 24px;gap:10px;min-height:65px}
+#coop-preview .topbar h2 {font-size:15px}
+#coop-preview .role-chip {background:#f4eee4;padding:4px 8px;letter-spacing:.075em;font-size:10px}
+#coop-preview .topbar label {font-size:12px}
+#coop-preview .topbar select {max-width:100%;color:var(--navy);background:#fff}
+#coop-preview .content {padding:24px 26px 32px}
+#coop-preview .student-grid {display:block}
+#coop-preview .cp-hero {
+  min-height:184px;position:relative;isolation:isolate;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:var(--navy);color:#fff;border-radius:14px;padding:27px 30px;margin:0 0 23px
+}
+#coop-preview .cp-hero::after {
+  content:"";position:absolute;z-index:-1;width:440px;height:440px;right:-170px;top:-142px;
+  border-radius:50%;background:repeating-radial-gradient(circle at center,transparent 0 23px,#d9ba824c 24px 25px,transparent 26px 37px);
+  transform:scaleY(.68) rotate(-24deg);pointer-events:none
+}
+#coop-preview .hero-kicker {color:var(--gold);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 7px}
+#coop-preview .cp-hero h2, #coop-preview .page-title {font-family:"DM Serif Text",Georgia,serif;font-weight:400;letter-spacing:-.025em}
+#coop-preview .cp-hero h2 {font-size:clamp(29px,5vw,48px);line-height:1.05;margin:0 0 10px}
+#coop-preview .cp-hero p {max-width:410px;margin:0;color:#e1eaf2;font-size:14px}
+#coop-preview .hero-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+#coop-preview .page-title {font-size:34px;line-height:1.06;color:var(--navy);margin:0 0 12px}
+#coop-preview .cp-panel {padding:23px}
+#coop-preview .cp-btn {font-weight:600;border-radius:7px;padding:8px 13px}
+#coop-preview .cp-btn.small {padding:5px 10px}
+#coop-preview .cp-btn:hover:not(:disabled) {filter:brightness(.94)}
+#coop-preview .cp-hero .secondary {background:transparent;border-color:#a5b8cb;color:white}
+#coop-preview .cp-card {min-width:0;padding:18px 20px;margin:0 0 10px;border-radius:12px}
+#coop-preview .cp-card .cp-title {font-size:17px;letter-spacing:-.02em;color:var(--navy);line-height:1.25}
+#coop-preview .cp-card .company {margin:3px 0}
+#coop-preview .score {min-width:62px;background:#f4ebdd;font-size:22px;padding:7px 9px;font-variant-numeric:tabular-nums}
+#coop-preview .score small {font-size:10px}
+#coop-preview .fit-details {margin-top:13px;border-top:1px solid var(--border);padding-top:10px}
+#coop-preview summary {cursor:pointer}
+#coop-preview .fit-details summary {font-size:13px;font-weight:600;color:var(--blue)}
+#coop-preview .fit-details[open] summary {margin-bottom:10px}
+#coop-preview .ai {padding:12px 14px}
+#coop-preview .rec-label {display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+#coop-preview .run-meta {overflow-wrap:anywhere}
+#coop-preview .more-results {margin-top:12px}
+#coop-preview .more-results summary {color:var(--blue);font-weight:600;margin-bottom:10px}
+#coop-preview .stack-title {margin-top:20px}
+#coop-preview .empty {padding:22px 14px;background:#fff}
+#coop-preview .cp-toolbar input, #coop-preview .cp-toolbar select {max-width:100%;background:#fff;color:var(--navy)}
+#coop-preview .cp-toolbar input {flex:1}
+#coop-preview .cp-toolbar .cp-muted {flex-basis:100%}
+#coop-preview .advisor-panel {background:#f8f0e2;border-color:#ddc7a4;margin-bottom:16px}
+#coop-preview .advisor-controls {display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+#coop-preview .advisor-controls select {width:min(100%,285px);min-height:36px;padding:6px;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--navy)}
+#coop-preview .advisor-out {margin-top:15px}
+#coop-preview .advisor-out ul {margin:7px 0;padding-left:20px}
+#coop-preview .quick-save {background:#fff;color:var(--blue);border-color:var(--border)}
+#coop-preview .quick-save[aria-pressed=true] {background:#f4ebdd;border-color:#dec59b}
+#coop-preview dialog {width:min(460px,calc(100% - 24px));max-height:90vh;color:var(--text);background:white}
+#coop-preview .cp-chip {white-space:normal}
+#coop-preview .actions label, #coop-preview .actions input {max-width:100%}
+#coop-preview .hist summary {width:fit-content}
+@media(max-width:690px) {
+  #coop-preview .shell {grid-template-columns:1fr}
+  #coop-preview .sidebar {padding:13px;gap:11px}
+  #coop-preview .brand {padding:0 0 9px}
+  #coop-preview .cp-nav, #coop-preview .cp-tabs {display:flex;flex-wrap:wrap;gap:4px}
+  #coop-preview .cp-nav button, #coop-preview .cp-tabs button {width:auto;padding:7px 8px}
+  #coop-preview .side-label {margin-left:2px}
+  #coop-preview .side-note {display:block;padding:0 2px}
+  #coop-preview .topbar, #coop-preview .content {padding:14px}
+  #coop-preview .topbar label {margin:0;flex-wrap:wrap}
+  #coop-preview .cp-hero {padding:22px 18px;min-height:0}
+  #coop-preview .cp-hero::after {opacity:.55}
+  #coop-preview .cp-card {padding:15px}
+}
+@media(prefers-reduced-motion:reduce) {#coop-preview * {scroll-behavior:auto!important}}
+
+#coop-preview .mobile-nav {display:none}
+@media(max-width:690px) {
+  #coop-preview #workspaceNav, #coop-preview .desktop-roles {display:none}
+  #coop-preview .mobile-nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+  #coop-preview .mobile-nav label {display:grid;gap:4px;font-size:11px;color:var(--gold)}
+  #coop-preview .mobile-nav select {width:100%;min-height:36px;padding:5px;background:var(--navy);color:white;border:1px solid #9db1c6;border-radius:6px}
+  #coop-preview .side-note {margin-top:0}
+  #coop-preview .topbar {min-height:0}
+  #coop-preview .content {padding-top:12px}
+}
+
+#coop-preview {background:#f5f5f7;color:var(--navy);font-family:"DM Sans",system-ui,sans-serif;overflow:clip}
+#coop-preview .shell {display:block}
+#coop-preview .public-header {
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:22px;
+  padding:11px clamp(18px,4vw,40px);border-bottom:1px solid #0c284014;background:#fff;
+}
+#coop-preview .public-header button {cursor:pointer}
+#coop-preview .wordmark {display:flex;align-items:center;gap:8px;justify-self:start;background:none;border:0;color:var(--navy);font-size:20px;font-weight:700;letter-spacing:-.035em;padding:0}
+#coop-preview .brand-symbol {display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:var(--gold);background:var(--navy);font-weight:600;font-size:17px}
+#coop-preview .public-links {display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,25px)}
+#coop-preview .public-links button {background:none;border:0;color:#425568;font-size:13px;padding:9px 0;white-space:nowrap}
+#coop-preview .public-links button:hover,#coop-preview .public-links button[aria-current] {color:var(--navy);text-decoration:underline;text-underline-offset:5px;text-decoration-color:#a57b3f}
+#coop-preview .avatar-button {width:38px;height:38px;justify-self:end;padding:2px;border:1px solid #c8af87;background:white;border-radius:50%;display:grid;place-items:center}
+#coop-preview .avatar-button img {display:block;width:32px;height:32px;object-fit:cover;border-radius:50%}
+#coop-preview .avatar-button[aria-current] {outline:2px solid var(--blue);outline-offset:2px}
+#coop-preview .content {max-width:1060px;margin:auto;padding:clamp(16px,3vw,30px) clamp(16px,4vw,40px) 38px}
+#coop-preview .feature {
+  overflow:hidden;display:grid;grid-template-columns:1.06fr 1fr;
+  border-radius:20px;background:#f3e8d9;margin:0 0 27px;min-height:188px;
+}
+#coop-preview .feature-content {padding:clamp(22px,4vw,45px);align-self:center}
+#coop-preview .feature h2 {font-family:inherit;color:var(--navy);font-weight:700;font-size:clamp(28px,5.05vw,54px);line-height:1.02;letter-spacing:-.048em;margin:0 0 12px}
+#coop-preview .feature p {margin:0;color:#425568;max-width:30ch;font-size:clamp(14px,1.7vw,17px)}
+#coop-preview .feature-content button {margin-top:19px;border-radius:99px;padding:9px 15px}
+#coop-preview .feature-home {background:var(--navy);min-height:316px}
+#coop-preview .feature-home h2 {color:#fff}
+#coop-preview .feature-home p {color:#dce8f4}
+#coop-preview .feature-home .cp-btn {color:var(--navy);background:var(--gold);border-color:var(--gold)}
+#coop-preview .feature-photo {display:block;width:100%;height:100%;min-height:100%;object-fit:cover;min-width:0;aspect-ratio:1.5}
+#coop-preview .feature-secondary {grid-template-columns:1.3fr 1fr}
+#coop-preview .feature-secondary h2 {font-size:clamp(27px,4.1vw,44px)}
+#coop-preview .feature-secondary .feature-photo {aspect-ratio:2}
+#coop-preview .section-head {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-bottom:10px}
+#coop-preview .section-head h2 {font-size:25px;letter-spacing:-.035em;margin:0}
+#coop-preview .inline-action {background:none;border:0;color:var(--blue);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 2px}
+#coop-preview #tab-recs > .cp-toolbar:has(.msg:empty) {display:none}
+#coop-preview details.rules {margin-bottom:14px}
+#coop-preview .listing-grid,#coop-preview #opps,#coop-preview #savedList {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+#coop-preview #opps > .empty,#coop-preview #savedList > .empty {grid-column:1/-1}
+#coop-preview :is(#recs,#opps,#savedList) article.cp-card {padding:0;margin:0;overflow:hidden;border:1px solid #0c284019;border-radius:16px;background:#fff}
+#coop-preview .employer-photo {display:block;width:100%;aspect-ratio:2.55;object-fit:cover;object-position:center}
+#coop-preview :is(#rec-OP-028,#opp-OP-028) .employer-photo {object-position:center 46%}
+#coop-preview .listing-content {padding:15px 16px}
+#coop-preview .listing-content .cp-title {font-size:18px}
+#coop-preview .listing-content .card-head {gap:8px}
+#coop-preview .listing-content .score {min-width:44px;padding:6px;font-size:17px}
+#coop-preview .listing-content .score small {font-size:9px}
+#coop-preview .listing-content .actions {gap:6px}
+#coop-preview .listing-content .cp-btn {font-size:12px;padding:6px 9px;border-radius:99px}
+#coop-preview .cp-btn.secondary {border-color:#8c9eac}
+#coop-preview .listing-content .cp-chip {font-size:11px}
+#coop-preview .profile-page-title {font-size:28px;letter-spacing:-.035em;margin:0 0 14px}
+#coop-preview .profile-person {display:flex;align-items:center;gap:14px}
+#coop-preview .profile-person img {width:68px;height:68px;object-fit:cover;border-radius:50%}
+#coop-preview h2:focus {outline:none}
+#coop-preview .more-results {margin-top:16px}
+#coop-preview .advisor-panel {background:#fff;border-color:#0c284018}
+#coop-preview .advisor-controls {margin-top:0}
+@media(max-width:630px) {
+ #coop-preview .public-header {grid-template-columns:1fr auto;gap:5px 12px;padding:9px 13px 5px}
+ #coop-preview .header-end {grid-column:2;grid-row:1}
+ #coop-preview .public-links {grid-column:1/-1;grid-row:2;justify-content:flex-start;gap:7px 13px;flex-wrap:wrap}
+ #coop-preview .public-links button {font-size:12px}
+ #coop-preview .feature,#coop-preview .feature-secondary {grid-template-columns:1fr;margin-bottom:20px;min-height:0}
+ #coop-preview .feature-content {padding:21px}
+ #coop-preview .feature-photo,#coop-preview .feature-secondary .feature-photo {aspect-ratio:2.25;height:auto;min-height:0;object-position:center 50%}
+ #coop-preview .feature-home h2 br {display:none}
+ #coop-preview .feature-home h2 {font-size:clamp(31px,8vw,42px)}
+}
+@media(max-width:540px) {
+ #coop-preview .listing-grid,#coop-preview #opps,#coop-preview #savedList {grid-template-columns:1fr}
+}
+#coop-preview :is(#rec-OP-031,#opp-OP-031) .employer-photo {object-position:center 68%}
+#coop-preview .listing-facts {margin:0 0 8px;text-transform:none}
+#coop-preview .listing-company {margin-top:3px}
+
+#coop-preview {
+  --navy:#101d46; --blue:#233fa8; --gold:#e4ca9f; --cream:#f3e4cc;
+  --paper:#f7f5f1; --text:#162246; --muted:#465472;
+  --border:#d6daea; --blue-soft:#e9edfb;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--paper);
+}
+#coop-preview .public-header {
+  background:#fffdf9;border-bottom:1px solid #152a651c;
+}
+#coop-preview .wordmark {
+  gap:9px;min-height:40px;font-size:22px;font-weight:720;letter-spacing:-.05em;
+}
+#coop-preview .brand-symbol {
+  display:block;position:relative;width:37px;height:37px;flex:none;
+  background:none;border-radius:0;
+}
+#coop-preview .brand-symbol::before,
+#coop-preview .brand-symbol::after {
+  content:"";position:absolute;inset:0;clip-path:polygon(4% 77%,51% 16%,94% 16%,46% 77%);
+}
+#coop-preview .brand-symbol::before {
+  background:#e0b879;transform:translate(6px,4px) scale(.75);
+}
+#coop-preview .brand-symbol::after {
+  background:var(--blue);transform:translate(-3px,0) scale(.82);
+}
+#coop-preview .public-links button {color:#465472}
+#coop-preview .public-links button[aria-current] {
+  color:var(--blue);font-weight:650;text-decoration-color:var(--blue);
+}
+#coop-preview .feature {border-radius:16px;background:#f0e2cb}
+#coop-preview .feature-home {
+  grid-template-columns:1.03fr 1fr;
+  background:#16295f;
+  min-height:305px;
+}
+#coop-preview .feature-home .feature-content {
+  position:relative;isolation:isolate;align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+}
+#coop-preview .feature-home .feature-content::before {
+  position:absolute;content:"";inset:0;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(45deg,transparent 0 16px,#bfcaff34 16px 17px,transparent 17px 32px),
+    repeating-linear-gradient(-45deg,transparent 0 16px,#bfcaff34 16px 17px,transparent 17px 32px);
+  mask-image:radial-gradient(ellipse at bottom right,#000 0%,transparent 66%);
+}
+#coop-preview .feature h2 {font-weight:690;letter-spacing:-.047em}
+#coop-preview .feature-home p {color:#e7edff}
+#coop-preview .feature-home .cp-btn {background:var(--gold);border-color:var(--gold);color:var(--navy)}
+#coop-preview .feature-secondary {min-height:160px}
+#coop-preview .feature-secondary .feature-content {padding-block:25px}
+#coop-preview .feature-secondary .feature-photo {max-height:210px;aspect-ratio:2.2}
+#coop-preview .section-head h2 {font-weight:680}
+#coop-preview :is(#recs,#opps,#savedList) article.cp-card {border-color:#142a631f}
+#coop-preview .listing-content .score {background:#eaeefc;color:#233fa8}
+#coop-preview .listing-content .cp-btn {font-size:13px}
+#coop-preview .cp-btn.secondary {border-color:#9caada}
+#coop-preview .avatar-button {border-color:#a8b3df}
+#coop-preview .profile-person img {box-shadow:0 0 0 1px #a8b3df}
+#coop-preview .cp-toolbar :is(input,select) {min-height:38px}
+#coop-preview #q {max-width:540px;min-width:0}
+#coop-preview :focus-visible {outline-color:var(--blue)}
+@media(max-width:630px) {
+ #coop-preview .feature-home {grid-template-columns:1fr;min-height:0}
+ #coop-preview .feature-home .feature-content::before {mask-image:radial-gradient(ellipse at bottom right,#000 0%,transparent 54%)}
+ #coop-preview .feature-secondary .feature-photo {max-height:140px}
+ #coop-preview .wordmark {font-size:20px}
+}
+
+#coop-preview {
+  --navy:#103151; --blue:#144677; --gold:#e5c687; --cream:#f6e8c8;
+  --paper:#f8eed8; --surface:#fffdf8; --text:#172f49; --muted:#4d5d6e;
+  --border:#d8cdb8; --blue-soft:#e7eff6;
+  background:var(--paper);color:var(--text);
+}
+#coop-preview .shell {
+  background-image:linear-gradient(180deg,#f0deb6 0,transparent 560px);
+  min-height:min(100dvh,680px);
+}
+#coop-preview .public-header {
+  background:#fff8e8;border-color:#b7965b52;
+}
+#coop-preview .brand-symbol::before {background:var(--gold)}
+#coop-preview .avatar-button {border-color:#b58e53}
+#coop-preview .content {position:relative;isolation:isolate}
+#coop-preview .content::before {
+  content:"";position:absolute;inset:0 0 auto;height:clamp(260px,48vw,460px);z-index:-1;
+  background:#f1dfb6 center top / max(640px,100%) auto no-repeat url("/student-preview/assets/bae13d06d4828b3a.webp");
+  background-blend-mode:multiply;
+  mask-image:linear-gradient(#000 10%,transparent);
+  opacity:.85;pointer-events:none;
+}
+#coop-preview .feature-home {background:var(--blue)}
+#coop-preview .feature-home .feature-content::before {
+  background:center top / auto 100% no-repeat url("/student-preview/assets/bae13d06d4828b3a.webp");
+  mix-blend-mode:screen;opacity:.14;
+  mask-image:linear-gradient(#000,transparent 72%);
+  filter:invert(1);
+}
+#coop-preview .feature-secondary {background:#f5e5be}
+#coop-preview .feature-home .cp-btn {background:var(--gold);border-color:var(--gold);color:var(--navy)}
+#coop-preview .feature-home p {color:#f3f7fc}
+#coop-preview :is(#recs,#opps,#savedList) article.cp-card {background:#fffdf8;border-color:#ddcdb2}
+#coop-preview .listing-content .score {background:#f1e2c4;color:var(--navy)}
+#coop-preview .cp-btn.secondary {border-color:#99afc4}
+#coop-preview .opportunity-search {
+  margin:0 0 17px;padding:17px 18px 13px;background:#fffaf0;border:1px solid #dfc99f;border-radius:14px;
+}
+#coop-preview .basic-search {
+  display:grid;grid-template-columns:minmax(144px,1.55fr) minmax(110px,1fr) minmax(136px,1fr) auto;
+  gap:10px;align-items:end;
+}
+#coop-preview .basic-search label,#coop-preview .advanced-filters label {
+  display:grid;gap:5px;min-width:0;font-size:12px;font-weight:650;color:var(--navy);
+}
+#coop-preview .opportunity-search input,#coop-preview .opportunity-search select,#coop-preview .chat-form input {
+  width:100%;min-width:0;min-height:41px;border:1px solid #baad96;border-radius:8px;
+  background:#fffdf9;color:var(--navy);padding:7px 9px;font:inherit;font-size:14px;
+}
+#coop-preview .opportunity-search input::placeholder {color:#596575}
+#coop-preview .basic-search .cp-btn {min-height:41px;padding-inline:15px}
+#coop-preview .search-tools {
+  display:flex;gap:16px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:9px;
+}
+#coop-preview #advancedToggle {text-decoration:none;font-weight:650}
+#coop-preview #advancedToggle::before {content:"+";display:inline-block;width:14px}
+#coop-preview #advancedToggle[aria-expanded=true]::before {content:"−"}
+#coop-preview .advanced-filters {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px;
+  min-width:0;border:0;border-top:1px solid var(--border);margin:10px 0 0;padding:12px 0 0;
+}
+#coop-preview .filter-note {margin:7px 0 0;font-size:12px}
+#coop-preview .filter-help {grid-column:1/-1;margin:0;font-size:12px}
+#coop-preview .search-results-head {
+  display:flex;align-items:baseline;justify-content:space-between;gap:5px 12px;flex-wrap:wrap;margin:0 0 9px;
+}
+#coop-preview #searchCount {margin:0;color:var(--navy);font-size:16px;text-transform:none}
+#coop-preview .degree-fact {margin:0 0 9px}
+#coop-preview .listing-company {line-height:1.4}
+#coop-preview .assistant-layer {position:sticky;top:0;height:0;z-index:5;pointer-events:none}
+#coop-preview .robot-launcher {
+  appearance:none;position:absolute;right:10px;top:clamp(140px,calc(100dvh - 166px),570px);
+  display:grid;place-items:center;width:60px;height:60px;padding:5px;border-radius:50%;
+  background:#fffaf0;border:1px solid #b9914e;box-shadow:0 5px 16px #102e5033;
+  cursor:grab;touch-action:none;user-select:none;pointer-events:auto;
+}
+#coop-preview .robot-launcher:hover {background:#fff5db}
+#coop-preview .robot-launcher.is-dragging {cursor:grabbing}
+#coop-preview .robot-art {
+  width:37px;height:38px;position:relative;display:inline-block;
+  pointer-events:none;flex:none;color:var(--blue);
+}
+#coop-preview .robot-head {
+  position:absolute;top:9px;left:3px;right:3px;height:21px;border:1.5px solid currentColor;
+  border-radius:8px 8px 7px 7px;background:#f7fbff;display:grid;place-items:center;
+}
+#coop-preview .robot-head::before,#coop-preview .robot-head::after {
+  position:absolute;content:"";height:7px;width:3px;background:currentColor;top:6px;
+}
+#coop-preview .robot-head::before {left:-4px;border-radius:2px 0 0 2px}
+#coop-preview .robot-head::after {right:-4px;border-radius:0 2px 2px 0}
+#coop-preview .robot-visor {
+  display:block;width:22px;height:12px;border-radius:5px;background:var(--blue);position:relative;
+}
+#coop-preview .robot-visor::before,#coop-preview .robot-visor::after {
+  content:"";position:absolute;top:4px;width:4px;height:4px;border-radius:50%;background:var(--gold);
+}
+#coop-preview .robot-visor::before {left:5px}
+#coop-preview .robot-visor::after {right:5px}
+#coop-preview .robot-antenna {position:absolute;top:3px;left:17px;width:3px;height:7px;background:currentColor}
+#coop-preview .robot-antenna::before {
+  content:"";position:absolute;top:-2px;left:-2px;width:7px;height:7px;border:1px solid #83612e;
+  background:var(--gold);border-radius:50%;
+}
+#coop-preview .robot-body {
+  position:absolute;top:31px;left:10px;right:10px;height:6px;border:1.5px solid currentColor;
+  border-radius:5px 5px 3px 3px;background:var(--gold);
+}
+#coop-preview .sr-assist {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#coop-preview .career-chat {
+  width:min(390px,calc(100% - 22px));max-height:calc(100dvh - 20px);padding:0;
+  border:1px solid #bdcbd7;border-radius:16px;background:#fffdf7;
+}
+#coop-preview .career-chat[open] {display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+#coop-preview .chat-embed {display:block;width:100%;height:min(600px,calc(100dvh - 140px));border:0;background:#fff}
+#coop-preview .chat-foot {padding:8px 13px 11px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+#coop-preview .chat-foot a {color:var(--blue)}
+#coop-preview .chat-header {
+  display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--blue);color:white;
+}
+#coop-preview .chat-header h2 {color:#fff;font:650 17px/1.25 system-ui,sans-serif;margin:0}
+#coop-preview .chat-header p {color:#e9eff8;font-size:12px;margin:1px 0 0}
+#coop-preview .robot-mini {background:#fffaf0;width:43px;height:43px;border-radius:50%;padding:3px}
+#coop-preview .robot-mini .robot-head {left:6px;right:6px;top:11px}
+#coop-preview .robot-mini .robot-antenna {left:20px;top:5px}
+#coop-preview .robot-mini .robot-body {left:13px;right:13px;top:33px}
+#coop-preview .chat-close {
+  margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid #ffffff83;
+  background:transparent;color:white;font-size:23px;line-height:1;cursor:pointer;
+}
+#coop-preview .chat-close:focus-visible {outline-color:#fff}
+#coop-preview .chat-transcript {
+  display:flex;flex-direction:column;align-items:flex-start;gap:9px;overflow:auto;height:255px;padding:14px;
+}
+#coop-preview .chat-transcript p {margin:0;padding:9px 11px;border-radius:11px;background:#f4ebd9;color:var(--navy);max-width:90%;overflow-wrap:anywhere}
+#coop-preview .chat-transcript .preview-message {align-self:flex-end;background:#e7eff6}
+#coop-preview .chat-form {display:flex;gap:8px;align-items:stretch;padding:10px 13px 14px;border-top:1px solid var(--border)}
+#coop-preview .chat-form input {flex:1;margin:0;font-size:16px}
+@media(max-width:670px) {
+ #coop-preview .basic-search {grid-template-columns:repeat(2,minmax(0,1fr));}
+ #coop-preview .keyword-field {grid-column:1/-1}
+ #coop-preview .basic-search #search {grid-column:1/-1;justify-self:start}
+ #coop-preview .advanced-filters {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #coop-preview .opportunity-search {padding:13px 11px 9px}
+ #coop-preview .robot-launcher {top:clamp(110px,calc(100dvh - 185px),515px);width:53px;height:53px}
+}
+
+#coop-preview .listing-company {display:flex;align-items:center;gap:8px;margin-top:6px}
+#coop-preview .listing-company strong {color:var(--navy);font-size:13px}
+#coop-preview .employer-mark {width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #dacdb3;border-radius:9px;background:white;color:var(--blue);font-size:10px;font-weight:750}
+#coop-preview .employer-mark img {object-fit:contain;display:block}
+#coop-preview .cp-chip.s-offered {background:#ece9fb;color:#4b3db8;font-weight:650}
+#coop-preview .cp-chip.s-accepted {background:var(--ok-soft);color:var(--ok);font-weight:650}
+#coop-preview .cp-chip.s-offerdeclined, #coop-preview .cp-chip.s-withdrawn {background:#eef0f3;color:#4b5563}
+#coop-preview .cp-chip.p-awaiting {background:var(--warn-soft);color:var(--warn)}
+#coop-preview .cp-chip.p-confirmed {background:var(--ok);color:#fff;font-weight:650}
+#coop-preview ol.timeline {list-style:none;margin:10px 0 0;padding:0 0 0 18px;border-left:2px solid var(--border)}
+#coop-preview ol.timeline li {position:relative;margin:0 0 10px}
+#coop-preview ol.timeline li::before {content:"";position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--blue);border:2px solid var(--surface)}
+#coop-preview ol.timeline li.last::before {background:var(--gold)}
+#coop-preview .gap-list {list-style:none;padding:0;margin:0}
+#coop-preview .gap-list li {display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
+#coop-preview .p06 {border:1px dashed var(--border);border-radius:12px;padding:12px;margin-top:12px}
+#coop-preview .inline-form {display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-top:8px}
+#coop-preview .inline-form label {font-size:13px;color:var(--muted)}
+#coop-preview .inline-form input, #coop-preview .inline-form select {display:block;margin-top:4px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font:inherit;background:#fff}
+#coop-preview .header-end {display:flex;align-items:center;gap:12px;justify-self:end}
+#coop-preview .demo-role {display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+#coop-preview .demo-role select {padding:5px 8px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:12.5px;background:#fff;color:var(--text)}
+#coop-preview .stack-title {margin:26px 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+#coop-preview .role-banner {margin:0 0 14px;padding:8px 12px;border-radius:10px;background:var(--blue-soft);color:var(--blue);font-size:13px}
+#coop-preview .ai-summary {margin:6px 0;font-weight:500}
+#coop-preview .public-header {grid-template-columns:auto minmax(0,1fr) auto;gap:18px}
+#coop-preview .public-links {gap:19px}
+#coop-preview .demo-role {font-size:11px;gap:4px}
+#coop-preview .demo-role select {max-width:145px}
+#coop-preview .header-end {gap:8px}
+#coop-preview .feature-home {min-height:225px;grid-template-columns:1.15fr 1fr}
+#coop-preview .feature-home h2 {font-size:40px;letter-spacing:-.035em}
+#coop-preview .feature-content {padding:28px 30px}
+#coop-preview .feature-home .feature-photo {max-height:260px}
+#coop-preview .feature-secondary {min-height:0;grid-template-columns:1fr auto;background:transparent;border-radius:0;margin-bottom:18px}
+#coop-preview .feature-secondary .feature-content {padding:3px 0}
+#coop-preview .feature-secondary h2 {font-size:30px;letter-spacing:-.03em}
+#coop-preview .feature-secondary .feature-photo {width:145px;height:90px;min-height:0;aspect-ratio:auto;border-radius:12px}
+#coop-preview .feature-secondary p {max-width:48ch;font-size:14px}
+#coop-preview .content::before {opacity:.33;max-height:320px}
+#coop-preview .basic-search {grid-template-columns:minmax(170px,1.5fr) minmax(110px,1fr) minmax(120px,1fr) auto}
+#coop-preview .source-tools {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+#coop-preview .source-tools label {display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+#coop-preview .source-tools select {background:#fffdf8;border:1px solid #baad96;border-radius:8px;padding:8px;color:var(--navy);max-width:100%;font:inherit}
+#coop-preview #feedStatus {font-size:12px;color:#4d5d6e;max-width:75ch;margin:0 0 15px;overflow-wrap:anywhere}
+#coop-preview .role-banner {background:transparent;border:0;padding:0;font-size:14px;max-width:65ch}
+#coop-preview .page-title {font:650 30px/1.15 system-ui,sans-serif;letter-spacing:-.03em}
+#coop-preview .stack-title {font-size:14px;text-transform:none;letter-spacing:0}
+#coop-preview .meta {overflow-wrap:anywhere}
+#coop-preview .listing-content .cp-title {font-size:18px;line-height:1.3}
+#coop-preview .listing-content .actions a {text-decoration:none}
+#coop-preview .listing-content .source-line {font-size:12px;color:#4d5d6e;margin:9px 0 0}
+#coop-preview .listing-content .source-line a {color:var(--blue)}
+#coop-preview .live-art {height:90px;background:#e9eff4;display:flex;align-items:center;justify-content:space-between;padding:20px;color:var(--blue);font-size:14px}
+#coop-preview .live-art strong {font-size:20px;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#coop-preview .why {grid-template-columns:1fr;gap:14px}
+#coop-preview .ai {background:#f5f2eb;border:1px solid var(--border);font-size:13px}
+#coop-preview .history-tools {margin-top:12px}
+#coop-preview .empty {border:1px solid var(--border);background:#fffaf0;color:#4d5d6e}
+#coop-preview .review-empty {padding:15px 0;color:#4d5d6e}
+#coop-preview .interview-info {margin:13px 0;padding:12px 14px;border-radius:10px;background:#e7eff6;border:1px solid #bdcbd7}
+#coop-preview .interview-info p {margin:3px 0;overflow-wrap:anywhere}
+#coop-preview .interview-info strong {font-weight:650}
+#coop-preview .s-interview {color:var(--blue);background:#e7eff6}
+#coop-preview dialog {width:min(480px,calc(100% - 26px));max-height:calc(100dvh - 30px);overflow:auto}
+#coop-preview .chat-embed {max-height:calc(100dvh - 200px)}
+#coop-preview .content table {min-width:580px}
+#coop-preview .interview-fields {display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+#coop-preview .interview-fields label:first-child,#coop-preview .interview-fields label:last-child {grid-column:1/-1}
+#coop-preview .role-picker-label {display:none}
+#coop-preview #tab-recs > .cp-toolbar {margin:0}
+@media(max-width:850px) {
+ #coop-preview .public-header {display:flex;flex-wrap:wrap}
+ #coop-preview .header-end {margin-left:auto}
+ #coop-preview .public-links {order:3;width:100%;justify-content:flex-start;flex-wrap:wrap}
+ #coop-preview .feature-home h2 {font-size:34px}
+ #coop-preview .advanced-filters {grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:630px) {
+ #coop-preview .feature-home {grid-template-columns:1fr}
+ #coop-preview .feature-home .feature-photo {display:none}
+ #coop-preview .feature-home {min-height:0}
+ #coop-preview .feature-secondary .feature-photo {display:none}
+ #coop-preview .feature-secondary {display:block}
+ #coop-preview .feature-content {padding:23px}
+ #coop-preview .feature-home h2 {font-size:31px}
+ #coop-preview .public-links {gap:13px}
+ #coop-preview .advanced-filters {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #coop-preview .basic-search {grid-template-columns:repeat(2,minmax(0,1fr))}
+ #coop-preview .demo-role select {max-width:135px}
+ #coop-preview .source-tools label {flex-wrap:wrap}
+}
+
+</style>
+<div id="coop-preview">
+
+<div class="shell">
+
+  <div>
+    <header class="public-header">
+      <button type="button" data-go="recs" class="wordmark" aria-label="Coop home"><span class="brand-symbol" aria-hidden="true"></span>Coop</button>
+      <nav class="public-links" aria-label="Main navigation">
+        <button type="button" data-tab="recs" aria-current="page">For you</button>
+        <button type="button" data-tab="browse">Explore</button>
+        <button type="button" data-tab="saved">Saved</button>
+        <button type="button" data-tab="apps">Applications <span id="appCount"></span></button>
+        <button type="button" data-tab="guide">Career guide</button>
+      </nav>
+      <div class="header-end">
+      <label class="demo-role"><span class="role-picker-label">Workspace</span>
+        <select id="demoRole" aria-label="Test workspace role">
+          <option value="student">Student</option>
+          <option value="employer">Employer</option>
+          <option value="coordinator">Coordinator</option>
+          <option value="faculty">Faculty reviewer</option>
+        </select></label>
+      <button type="button" class="avatar-button" data-tab="profile" aria-label="Open Layla Hassan’s profile"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""></button>
+      </div>
+    </header>
+<div class="assistant-layer">
+  <button type="button" id="robotLauncher" class="robot-launcher" aria-label="Open the co-op assistant (Team P6/P7)" aria-describedby="robotHelp" aria-haspopup="dialog" aria-controls="careerChat">
+    <span class="robot-art" aria-hidden="true">
+      <span class="robot-antenna"></span>
+      <span class="robot-head"><span class="robot-visor"></span></span>
+      <span class="robot-body"></span>
+    </span>
+  </button>
+  <span class="sr-assist" id="robotHelp">Drag to move, or use the arrow keys with the robot focused.</span>
+</div>
+<dialog id="careerChat" class="career-chat" aria-labelledby="chatTitle">
+  <div class="chat-header">
+    <span class="robot-art robot-mini" aria-hidden="true"><span class="robot-antenna"></span><span class="robot-head"><span class="robot-visor"></span></span><span class="robot-body"></span></span>
+    <div><h2 id="chatTitle">Co-op assistant</h2><p>Placement support</p></div>
+    <button type="button" id="closeChat" class="chat-close" aria-label="Close co-op assistant">×</button>
+  </div>
+  <!-- Team P6/P7 owns the FAQ chatbot; their embed is loaded on first open. -->
+  <iframe id="chatEmbed" class="chat-embed" title="IPP co-op assistant" data-src="https://lizhengxi25.github.io/waypoint/#/embed"></iframe>
+  <p class="chat-foot">Having trouble?
+    <a href="https://lizhengxi25.github.io/waypoint/#/embed" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
+</dialog>
+
+    <select id="student" hidden aria-hidden="true" tabindex="-1"></select>
+    <main class="content">
+
+      <!-- ================= STUDENT ================= -->
+      <section class="view" id="view-student" aria-label="Coop workspace">
+        <div class="student-grid">
+
+          <section>
+
+            <div id="tab-recs">
+              <header class="feature feature-home">
+                <div class="feature-content">
+                  <h2>Find your next<br> placement.</h2>
+                  <p>Find internships, part-time work, and graduate roles that fit your skills.</p>
+                  <button class="cp-btn" data-go="browse" type="button">Explore opportunities</button>
+                </div>
+                <img src="/student-preview/assets/7c42d6ba469072fd.webp" alt="" class="feature-photo">
+              </header>
+              <div class="section-head"><h2>Your matches</h2><button class="inline-action" id="recommend" type="button">Refresh matches</button></div>
+              <div class="cp-toolbar">
+
+                <span class="msg" aria-live="polite" id="recMsg"></span>
+              </div>
+              <details class="rules"><summary>How matching works</summary><div class="cp-muted run-meta" id="recInfo" hidden></div><div id="rules"></div></details>
+              <div id="recs"></div>
+            </div>
+
+            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2><p>Explore current roles and university placements.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
+<div class="source-tools"><label for="catalogueSource">Show<select id="catalogueSource"><option value="live">Live opportunities</option><option value="university">University listings</option></select></label></div>
+<p id="feedStatus" role="status">Loading live opportunities…</p>
+<form id="opportunitySearch" class="opportunity-search" aria-label="Search opportunities">
+  <div class="basic-search">
+    <label class="keyword-field" for="q">Search
+      <input id="q" type="search" placeholder="Role, employer, city, or skill" maxlength="140">
+    </label>
+    <label for="country">Country
+      <select id="country"><option value="">Any country</option></select>
+    </label>
+    <label for="degree">Degree level
+      <select id="degree">
+        <option value="">Any degree level</option>
+        <option value="bachelors">Bachelor’s (BA, BSc)</option>
+        <option value="masters">Master’s (MA, MSc)</option>
+        <option value="doctorate">Doctorate (PhD)</option>
+        <option value="unknown">Degree level not listed</option>
+      </select>
+    </label>
+    <button class="cp-btn" type="button" id="search">Search</button>
+  </div>
+  <div class="search-tools">
+    <button type="button" class="inline-action" id="advancedToggle" aria-label="Advanced search" aria-expanded="false" aria-controls="advancedFilters">Advanced search <span id="advancedCount"></span></button>
+    <button type="button" class="inline-action" id="clearFilters" hidden>Clear all</button>
+  </div>
+  <fieldset id="advancedFilters" class="advanced-filters" hidden aria-label="Advanced search filters">
+    <label for="jobType">Job type<select id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance</option></select></label>
+    <label for="mode">Work mode
+      <select id="mode">
+        <option value="">Any mode</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option>
+      </select>
+    </label>
+    <label for="sector">Sector
+      <select id="sector"><option value="">Any sector</option></select>
+    </label>
+    <label for="requiredSkill">Skill keyword
+      <select id="requiredSkill"><option value="">Any skill</option></select>
+    </label>
+    <label for="startBy">Starts on or before
+      <input type="date" id="startBy">
+    </label>
+    <p class="cp-muted filter-help" id="dateFilterHelp">Roles with unconfirmed dates are excluded when a start date is set.</p>
+  </fieldset>
+  <p class="cp-muted filter-note" id="degreeNote" hidden>Degree criteria are shown only when supplied by the listing. Unspecified degrees are excluded by a degree filter.</p>
+</form>
+<div class="search-results-head">
+  <h3 id="searchCount" aria-live="polite"></h3>
+  <span class="cp-muted">Select two roles to compare.</span>
+</div>
+              <div id="compare"></div>
+              <div id="opps"></div>
+            </div>
+
+
+            <div id="tab-apps" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Applications</h2><p>Pick up a draft or check the status of an application.</p></div><img src="/student-preview/assets/e985c5a0af90f86b.webp" alt="" class="feature-photo"></header><div id="apps"></div></div>
+            <div id="tab-saved" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Saved opportunities</h2><p>Keep track of the roles you want to come back to.</p></div><img src="/student-preview/assets/459af678c8771a45.webp" alt="" class="feature-photo"></header><div id="savedList"></div></div>
+            <div id="tab-guide" hidden>
+              <header class="feature feature-secondary"><div class="feature-content"><h2>Career guide</h2><p>See how your experience fits and what to check before applying.</p></div><img src="/student-preview/assets/e26fddd022106113.webp" alt="" class="feature-photo"></header>
+              <div class="cp-panel advisor-panel">
+
+                <div class="advisor-controls">
+                  <label for="guideRole">Opportunity</label><select id="guideRole"></select>
+                  <span id="guideMsg" class="msg" aria-live="polite"></span>
+                </div>
+                <div class="advisor-out" id="guideResult" aria-live="polite"></div>
+              </div>
+            </div>
+            <div id="tab-profile" hidden><h2 class="profile-page-title">Profile</h2>
+              <section class="cp-panel" id="profile" aria-label="Student profile"></section>
+            </div>
+
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= EMPLOYER ================= -->
+      <section inert class="view" id="view-employer" hidden><h2 class="page-title">Application review</h2>
+        <p class="role-banner">Review applications, arrange interviews, and send offers. Test workspace.</p>
+        <span class="msg" aria-live="polite" id="employerMsg"></span>
+        <div id="queue"></div>
+      </section>
+
+      <!-- ================= COORDINATOR ================= -->
+      <section inert class="view" id="view-coordinator" hidden><h2 class="page-title">Placements, corrections &amp; matching</h2>
+        <p class="role-banner">Confirm accepted offers and manage profile correction requests. Test workspace.</p>
+        <h2 class="stack-title">Accepted offers awaiting confirmation</h2>
+        <span class="msg" aria-live="polite" id="plMsg"></span>
+        <div id="awaiting"></div>
+        <h2 class="stack-title">Confirmed placements</h2>
+        <div id="placements"></div>
+        <span class="msg" aria-live="polite" id="crMsg"></span>
+        <h2 class="stack-title">Correction requests</h2>
+        <div id="corrections"></div>
+
+        <h2 class="stack-title">Matching history</h2>
+        <div class="cp-toolbar">
+          <label class="cp-muted">Student
+            <select id="runsStudent" aria-label="Student for matching runs"></select>
+          </label>
+          <button class="cp-btn secondary small" id="runsRefresh">Refresh</button>
+          <button class="cp-btn small" id="rerun">Re-run matching</button>
+          <span class="msg" aria-live="polite" id="runsMsg"></span>
+        </div>
+        <div id="runs"></div>
+      </section>
+
+      <!-- ================= FACULTY ================= -->
+      <section inert class="view" id="view-faculty" hidden><h2 class="page-title">Skill evidence &amp; application records</h2>
+        <p class="role-banner">Review skill evidence and update the student’s matches. Test workspace.</p>
+        <h2 class="stack-title">Review skill evidence</h2>
+        <div class="cp-card">
+          <div class="inline-form">
+            <label>Student <select id="evStudent"></select></label>
+            <label>Skill <select id="evSkill"></select></label>
+            <label>Evidence ID <input id="evId" placeholder="e.g. EV-0101"></label>
+            <button class="cp-btn" id="evReview" type="button">Approve evidence</button>
+          </div>
+          <p class="msg" id="evMsg"></p>
+          <div id="evVersions"></div>
+        </div>
+        <h2 class="stack-title">Applications (read-only)</h2>
+        <div id="facultyApps"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<dialog id="interviewDialog" aria-labelledby="interviewTitle">
+  <h2 id="interviewTitle">Schedule interview</h2>
+  <p class="cp-muted" id="interviewContext"></p>
+  <div class="interview-fields">
+    <label>Interview time<input type="datetime-local" id="interviewTime" required></label>
+    <label>Duration<select id="interviewDuration"><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></label>
+    <label>Format<select id="interviewMode"><option value="online">Online</option><option value="in-person">In person</option></select></label>
+    <label>Meeting link or location<input type="text" id="interviewLocation" maxlength="500" required placeholder="Meeting link or office address"></label>
+  </div>
+  <p class="cp-muted" id="interviewZone"></p>
+  <p class="msg" role="alert" id="interviewMsg"></p>
+  <div class="actions"><button class="cp-btn" id="interviewSave" type="button">Save interview</button><button class="cp-btn secondary" id="interviewCancel" type="button">Cancel</button></div>
+</dialog>
+
+<!-- Apply / draft dialog -->
+<dialog id="applyDialog" aria-labelledby="applyTitle">
+  <h2 id="applyTitle">Apply</h2>
+  <p class="cp-muted" id="applyContext"></p>
+  <label>Why are you interested in this role?
+    <textarea id="applyStatement" rows="4" placeholder="Tell the employer what interests you and what you would bring."></textarea>
+  </label>
+  <p class="msg" id="applyMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn" id="applySubmit">Submit application</button>
+    <button type="button" class="cp-btn gold" id="applyDraftBtn">Save as draft</button>
+    <button type="button" class="cp-btn secondary" id="applyCancel">Cancel</button>
+  </div>
+</dialog>
+
+<!-- Decline dialog (employer) -->
+<dialog id="declineDialog">
+  <h2>Decline application</h2>
+  <p class="cp-muted" id="declineContext"></p>
+  <label>Reason (required — the student will see it with the decision)
+    <textarea id="declineReason" rows="3" placeholder="e.g. requires reviewed SQL evidence we could not verify"></textarea>
+  </label>
+  <p class="msg" id="declineMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn danger" id="declineYes">Decline</button>
+    <button type="button" class="cp-btn secondary" id="declineNo">Cancel</button>
+  </div>
+</dialog>
+
+<!-- Withdraw dialog (student) -->
+<dialog id="withdrawDialog" aria-labelledby="withdrawTitle">
+  <h2 id="withdrawTitle">Withdraw application?</h2>
+  <p class="cp-muted" id="withdrawContext"></p>
+  <label>Reason (optional, kept in the history)
+    <textarea id="withdrawReason" rows="2" placeholder="e.g. accepted a different placement"></textarea>
+  </label>
+  <p class="msg" id="withdrawMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn danger" id="withdrawYes">Withdraw</button>
+    <button type="button" class="cp-btn secondary" id="withdrawNo">Cancel (keep application)</button>
+  </div>
+</dialog>
+
+<!-- Skill gap → P06 dialog (student) -->
+<dialog id="gapDialog" aria-labelledby="gapTitle">
+  <h2 id="gapTitle">Prepare for this gap</h2>
+  <div id="gapBody"></div>
+  <p class="msg" id="gapMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn" id="gapDone" hidden>Mark activity done</button>
+    <button type="button" class="cp-btn secondary" id="gapClose">Close</button>
+  </div>
+</dialog>
+
+<!-- Flag dialog (student) -->
+<dialog id="flagDialog">
+  <h2>Flag this result</h2>
+  <p class="cp-muted" id="flagContext"></p>
+  <label>What looks wrong?
+    <select id="flagField">
+      <optgroup label="Student profile (owned by P01)">
+        <option value="availability">Availability dates</option>
+        <option value="interests">Interests</option>
+        <option value="skills">Skills / evidence</option>
+      </optgroup>
+      <optgroup label="Opportunity listing (owned by P03)">
+        <option value="listing dates">Listing dates</option>
+        <option value="required skills">Required skills</option>
+        <option value="listing status">Listing status</option>
+      </optgroup>
+    </select>
+  </label>
+  <label>Why should the coordinator check this?
+    <textarea id="flagReason" rows="3" placeholder="e.g. my availability was updated in the P01 profile but the recommendation still uses the old dates"></textarea>
+  </label>
+  <p class="msg" id="flagMsg"></p>
+  <div class="actions">
+    <button type="button" class="cp-btn" id="flagSend">Send to coordinator</button>
+    <button type="button" class="cp-btn secondary" id="flagCancel">Cancel</button>
+  </div>
+</dialog>
+
+
+</div>
+<script>
+(() => {
+const root = document.getElementById("coop-preview");
+const visualAssets = {"OP-028": "/student-preview/assets/974facbb687552a3.webp", "OP-031": "/student-preview/assets/0a984719eef967cd.webp", "OP-032": "/student-preview/assets/e82d8abd3b648e7d.webp", "OP-033": "/student-preview/assets/8be8476f80cd742d.webp"};
+const rolePhotos = {"OP-101": {"image": "/student-preview/assets/93c7e737742d126e.webp", "alt": "Colleagues discussing ideas at a whiteboard"}, "OP-102": {"image": "/student-preview/assets/9695a56f9332df37.webp", "alt": "Server racks lining a data center corridor"}, "OP-103": {"image": "/student-preview/assets/0e564b1deb74fbce.webp", "alt": "Close-up of equipment in a server rack"}, "OP-104": {"image": "/student-preview/assets/463b05961dc7091c.webp", "alt": "Robotic arm in an engineering laboratory"}, "OP-105": {"image": "/student-preview/assets/1995f991d95cc999.webp", "alt": "Two colleagues examining analytics on a laptop"}, "OP-106": {"image": "/student-preview/assets/1bd991f661eca63f.webp", "alt": "Team discussing graphs and product data"}, "OP-107": {"image": "/student-preview/assets/78cac49c2d20d73c.webp", "alt": "Researchers reviewing materials together at a worktable"}, "OP-108": {"image": "/student-preview/assets/20aa104b05a87d20.webp", "alt": "Team reviewing charts and documentation at a table"}};
+function employerPhoto(o) {
+  if (o.external) return "";
+  const photo = rolePhotos[o.opportunity_id];
+  if (photo) return `<img class="employer-photo" loading="lazy" src="${photo.image}" alt="${esc(photo.alt)}">`;
+  const url = visualAssets[o.visual || o.opportunity_id];
+  if (!url) return "";
+  const label = o.opportunity_id === "OP-028" ? "Emirates Airbus A380" : {
+    "OP-031":"Laptop displaying data charts", "OP-032":"Designer sketching on a sticky note",
+    "OP-033":"Software developer at a coding workstation"
+  }[o.visual || o.opportunity_id];
+  return `<img class="employer-photo" loading="lazy" src="${url}" alt="${label}">`;
+}
+
+// Public discovery and university application records have distinct source ownership.
+let universityCatalogue = [];
+let open = [];
+const records = { saved: {} };
+async function api(path, opts = {}) {
+  // ngrok's free tier answers browser requests with an HTML warning page unless this header is present.
+  const headers = { "ngrok-skip-browser-warning": "1", ...(opts.headers || {}) };
+  const res = await fetch(path, { ...opts, headers });
+  const text = await res.text();
+  let body;
+  try { body = text ? JSON.parse(text) : null; }
+  catch { throw new Error(`Server returned a non-JSON response for ${path} (HTTP ${res.status}). Is the backend running?`); }
+  if (!res.ok) throw new Error((body && body.detail) || res.statusText);
+  return body;
+}
+const json = body => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+const $ = id => root.querySelector("#" + CSS.escape(id));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const savedIds = () => records.saved[studentId()] ||= [];
+function saveButton(o) {
+  const selected = savedIds().includes(o.opportunity_id);
+  return `<button class="cp-btn quick-save" type="button" data-save="${esc(o.opportunity_id)}" aria-pressed="${selected}">${selected ? "Saved" : "Save"}</button>`;
+}
+function renderSaved() {
+  const saved = open.filter(o => savedIds().includes(o.opportunity_id));
+  $("savedList").innerHTML = saved.length ? saved.map(o => `
+    <article class="cp-card saved-item">
+      ${employerPhoto(o)}<div class="listing-content"><div class="cp-title"><b>${esc(o.title)}</b></div>
+      ${oppSummary(o)}
+      <div class="actions">${applyButton(o)}
+        <button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">View opportunity</button>
+        <button class="cp-btn quick-save" type="button" data-save="${esc(o.opportunity_id)}">Remove</button>
+      </div></div>
+    </article>`).join("") : '<div class="empty">No saved opportunities yet. Use Save on a match or catalogue listing to start your shortlist.</div>';
+}
+function renderGuide() {
+  const recs = Object.values(state.recs);
+  const picker = $("guideRole");
+  const previous = picker.value;
+  picker.innerHTML = recs.length ? recs.map(r => `<option value="${esc(r.opportunity_id)}">${esc(state.opps[r.opportunity_id].title)}</option>`).join("") : '<option value="">Run matching first</option>';
+  if (recs.some(r => r.opportunity_id === previous)) picker.value = previous;
+  const r = state.recs[picker.value];
+  if (!r) {
+    $("guideResult").innerHTML = '<button class="cp-btn" type="button" data-go="recs">Go to recommendations</button>';
+    return;
+  }
+  const o = state.opps[r.opportunity_id];
+  const advice = {
+    eligible: r.gaps.length ? "Check how the employer assesses the required skills before you apply." : "Review the listing and use your matching skills as examples in your statement.",
+    unknown: "Confirm the missing information before relying on this match.",
+    ineligible: "Check whether the dates are flexible or look for a role within your availability."
+  }[r.eligibility];
+  const details = [...r.reasons, ...r.gaps, ...r.unknowns];
+  $("guideResult").innerHTML = `
+    <div class="rec-label"><b>${esc(o.title)}</b><span class="cp-chip accent">Rules score ${r.score}</span></div>
+    <div>${esc(advice)}</div>
+    <ul>${details.map(line => `<li>${esc(line)}</li>`).join("")}</ul>
+    ${aiBox(r)}
+    <div class="actions"><button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">Open listing</button>${saveButton(o)}</div>`;
+}
+$("guideRole").onchange = renderGuide;
+root.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.go) showTab(d.go);
+  if (!d.save) return;
+  const ids = savedIds();
+  const index = ids.indexOf(d.save);
+  if (index < 0) ids.push(d.save);
+  else ids.splice(index, 1);
+  const selected = index < 0;
+  root.querySelectorAll(`[data-save="${d.save}"][aria-pressed]`).forEach(button => {
+    button.setAttribute("aria-pressed", String(selected));
+    button.textContent = selected ? "Saved" : "Save";
+  });
+  renderSaved();
+});
+
+const state = {
+  role: "student", skills: {}, student: null, students: [], opps: {}, apps: [], recs: {},
+  compare: [], corrections: [], allApps: [], runs: [], lastAccepted: null,
+};
+const skillName = id => state.skills[id] || id;
+const studentId = () => $("student").value;
+const ACTIVE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed", "Offered", "Offer accepted"];
+const WITHDRAWABLE = ["Submitted", "Under review", "Shortlisted", "Interview scheduled", "Interview completed"];
+
+async function opp(id) {
+  if (!state.opps[id]) state.opps[id] = await api(`/api/opportunities/${id}`);
+  return state.opps[id];
+}
+
+function setMsg(id, text, kind) {
+  const el = typeof id === "string" ? $(id) : id;
+  if (!el) return;
+  el.className = "msg" + (kind ? " " + kind : "");
+  el.textContent = text || "";
+}
+
+// ================= Role switching (simulated) =================
+// ================= Profile =================
+function renderProfile(s) {
+  const skills = s.skills || [];
+  const avail = s.availability_start && s.availability_end
+    ? `${esc(s.availability_start)} → ${esc(s.availability_end)}`
+    : `<span class="cp-chip warn">Not provided</span>`;
+  $("profile").innerHTML = `
+    <div class="profile-person"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""><div><h2>${esc(s.display_name)}</h2><div class="cp-muted">${esc(s.student_id)}</div></div></div>
+    <h3>Interests</h3>
+    <div class="chips">${(s.interests || []).length
+      ? s.interests.map(i => `<span class="cp-chip accent">${esc(i)}</span>`).join("")
+      : `<span class="cp-chip warn">Not provided</span>`}</div>
+    <h3>Availability</h3>
+    <div>${avail}</div>
+    <h3>Skills</h3>
+    <div class="chips">${skills.length
+      ? skills.map(sk => sk.evidence_status === "reviewed"
+          ? `<span class="cp-chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
+          : `<span class="cp-chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
+      : `<span class="cp-chip warn">None listed</span>`}</div>
+    <p class="cp-muted">A check mark indicates reviewed skill evidence. Profile v${esc(s.profile_version)} · P01 team export.</p>
+    <h3>Update availability</h3>
+    <div class="inline-form">
+      <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
+      <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
+      <button class="cp-btn small" type="button" id="avSave">Save &amp; refresh matches</button>
+    </div>
+    <p class="cp-muted">Your matches refresh when your availability changes.</p>
+    <p class="msg" id="avMsg"></p>`;
+  $("avSave").onclick = async () => {
+    try {
+      const r = await api(`/api/students/${s.student_id}/profile-updates`, json({ kind: "availability",
+        actor_role: "student", availability_start: $("avStart").value, availability_end: $("avEnd").value }));
+      await onStudentChange();
+      setMsg("avMsg", `Saved as profile v${r.new_profile_version}; your matches were refreshed.`, "success");
+    } catch (err) { setMsg("avMsg", err.message, "error"); }
+  };
+}
+
+// ================= Skill chips relative to the student =================
+function chip(id, required) {
+  const held = Object.fromEntries((state.student.skills || []).map(s => [s.skill_id, s.evidence_status]));
+  const name = esc(skillName(id));
+  if (!held[id]) return required ? `<span class="cp-chip bad">✗ ${name}</span>` : `<span class="cp-chip">${name}</span>`;
+  return held[id] === "reviewed" ? `<span class="cp-chip ok">✓ ${name}</span>` : `<span class="cp-chip ok">${name} · self-declared</span>`;
+}
+
+function skillChips(o) {
+  return `
+    <div class="chips" style="margin-top:8px">
+      <span class="cp-muted">Required:</span> ${o.required_skills.map(id => chip(id, true)).join("") || '<span class="cp-muted">none</span>'}
+    </div>
+    <div class="chips" style="margin-top:4px">
+      <span class="cp-muted">Desirable:</span> ${o.desirable_skills.map(id => chip(id, false)).join("") || '<span class="cp-muted">none</span>'}
+    </div>`;
+}
+
+function jobType(o) {
+  return {"internship":"Internship","part-time":"Part-time","full-time":"Full-time",contract:"Contract",freelance:"Freelance"}[o.job_type] || "Job type not listed";
+}
+
+const employerMarks = {"Emirates Group": "/student-preview/assets/92c13fba445be9cf.png", "Microsoft": "/student-preview/assets/2d48b04349515dd0.png", "Amazon Web Services": "/student-preview/assets/b51716f9fbf3ebbb.png", "Google": "/student-preview/assets/a2b65d58d7ecf008.png", "Presight": "/student-preview/assets/d161dff3cb0bbb72.png", "Careem": "/student-preview/assets/7e4d62e931dab132.png", "Technology Innovation Institute": "/student-preview/assets/5662acabecca4e61.png", "e&": "/student-preview/assets/45308afe3d668a6b.png"};
+function employerBadge(name) {
+  const image = Object.hasOwn(employerMarks, name) ? employerMarks[name] : "";
+  const initials = name.split(/\s+/).slice(0,3).map(word=>word[0]).join("").toUpperCase();
+  return `<span class="employer-mark" aria-hidden="true">${image
+    ? `<img src="${image}" alt="" width="25" height="25">` : esc(initials)}</span>`;
+}
+function oppSummary(o) {
+  const location = o.location.toLowerCase() === o.work_mode.toLowerCase() ? "" : o.location;
+  return `<div class="cp-muted listing-company">${employerBadge(o.employer_name)}<span><strong>${esc(o.employer_name)}</strong><br>${[location, o.work_mode, jobType(o), o.external ? "" : "University listing"].filter(Boolean).map(esc).join(" · ")}</span></div>`;
+}
+
+function listingFacts(o) {
+  const format = new Intl.DateTimeFormat("en-GB", {dateStyle:"medium", timeZone:"UTC"});
+  const dates = o.start_date && o.end_date
+    ? `${format.format(new Date(o.start_date))} to ${format.format(new Date(o.end_date))}` : o.start_date ? `From ${format.format(new Date(o.start_date))}` : "Dates to be confirmed";
+  return `<p class="cp-muted listing-facts">${esc(dates)} · ${esc(o.sector)} · ${esc(countryName(o))}</p>`;
+}
+
+function statusChip(status) {
+  const cls = { Draft: "s-draft", Submitted: "s-submitted", "Under review": "s-review",
+                Shortlisted: "s-shortlisted", "Interview scheduled":"s-interview", "Interview completed":"s-interview", Declined: "s-declined", Offered: "s-offered",
+                "Offer accepted": "s-accepted", "Offer declined": "s-offerdeclined", Withdrawn: "s-withdrawn" }[status] || "";
+  return `<span class="cp-chip ${cls}">${esc(status)}</span>`;
+}
+function placementChip(p) {
+  const cls = { "Awaiting university confirmation": "p-awaiting", Confirmed: "p-confirmed" }[p] || "";
+  return `<span class="cp-chip ${cls}">${p === "Confirmed" ? "✓ " : ""}${esc(p)}</span>`;
+}
+const gapSkill = g => (g.match(/\((SK-[A-Z]+)\)$/) || [])[1];
+
+function applyButton(o) {
+  if (o.external) return `<a class="cp-btn" href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">View &amp; apply</a>`;
+  const active = state.apps.find(a => a.opportunity_id === o.opportunity_id && ACTIVE.includes(a.application_status));
+  if (active) return `<span class="cp-chip ok">Applied</span>`;
+  const draft = state.apps.find(a => a.opportunity_id === o.opportunity_id && a.application_status === "Draft");
+  if (draft) return `<button class="cp-btn gold" data-editdraft="${esc(draft.application_id)}">Resume draft</button>`;
+  return `<button class="cp-btn" data-apply="${esc(o.opportunity_id)}">Apply</button>`;
+}
+
+// ================= Recommendations (rules + bounded AI) =================
+function aiBox(r) {
+  const items = (r.ai_matches || []).map(m =>
+    `<li>“${esc(m.term)}” in the ${esc(m.field)} ≈ your skill <b>${esc(m.skill_name)}</b> (${esc(m.skill_id)}, ${esc(m.evidence_status)})</li>`).join("");
+  return `
+  <div class="ai">
+    ${r.ai_insights?.summary ? `<p class="ai-summary">${esc(r.ai_insights.summary)}</p>` : ""}
+    <h4>Skill terms found in the listing</h4>
+    ${items ? `<ul>${items}</ul>` : `<div>No equivalent skill terms found for this opportunity.</div>`}
+    <p>Simulated term matching. Eligibility and scores use the published rules.</p>
+  </div>`;
+}
+
+async function renderRecs(recs) {
+  state.recs = Object.fromEntries(recs.map(r => [r.opportunity_id, r]));
+  if (!recs.length) {
+    $("recInfo").textContent = "";
+    $("recs").innerHTML = `<div class="empty">No recommendations yet. Click <b>Run matching</b> to score open opportunities against this profile.</div>`;
+    return;
+  }
+  $("recInfo").textContent = `Last run ${recs[0].created_at} · rules ${recs[0].method_version} · AI ${recs[0].ai_method_version || "—"} · profile v${recs[0].profile_version}`;
+  const opps = await Promise.all(recs.map(r => opp(r.opportunity_id)));
+  const list = (items, empty) => items.length ? `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : `<div class="cp-muted">${empty}</div>`;
+  const cards = recs.map((r, i) => {
+    const o = opps[i];
+    const eligibilityBadge = {
+      eligible: `<span class="cp-chip ok">Eligible</span>`,
+      unknown: `<span class="cp-chip warn">Check eligibility</span>`,
+      ineligible: `<span class="cp-chip bad">Date conflict</span>`,
+    }[r.eligibility];
+    return `
+    <article class="cp-card ${r.eligibility === "ineligible" ? "conflict" : r.eligibility === "unknown" ? "unknown" : ""}" id="rec-${esc(o.opportunity_id)}">
+      ${employerPhoto(o)}<div class="listing-content">
+      <div class="card-head">
+        <div>
+          <div class="cp-title">${esc(o.title)}</div>
+          ${oppSummary(o)}
+          <div class="chips" style="margin-top:6px">
+            ${eligibilityBadge}
+            ${r.unknowns.length && r.eligibility !== "unknown" ? `<span class="cp-chip warn">Needs checking</span>` : ""}
+            ${r.gaps.length ? `<span class="cp-chip bad">${r.gaps.length} skill gap${r.gaps.length > 1 ? "s" : ""}</span>` : ""}
+          </div>
+        </div>
+        <div class="score" aria-label="Match score ${r.score}">${r.score}<small>score</small></div>
+      </div>
+      <div class="actions">${applyButton(o)}
+        <button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">View listing</button>
+        ${saveButton(o)}
+      </div>
+      <details class="fit-details"><summary>Match details</summary>${listingFacts(o)}${degreeFact(o)}
+      ${o.description ? `<p class="cp-muted desc">${esc(o.description)}</p>` : ""}
+      ${skillChips(o)}
+      <div class="why">
+        <div><h4>Why it matches</h4>${list(r.reasons, "No matching interests or skills")}</div>
+        <div>
+          <h4>Gaps</h4>${r.gaps.length ? `<ul class="gap-list">${r.gaps.map(g => `<li><span>${esc(g)}</span>
+            ${gapSkill(g) ? `<button class="cp-btn small secondary" type="button" data-gap="${esc(r.recommendation_id)}" data-skill="${esc(gapSkill(g))}">Prepare →</button>` : ""}</li>`).join("")}</ul>`
+            : `<div class="cp-muted">No missing required skills</div>`}
+          <h4 style="margin-top:8px">Unknowns</h4>${list(r.unknowns, "Nothing missing")}
+        </div>
+      </div>
+      ${aiBox(r)}
+      <div class="actions">
+        <button class="cp-btn secondary" data-flag="${esc(r.recommendation_id)}">Flag this result</button>
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+      <div class="meta">
+        <span>${esc(r.recommendation_id)}</span><span>${esc(o.opportunity_id)} v${esc(r.opportunity_version)}</span>
+        <span>profile v${esc(r.profile_version)}</span><span>rules ${esc(r.method_version)}</span>
+      </div>
+      </details></div>
+    </article>`;
+  });
+  $("recs").innerHTML = `<div class="listing-grid">${cards.slice(0, 2).join("")}</div>` + (cards.length > 2
+    ? `<details class="more-results"><summary>Show ${cards.length - 2} more opportunities</summary><div class="listing-grid">${cards.slice(2).join("")}</div></details>`
+    : "");
+}
+
+// ================= Browse & compare (P04-01) =================
+async function searchOpps() {
+  const opps = searchCatalogue();
+  setSearchSummary(opps.length);
+  opps.forEach(o => state.opps[o.opportunity_id] = o);
+  $("opps").innerHTML = opps.length ? opps.map(o => {
+    const rec = state.recs[o.opportunity_id];
+    return `
+    <article class="cp-card" id="opp-${esc(o.opportunity_id)}">
+      ${employerPhoto(o)}<div class="listing-content">
+      <div class="card-head">
+        <div class="cp-title" style="font-weight:600">${esc(o.title)}</div>
+        <label class="compare-pick"><input type="checkbox" data-compare="${esc(o.opportunity_id)}"
+          ${state.compare.includes(o.opportunity_id) ? "checked" : ""}> Compare</label>
+      </div>
+      ${oppSummary(o)}
+      <div class="actions">${applyButton(o)} ${saveButton(o)}
+        ${rec ? `<button class="linkish" data-viewrec="${esc(o.opportunity_id)}">See match</button>` : ""}
+        <span class="msg" data-msg="${esc(o.opportunity_id)}"></span></div>
+
+      <details class="fit-details"><summary>Role details &amp; requirements</summary>${listingFacts(o)}${degreeFact(o)}
+        ${o.description ? `<p class="cp-muted desc">${esc(o.description)}</p>` : ""}
+        ${o.external ? `<p class="cp-muted">${o.salary ? "Pay: "+esc(o.salary) : "Pay not specified"}</p><p class="source-line">Source: <a href="${esc(o.source_url)}" target="_blank" rel="noopener noreferrer">${esc(o.source)}</a> · Apply on the provider’s website</p>` : skillChips(o)}
+        <details class="history-tools"><summary>Record information</summary><div class="meta"><span>${esc(o.opportunity_id)}</span><span>version ${esc(o.version)}</span></div></details>
+      </details></div>
+    </article>`;
+  }).join("")
+    : `<div class="empty">No opportunities match these filters. Try fewer filters or use Clear all.</div>`;
+  renderCompare();
+}
+
+async function renderCompare() {
+  if (state.compare.length < 2) {
+    $("compare").innerHTML = state.compare.length ? `<p class="cp-muted">Selected ${esc(state.compare[0])}. Tick one more to compare.</p>` : "";
+    return;
+  }
+  const [a, b] = await Promise.all(state.compare.map(opp));
+  const skills = (ids, required) => ids.length
+    ? `<div class="chips">${ids.map(id => chip(id, required)).join("")}</div>` : "none";
+  const recCell = o => state.recs[o.opportunity_id]
+    ? `score ${state.recs[o.opportunity_id].score} · ${esc(state.recs[o.opportunity_id].eligibility)}`
+    : "not in last matching run";
+  const rows = [
+    ["Opportunity", o => `${esc(o.opportunity_id)} · approved version v${esc(o.version)}`],
+    ["Employer", o => esc(o.employer_name)],
+    ["Job type", jobType],
+    ["Country", o => esc(countryName(o))],
+    ["Degree level", o => degreeFact(o)],
+    ["Location / mode", o => `${esc(o.location)} · ${esc(o.work_mode)}`],
+    ["Dates", o => o.start_date ? `${esc(o.start_date)} → ${esc(o.end_date)}` : "not provided"],
+    ["Sector", o => esc(o.sector)],
+    ["Required skills", o => skills(o.required_skills, true)],
+    ["Desirable skills", o => skills(o.desirable_skills, false)],
+    ["Recommendation", recCell],
+  ];
+  $("compare").innerHTML = `<div class="cp-card" style="overflow-x:auto">
+    <div class="card-head"><h2>Compare</h2><button class="linkish" id="clearCompare">Clear</button></div>
+    <table class="compare">
+      <tr><th></th><th>${esc(a.title)}</th><th>${esc(b.title)}</th></tr>
+      ${rows.map(([label, f]) => `<tr><th>${label}</th><td>${f(a)}</td><td>${f(b)}</td></tr>`).join("")}
+    </table></div>`;
+  $("clearCompare").onclick = () => { state.compare = []; searchOpps(); };
+}
+
+root.addEventListener("change", e => {
+  const id = e.target.dataset?.compare;
+  if (!id) return;
+  state.compare = state.compare.filter(x => x !== id);
+  if (e.target.checked) state.compare.push(id);
+  if (state.compare.length > 2) state.compare.shift();
+  root.querySelectorAll("[data-compare]").forEach(cb => cb.checked = state.compare.includes(cb.dataset.compare));
+  renderCompare();
+});
+
+// ================= Tabs & cross-links =================
+function showTab(name) {
+  const previous = root.querySelector(".student-grid > section > div:not([hidden])");
+  if (name === "saved") renderSaved();
+  if (name === "guide") renderGuide();
+  for (const tab of root.querySelectorAll("[data-tab]")) {
+    const selected = tab.dataset.tab === name;
+    if (selected) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+    $(`tab-${tab.dataset.tab}`).hidden = !selected;
+  }
+  const selectedPanel = $(`tab-${name}`);
+  if (previous && previous !== selectedPanel) {
+    const title = selectedPanel.querySelector("h2");
+    title?.setAttribute("tabindex", "-1");
+    title?.focus({preventScroll:true});
+    root.scrollIntoView({block:"start"});
+  }
+}
+async function focusCard(tab, elementId) {
+  showTab(tab);
+  if (tab === "browse" && !$(elementId)) {
+    clearSearchFilters();
+    await searchOpps();
+  }
+  const el = $(elementId);
+  if (!el) return;
+  const more = el.closest("details.more-results");
+  if (more) more.open = true;
+  const details = el.querySelector("details.fit-details");
+  if (details) details.open = true;
+  root.querySelectorAll(".cp-card.highlight").forEach(c => c.classList.remove("highlight"));
+  el.classList.add("highlight");
+  el.setAttribute("tabindex", "-1");
+  el.focus({ preventScroll: true });
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function renderRules(rules) {
+  $("rules").innerHTML = `
+    <p>Availability determines eligibility. Missing dates need checking before you rely on a match.</p>
+    <p>The score adds ${rules.weights.interest} points for a matching sector, ${rules.weights.required_skill} for each required skill you have, and ${rules.weights.desirable_skill} for each desirable skill you have.</p>`;
+}
+
+// ================= My applications (drafts, decisions, history) =================
+function historyHtml(a, open = false) {
+  if (!a.history?.length) return "";
+  const n = a.history.length;
+  const items = a.history.map((e, i) => `
+    <li class="${i === n - 1 ? "last" : ""}"><b>${esc(e.action)}</b> by ${esc(e.actor_name)} (${esc(e.actor_role)}) at ${esc(e.created_at)}
+      ${e.reason ? `<div class="reason">Reason: ${esc(e.reason)}</div>` : ""}
+      <div class="cp-muted">Next action: ${esc(e.next_action)}</div></li>`).join("");
+  return `<details class="hist"${open ? " open" : ""}><summary>History (${n})</summary><ol class="timeline">${items}</ol></details>`;
+}
+
+function studentActions(a) {
+  const id = esc(a.application_id);
+  if (a.application_status === "Draft") return `<button class="cp-btn gold" type="button" data-editdraft="${id}">Edit draft</button>`;
+  if (a.application_status === "Offered") return `<button class="cp-btn" type="button" data-offer="accept" data-app="${id}">Accept offer</button>
+    <button class="cp-btn danger" type="button" data-offer="decline" data-app="${id}">Decline offer</button>`;
+  if (WITHDRAWABLE.includes(a.application_status)) return `<button class="cp-btn secondary" type="button" data-withdraw="${id}">Withdraw…</button>`;
+  return "";
+}
+
+async function loadApps() {
+  state.apps = await api(`/api/students/${studentId()}/applications`);
+  $("appCount").textContent = state.apps.length ? `(${state.apps.length})` : "";
+  if (!state.apps.length) { $("apps").innerHTML = `<div class="empty">No applications or drafts yet.</div>`; return; }
+  const opps = await Promise.all(state.apps.map(a => opp(a.opportunity_id)));
+  $("apps").innerHTML = state.apps.map((a, i) => `
+    <article class="cp-card">
+      <div class="card-head"><div><div class="cp-title"><b>${esc(opps[i].title)}</b></div>
+        <div class="cp-muted company">${esc(opps[i].employer_name)}</div></div>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      <p class="cp-muted" style="margin:6px 0 0">Next: ${esc(a.history?.at(-1)?.next_action || "")}</p>
+      ${interviewDetails(a)}
+      ${studentActions(a) ? `<div class="actions">${studentActions(a)}</div>` : ""}
+      <details class="fit-details"><summary>Application details &amp; history</summary>
+        <p class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.submitted_at)}</p>
+        <p>${esc(a.statement || "No statement yet")}</p>
+        ${historyHtml(a, true)}
+      </details>
+    </article>`).join("") + `<span class="msg" id="appsMsg" aria-live="polite"></span>`;
+}
+
+// ================= Apply / draft dialog =================
+let applyCtx = null; // { mode: "apply" | "draft", opportunity_id?, application? }
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.apply) {
+    const o = await opp(d.apply);
+    applyCtx = { mode: "apply", opportunityId: d.apply };
+    $("applyTitle").textContent = `Apply to ${o.title}`;
+    $("applyContext").textContent = o.employer_name;
+    $("applyStatement").value = "";
+    $("applyDraftBtn").textContent = "Save as draft";
+    setMsg("applyMsg", "");
+    $("applyDialog").showModal();
+  }
+  if (d.editdraft) {
+    const a = state.apps.find(x => x.application_id === d.editdraft);
+    if (!a) return;
+    applyCtx = { mode: "draft", application: a };
+    $("applyTitle").textContent = `Draft for ${a.opportunity_title}`;
+    $("applyContext").textContent = "Your draft is ready to edit.";
+    $("applyStatement").value = a.statement || "";
+    $("applyDraftBtn").textContent = "Save draft";
+    setMsg("applyMsg", "");
+    $("applyDialog").showModal();
+  }
+});
+$("applyCancel").onclick = () => { applyCtx = null; $("applyDialog").close(); };
+$("applyDraftBtn").onclick = async () => {
+  if (!applyCtx) return;
+  const statement = $("applyStatement").value;
+  try {
+    if (applyCtx.mode === "apply") {
+      const a = await api("/api/applications/draft", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId(), opportunity_id: applyCtx.opportunityId,
+                               statement, actor_role: "student" }),
+      });
+      setMsg("applyMsg", `Saved as draft ${a.application_id} — still a Draft, not submitted.`, "success");
+    } else {
+      const a = await api(`/api/applications/${applyCtx.application.application_id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statement, actor_role: "student" }),
+      });
+      setMsg("applyMsg", `Draft ${a.application_id} saved — still a Draft, not submitted.`, "success");
+    }
+    $("applyDialog").close();
+    applyCtx = null;
+    await refreshLists();
+    showTab("apps");
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");
+  }
+};
+$("applySubmit").onclick = async () => {
+  if (!applyCtx) return;
+  const statement = $("applyStatement").value;
+  try {
+    let a;
+    if (applyCtx.mode === "apply") {
+      a = await api("/api/applications", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId(), opportunity_id: applyCtx.opportunityId,
+                               statement, actor_role: "student" }),
+      });
+    } else {
+      a = await api(`/api/applications/${applyCtx.application.application_id}/submit`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statement, actor_role: "student" }),
+      });
+    }
+    setMsg("applyMsg", `Submitted as ${a.application_id}. Status: Submitted · Placement: Not placed.`, "success");
+    $("applyDialog").close();
+    applyCtx = null;
+    await refreshLists();
+    showTab("apps");
+  } catch (err) {
+    setMsg("applyMsg", err.message, "error");  // draft/entered data stays in the textarea
+  }
+};
+
+// ================= Offer response & withdrawal (P04-05, P04-07) =================
+let withdrawCtx = null;
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (d.offer) {
+    try {
+      const a = await api(`/api/applications/${d.app}/offer-response`, json({ response: d.offer, actor_role: "student" }));
+      await refreshLists();
+      showTab("apps");
+      setMsg("appsMsg", d.offer === "accept"
+        ? `Offer accepted — placement is now “${a.placement_status}”. The university coordinator confirms it.`
+        : "Offer declined.", "success");
+    } catch (err) { setMsg("appsMsg", err.message, "error"); }
+  }
+  if (d.withdraw) {
+    const a = state.apps.find(x => x.application_id === d.withdraw);
+    withdrawCtx = d.withdraw;
+    $("withdrawContext").textContent = a
+      ? `${a.opportunity_title} (${a.application_status}). Withdrawing is final; the history is kept.` : d.withdraw;
+    $("withdrawReason").value = "";
+    setMsg("withdrawMsg", "");
+    $("withdrawDialog").showModal();
+  }
+});
+$("withdrawNo").onclick = () => { withdrawCtx = null; $("withdrawDialog").close(); };  // no request: record unchanged
+$("withdrawYes").onclick = async () => {
+  if (!withdrawCtx) return;
+  try {
+    const a = await api(`/api/applications/${withdrawCtx}/withdraw`, json({ actor_role: "student", reason: $("withdrawReason").value }));
+    $("withdrawDialog").close();
+    withdrawCtx = null;
+    await refreshLists();
+    showTab("apps");
+    setMsg("appsMsg", `${a.opportunity_title}: withdrawn. The earlier history is kept.`, "success");
+  } catch (err) { setMsg("withdrawMsg", err.message, "error"); }
+};
+
+// ================= Skill gap → P06 (P05-06) =================
+let gapCtx = null;
+function renderGap(g) {
+  gapCtx = g;
+  $("gapTitle").textContent = `Prepare: ${g.skill_name}`;
+  const act = g.activity;
+  $("gapBody").innerHTML = `
+    <details><summary>Handoff details</summary><p class="cp-muted">Sent to P06: student ${esc(g.student_id)}, skill ${esc(g.skill_id)}, ${esc(g.opportunity_id)}
+      v${esc(g.opportunity_version)}, ${esc(g.recommendation_id)} (profile v${esc(g.profile_version)}) · ${esc(g.gap_id)}</p></details>
+    ${act ? `<div class="p06"><span class="cp-chip accent">Preparation activity</span>
+        ${act.status === "outline" ? `<span class="cp-chip warn">Outline — module not finished yet</span>` : ""}
+        <h3 style="margin:8px 0 4px">${esc(act.title)}</h3>
+        <div class="cp-muted">${esc(act.activity_id)} · ${esc(act.provider)} · about ${esc(act.estimated_hours)} h</div>
+        <p><b>Evidence needed:</b> ${esc(act.evidence_needed)}</p></div>`
+      : `<div class="p06"><span class="cp-chip warn">No P06 activity yet</span></div>`}
+    <p style="margin-top:10px"><b>Next action:</b> ${esc(g.next_action)}</p>
+    ${g.completed_at ? `<p class="msg success">Activity marked done. Your match is unchanged until a faculty reviewer reviews the evidence.</p>` : ""}`;
+  $("gapDone").hidden = !act || !!g.completed_at;
+}
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.gap) return;
+  try {
+    renderGap(await api(`/api/recommendations/${d.gap}/gaps/${d.skill}/handoff`, json({ actor_role: "student" })));
+    setMsg("gapMsg", "");
+    $("gapDialog").showModal();
+  } catch (err) { setMsg("recMsg", err.message, "error"); }
+});
+$("gapClose").onclick = () => { gapCtx = null; $("gapDialog").close(); };
+$("gapDone").onclick = async () => {
+  try { renderGap(await api(`/api/skill-gaps/${gapCtx.gap_id}/complete`, json({ actor_role: "student" }))); }
+  catch (err) { setMsg("gapMsg", err.message, "error"); }
+};
+
+// ================= Flag dialog (student → coordinator) =================
+let flagCtx = null;
+root.addEventListener("click", e => {
+  const id = e.target.dataset?.flag;
+  if (!id) return;
+  flagCtx = id;
+  const r = Object.values(state.recs).find(x => x.recommendation_id === id);
+  $("flagContext").textContent = r
+    ? `Flagging ${r.recommendation_id} (${r.opportunity_id} v${r.opportunity_version}, profile v${r.profile_version}, ${r.method_version}). The coordinator sees your reason, the affected field and these input versions.`
+    : `Flagging ${id}.`;
+  $("flagReason").value = "";
+  setMsg("flagMsg", "");
+  $("flagDialog").showModal();
+});
+$("flagCancel").onclick = () => { flagCtx = null; $("flagDialog").close(); };
+$("flagSend").onclick = async () => {
+  if (!flagCtx) return;
+  try {
+    const cr = await api(`/api/recommendations/${flagCtx}/flags`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: $("flagReason").value, affected_field: $("flagField").value, actor_role: "student" }),
+    });
+    setMsg("recMsg", `Flagged as ${cr.correction_id} was sent for review.`, "success");
+    $("flagDialog").close();
+    flagCtx = null;
+  } catch (err) {
+    setMsg("flagMsg", err.message, "error");
+  }
+};
+
+// ================= Employer view =================
+async function loadAllApps() {
+  state.allApps = await api("/api/applications");
+  if (state.role === "employer") renderEmployer();
+  if (state.role === "faculty") renderFaculty();
+}
+
+function employerCard(a) {
+  const actions = {
+    "Submitted": `<button class="cp-btn small" data-decide="Under review" data-app="${esc(a.application_id)}">Start review</button>`,
+    "Under review": `<button class="cp-btn small" data-decide="Shortlisted" data-app="${esc(a.application_id)}">Shortlist</button>
+                     <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Shortlisted": `<button class="cp-btn small" type="button" data-interview="${esc(a.application_id)}">Schedule interview</button><button class="cp-btn small secondary" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button>
+                    <button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview scheduled": `<button class="cp-btn small secondary" data-interview="${esc(a.application_id)}">Reschedule</button><button class="cp-btn small" data-complete-interview="${esc(a.application_id)}" ${new Date(a.interview?.starts_at) > new Date() ? 'disabled title="Available after the interview starts"' : ""}>Mark completed</button><button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Interview completed": `<button class="cp-btn small" data-decide="Offer" data-app="${esc(a.application_id)}">Make offer</button><button class="cp-btn small danger" data-decline="${esc(a.application_id)}">Decline…</button>`,
+    "Offered": `<span class="cp-muted">Waiting for the student to accept or decline.</span>`,
+    "Offer accepted": `<span class="cp-muted">Accepted — the university coordinator confirms the placement.</span>`,
+    "Declined": `<span class="cp-muted">Final — an offer can never follow a decline.</span>`,
+  }[a.application_status] || "";
+  return `
+  <article class="cp-card">
+    <div class="card-head">
+      <div>
+        <div class="cp-title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="cp-muted">${esc(a.application_id)} · ${esc(a.student_id)} → ${esc(a.opportunity_id)} v${esc(a.opportunity_version)}
+          · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div>
+      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div>
+    </div>
+    <p class="cp-muted" style="margin:8px 0 0"><b>Statement:</b> ${esc(a.statement) || "—"}</p>
+    ${interviewDetails(a)}
+    ${historyHtml(a)}
+    <div class="actions">${actions}</div>
+  </article>`;
+}
+
+function renderEmployer() {
+  const groups = [[["Submitted"], "Awaiting first review"], [["Under review"], "In review"],
+                  [["Shortlisted"], "Shortlisted"], [["Interview scheduled", "Interview completed"], "Interviews"], [["Offered", "Offer accepted"], "Offers"],
+                  [["Declined", "Offer declined", "Withdrawn"], "Closed"]];
+  const activeGroups = groups.filter(([statuses])=>state.allApps.some(a=>statuses.includes(a.application_status)));
+  $("queue").innerHTML = activeGroups.map(([statuses, label]) => {
+    const rows = state.allApps.filter(a => statuses.includes(a.application_status));
+    return `<h3 class="stack-title">${label} (${rows.length})</h3>` +
+      (rows.length ? rows.map(employerCard).join("") : `<div class="empty">Nothing here.</div>`);
+  }).join("") || `<div class="empty">Applications will appear here when a student submits.</div>`;
+}
+
+let declineCtx = null;
+root.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.decline) {
+    declineCtx = d.decline;
+    const a = state.allApps.find(x => x.application_id === d.decline);
+    $("declineContext").textContent = a
+      ? `Declining ${a.application_id} (${a.student_name} → ${a.opportunity_title}). The student sees this reason with the decision.`
+      : `Declining ${d.decline}.`;
+    $("declineReason").value = "";
+    setMsg("declineMsg", "");
+    $("declineDialog").showModal();
+  }
+});
+$("declineNo").onclick = () => { declineCtx = null; $("declineDialog").close(); };
+$("declineYes").onclick = async () => {
+  if (!declineCtx) return;
+  try {
+    await api(`/api/applications/${declineCtx}/decisions`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "Declined", actor_role: "employer",
+                             actor_name: "Employer reviewer (simulated)", reason: $("declineReason").value }),
+    });
+    $("declineDialog").close();
+    declineCtx = null;
+    setMsg("employerMsg", "", "");
+    await loadAllApps();
+  } catch (err) {
+    setMsg("declineMsg", err.message, "error");
+  }
+};
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  if (!d.decide) return;
+  try {
+    await api(`/api/applications/${d.app}/decisions`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: d.decide, actor_role: "employer", actor_name: "Employer reviewer (simulated)" }),
+    });
+    setMsg("employerMsg", "", "");
+    await loadAllApps();
+  } catch (err) {
+    setMsg("employerMsg", err.message, "error");
+  }
+});
+
+// ================= Role switching (simulated, no login) =================
+const ROLE_VIEWS = ["student", "employer", "coordinator", "faculty"];
+async function switchRole(role) {
+  state.role = role;
+  $("demoRole").value = role;
+  for (const r of ROLE_VIEWS) {
+    const view = $(`view-${r}`);
+    view.hidden = r !== role;
+    view.inert = r !== role;
+  }
+  if (role !== "student") root.querySelectorAll(".public-links [data-tab]").forEach(t => t.removeAttribute("aria-current"));
+  try {
+    if (role === "student") { await onStudentChange(); showTab("apps"); }
+    if (role === "employer" || role === "faculty") await loadAllApps();
+    if (role === "faculty") await loadEvidence();
+    if (role === "coordinator") { await loadPlacements(); await loadCorrections(); await loadRuns(); }
+  } catch (err) { setMsg(role === "coordinator" ? "crMsg" : "recMsg", err.message, "error"); }
+  root.scrollIntoView({ block: "start" });
+}
+$("demoRole").onchange = () => switchRole($("demoRole").value);
+
+// ================= Coordinator: placements and P07 handoff (P04-06) =================
+async function loadPlacements() {
+  const [apps, placements] = await Promise.all([api("/api/applications"), api("/api/placements")]);
+  const awaiting = apps.filter(a => a.application_status === "Offer accepted" && a.placement_status !== "Confirmed");
+  $("awaiting").innerHTML = awaiting.length ? awaiting.map(a => `
+    <article class="cp-card">
+      <div class="card-head"><div>
+        <div class="cp-title">${esc(a.student_name)} · ${esc(a.opportunity_title)}</div>
+        <div class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.employer_name || "")}</div>
+      </div><div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
+      ${historyHtml(a)}
+      <div class="actions"><button class="cp-btn" type="button" data-confirm="${esc(a.application_id)}">Confirm placement &amp; hand to P07</button></div>
+    </article>`).join("") : `<div class="empty">No accepted offers waiting. An employer makes an offer, then the student accepts it.</div>`;
+  $("placements").innerHTML = placements.length ? `<div class="cp-card" style="overflow-x:auto"><table>
+    <tr><th>Placement</th><th>Student</th><th>Opportunity</th><th>Application</th><th>Confirmed</th><th>P07 handoff</th></tr>
+    ${placements.map(p => `<tr>
+      <td><b>${esc(p.placement_id)}</b></td>
+      <td>${esc(p.student_name)}<div class="cp-muted">${esc(p.student_id)} · profile v${esc(p.profile_version)}</div></td>
+      <td>${esc(p.opportunity_title)}<div class="cp-muted">${esc(p.opportunity_id)} v${esc(p.opportunity_version)}</div></td>
+      <td>${esc(p.application_id)}</td>
+      <td class="cp-muted">${esc(p.confirmed_by)}<div>${esc(p.confirmed_at)}</div></td>
+      <td>${p.p07_handoff ? `<span class="cp-chip ok">${esc(p.p07_handoff.handoff_id)} · ${esc(p.p07_handoff.receipt_status)}</span>
+        <details class="hist"><summary>Payload sent to P07</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(JSON.stringify(p.p07_handoff.payload, null, 2))}</pre></details>` : "—"}</td>
+    </tr>`).join("")}</table></div>
+    <p class="cp-muted">P07 is not live yet: handoffs go to a labelled mock outbox. Supervisor contact goes to P07 only, never to the student.</p>`
+    : `<div class="empty">No confirmed placements yet.</div>`;
+}
+root.addEventListener("click", async e => {
+  const id = e.target.dataset?.confirm;
+  if (!id) return;
+  try {
+    const p = await api(`/api/applications/${id}/confirm-placement`,
+      json({ actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }));
+    setMsg("plMsg", p.already_confirmed
+      ? `${id} was already confirmed as ${p.placement_id}; no second placement or handoff was created.`
+      : `Confirmed ${p.placement_id} for ${id} and handed it to P07 (${p.p07_handoff.handoff_id}).`, "success");
+    await loadPlacements();
+  } catch (err) { setMsg("plMsg", err.message, "error"); }
+});
+
+// ================= Faculty: skill evidence review (P05-07) =================
+async function loadEvidence() {
+  const id = $("evStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  const versions = await api(`/api/students/${id}/profile-versions`);
+  $("evVersions").innerHTML = `<h3 style="margin-top:14px">Profile versions</h3><div style="overflow-x:auto"><table>
+    <tr><th>Version</th><th>Source</th><th>Created</th><th>Reviewed skills</th><th>Availability</th></tr>
+    ${versions.map(v => `<tr><td>v${esc(v.profile_version)}</td><td>${esc(v.source)}</td><td class="cp-muted">${esc(v.created_at || "—")}</td>
+      <td>${(v.profile.skills || []).filter(s => s.evidence_status === "reviewed").map(s => `<span class="cp-chip ok">✓ ${esc(skillName(s.skill_id))}</span>`).join(" ") || "—"}</td>
+      <td class="cp-muted">${esc(v.profile.availability_start || "?")} → ${esc(v.profile.availability_end || "?")}</td></tr>`).join("")}
+  </table></div>`;
+}
+$("evStudent").onchange = () => { setMsg("evMsg", ""); loadEvidence(); };
+$("evReview").onclick = async () => {
+  const id = $("evStudent").value;
+  try {
+    const r = await api(`/api/students/${id}/profile-updates`, json({ kind: "skill_evidence", actor_role: "faculty",
+      actor_name: "FAC-01 (simulated faculty reviewer)", skill_id: $("evSkill").value, evidence_id: $("evId").value }));
+    setMsg("evMsg", `${skillName($("evSkill").value)} marked reviewed → profile v${r.new_profile_version}; matching reran (${r.recommendations.length} results). Earlier runs keep their versions.`, "success");
+    await loadEvidence();
+  } catch (err) { setMsg("evMsg", err.message, "error"); }
+};
+
+// ================= Coordinator view =================
+async function loadCorrections() {
+  state.corrections = await api("/api/corrections");
+  renderCorrections();
+}
+
+function acceptForm(cr) {
+  if (cr.source_module === "P03")
+    return `<p class="cp-muted">Recorded for the P03 owning module. Applying a new listing version needs the
+      live P03 interface (deferred — this request stays recorded).</p>`;
+  if (cr.affected_field === "availability")
+    return `<div class="actions" style="align-items:flex-end">
+        <label class="cp-muted">New availability start <input type="date" data-crstart="${esc(cr.correction_id)}"></label>
+        <label class="cp-muted">New availability end <input type="date" data-crend="${esc(cr.correction_id)}"></label>
+        <button class="cp-btn small" data-accept="${esc(cr.correction_id)}">Accept &amp; apply as new version</button>
+      </div>`;
+  if (cr.affected_field === "interests")
+    return `<div class="actions">
+        <label class="cp-muted" style="flex:1">Corrected interests (comma-separated)
+          <input type="text" placeholder="e.g. aviation, analytics" data-crinterests="${esc(cr.correction_id)}"></label>
+        <button class="cp-btn small" data-accept="${esc(cr.correction_id)}">Accept &amp; apply as new version</button>
+      </div>`;
+  return `<p class="cp-muted">Skill-evidence corrections are reviewed by P01/P06 with evidence; applying one here
+    is deferred (recorded only).</p>`;
+}
+
+function renderCorrections() {
+  const crs = state.corrections;
+  if (state.lastAccepted)
+    setMsg("crMsg", `Correction ${state.lastAccepted.correction_id} applied as profile
+      v${state.lastAccepted.new_profile_version} for ${state.lastAccepted.student_id}. Re-run matching below or in the Student view.`, "success");
+  if (!crs.length) {
+    $("corrections").innerHTML = `<div class="empty">No correction requests. A student flags a recommendation
+      from the Recommendations tab (“Flag this result”).</div>`;
+    return;
+  }
+  const statusChips = { flagged: "cp-chip warn", recorded: "cp-chip accent", accepted: "cp-chip ok" };
+  $("corrections").innerHTML = crs.map(cr => `
+    <article class="cp-card">
+      <div class="card-head">
+        <div>
+          <div class="cp-title">${esc(cr.correction_id)} · ${esc(cr.student_name)} · field: ${esc(cr.affected_field)}</div>
+          <div class="cp-muted">Flagged at ${esc(cr.created_at)} · owning module <b>${esc(cr.source_module)}</b>
+            · input versions: profile v${esc(cr.source_version.profile_version)},
+            ${esc(cr.source_version.opportunity_id)} v${esc(cr.source_version.opportunity_version)},
+            ${esc(cr.source_version.method_version)}</div>
+        </div>
+        <span class="${statusChips[cr.status] || "cp-chip"}">${esc(cr.status)}</span>
+      </div>
+      <p style="margin:8px 0 0"><b>Student's reason:</b> ${esc(cr.reason)}</p>
+      ${cr.note ? `<p class="cp-muted"><b>Coordinator note:</b> ${esc(cr.note)}${cr.coordinator ? ` — ${esc(cr.coordinator)}` : ""}</p>` : ""}
+      ${cr.status === "flagged" ? `
+        <div class="actions">
+          <label class="cp-muted" style="flex:1">Note to the owning module
+            <input type="text" placeholder="e.g. availability looks stale; please supply corrected dates"
+              data-crnote="${esc(cr.correction_id)}"></label>
+          <button class="cp-btn small" data-record="${esc(cr.correction_id)}">Record correction request</button>
+        </div>` : ""}
+      ${cr.status === "recorded" ? acceptForm(cr) : ""}
+      ${cr.status === "accepted" ? `<p class="msg success">Applied as a new input version; the original
+        recommendation stays traceable in Matching runs.</p>` : ""}
+    </article>`).join("");
+}
+
+root.addEventListener("click", async e => {
+  const d = e.target.dataset || {};
+  try {
+    if (d.record) {
+      const note = root.querySelector(`[data-crnote="${d.record}"]`)?.value || "";
+      await api(`/api/corrections/${d.record}/record`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note, actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" }),
+      });
+      state.lastAccepted = null;
+      await loadCorrections();
+    }
+    if (d.accept) {
+      const cr = state.corrections.find(x => x.correction_id === d.accept);
+      const body = { actor_role: "coordinator", actor_name: "COORD-01 (simulated coordinator)" };
+      if (cr.affected_field === "availability") {
+        body.availability_start = root.querySelector(`[data-crstart="${d.accept}"]`)?.value || "";
+        body.availability_end = root.querySelector(`[data-crend="${d.accept}"]`)?.value || "";
+      } else if (cr.affected_field === "interests") {
+        body.interests = (root.querySelector(`[data-crinterests="${d.accept}"]`)?.value || "")
+          .split(",").map(s => s.trim()).filter(Boolean);
+      }
+      state.lastAccepted = await api(`/api/corrections/${d.accept}/accept`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      await loadCorrections();
+      $("runsStudent").value = state.lastAccepted.student_id;
+      await loadRuns();
+    }
+  } catch (err) {
+    setMsg("crMsg", err.message, "error");
+  }
+});
+
+async function loadRuns() {
+  const id = $("runsStudent").value || state.students[0]?.student_id;
+  if (!id) return;
+  state.runs = await api(`/api/students/${id}/recommendation-runs`);
+  $("runs").innerHTML = state.runs.length ? `<div class="cp-card" style="overflow-x:auto"><table>
+    <tr><th>Run</th><th>Created</th><th>Profile version</th><th>Rules method</th><th>AI method</th><th>Results</th><th>Eligible</th></tr>
+    ${state.runs.map(r => `<tr>
+      <td>${esc(r.run_id)}</td><td class="cp-muted">${esc(r.created_at)}</td><td>v${esc(r.profile_version)}</td>
+      <td>${esc(r.method_version)}</td><td>${esc(r.ai_method_version || "—")}</td>
+      <td>${esc(r.results)}</td><td>${esc(r.eligible)}</td></tr>`).join("")}
+  </table></div>`
+    : `<div class="empty">No matching runs yet for this student.</div>`;
+}
+
+$("runsRefresh").onclick = () => loadRuns();
+$("runsStudent").onchange = () => { state.lastAccepted = null; setMsg("crMsg", ""); loadRuns(); };
+$("rerun").onclick = async () => {
+  const id = $("runsStudent").value;
+  try {
+    await api(`/api/students/${id}/recommendations`, { method: "POST" });
+    setMsg("runsMsg", `Matching re-run for ${id} with the latest profile version. Earlier runs stay unchanged above.`, "success");
+    await loadRuns();
+  } catch (err) {
+    setMsg("runsMsg", err.message, "error");
+  }
+};
+
+// ================= Faculty view (read-only) =================
+function renderFaculty() {
+  const rows = state.allApps;
+  $("facultyApps").innerHTML = rows.length ? `<div class="cp-card" style="overflow-x:auto"><table>
+    <tr><th>Application</th><th>Student</th><th>Opportunity</th><th>Application status</th><th>Placement status</th><th>Latest event</th><th>Submitted</th></tr>
+    ${rows.map(a => {
+      const last = a.history?.[a.history.length - 1];
+      return `<tr>
+        <td>${esc(a.application_id)}</td>
+        <td>${esc(a.student_name)}<div class="cp-muted">${esc(a.student_id)}</div></td>
+        <td>${esc(a.opportunity_title)}<div class="cp-muted">${esc(a.opportunity_id)} v${esc(a.opportunity_version)}</div></td>
+        <td>${statusChip(a.application_status)}</td>
+        <td>${placementChip(a.placement_status)}</td>
+        <td class="cp-muted">${last ? `${esc(last.action)} by ${esc(last.actor_name)} at ${esc(last.created_at)}` : "—"}</td>
+        <td class="cp-muted">${esc(a.submitted_at)}</td></tr>`;
+    }).join("")}
+  </table></div>` : `<div class="empty">No applications yet.</div>`;
+}
+
+// ================= Wiring =================
+async function refreshLists() {
+  await loadApps();
+  let recs = await api(`/api/students/${studentId()}/recommendations`);
+  if (!recs.length) recs = await api(`/api/students/${studentId()}/recommendations`, { method: "POST" });
+  await renderRecs(recs);
+  await searchOpps();
+  renderSaved();
+  renderGuide();
+}
+
+async function onStudentChange() {
+  state.student = await api(`/api/students/${studentId()}`);
+  state.compare = [];
+  renderProfile(state.student);
+  await refreshLists();
+}
+
+
+for (const button of root.querySelectorAll("[data-tab]")) {
+  button.onclick = async () => {
+    if (state.role !== "student") await switchRole("student");
+    showTab(button.dataset.tab);
+  };
+}
+root.addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.view) focusCard("browse", `opp-${d.view}`);
+  if (d.viewrec) focusCard("recs", `rec-${d.viewrec}`);
+});
+$("student").onchange = onStudentChange;
+$("recommend").onclick = async () => {
+  setMsg("recMsg", "");
+  await renderRecs(await api(`/api/students/${studentId()}/recommendations`, { method: "POST" }));
+  await searchOpps();
+  renderGuide();
+};
+
+
+const countryCodes = ["AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS", "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE", "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP", "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS", "IT", "JE", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY", "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF", "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "YE", "YT", "ZA", "ZM", "ZW"];
+const regionNames = new Intl.DisplayNames(["en"], {type:"region"});
+const DEGREE_NAMES = {bachelors:"Bachelor’s", masters:"Master’s", doctorate:"Doctorate"};
+const listingDegrees = {};
+const places = {"Dubai":"AE", "Abu Dhabi":"AE", "Sharjah":"AE"};
+const countryCode = o => o.country_code || places[o.location] || "unknown";
+const countryName = o => countryCode(o) === "unknown" ? "Country not listed" : regionNames.of(countryCode(o));
+const advancedFields = ["jobType","mode","sector","requiredSkill","startBy"];
+const allFilterFields = ["q","country","degree",...advancedFields];
+const listingLevels = o => o.degree_levels || [];
+function matchesCountry(o, selected) {
+  if (!o.external) return countryCode(o) === selected;
+  const location = o.location.toLowerCase();
+  const worldwide = /worldwide|anywhere in the world/.test(location) || location.trim() === "anywhere";
+  if (selected === "unknown") return !worldwide && !countryCodes.some(code => explicitCountry(location, code));
+  if (worldwide) return true;
+  return explicitCountry(location, selected);
+}
+function explicitCountry(location, code) {
+  const aliases = {US:["usa","united states","us"], GB:["uk","united kingdom"], AE:["uae","united arab emirates"]};
+  const names = [regionNames.of(code).toLowerCase(), ...(aliases[code] || [])];
+  const parts = location.split(/[,;|/()]+/).map(part=>part.trim());
+  return names.some(name=>parts.includes(name) || location === name + " only");
+}
+
+function makeSearchOptions() {
+  const selected = Object.fromEntries(["country","sector","requiredSkill"].map(id=>[id,$(id).value]));
+  for (const id of ["country","sector","requiredSkill"]) $(id).innerHTML = `<option value="">${id === "country" ? "Any country" : id === "sector" ? "Any sector" : "Any skill"}</option>`;
+  const represented = new Set(open.map(countryCode).filter(code=>code!=="unknown"));
+  const orderCodes = codes => [...codes].sort((a,b)=>regionNames.of(a).localeCompare(regionNames.of(b)));
+  const option = (value,label) => `<option value="${esc(value)}">${esc(label)}</option>`;
+  const regionOptions = codes => orderCodes(codes).map(code=>option(code,regionNames.of(code))).join("");
+  $("country").insertAdjacentHTML("beforeend",
+    `<optgroup label="In the catalogue">${regionOptions(represented)}${option("unknown","Country not listed")}</optgroup>
+     <optgroup label="Other countries">${regionOptions(countryCodes.filter(code=>!represented.has(code)))}</optgroup>`);
+  const sectors = [...new Set(open.map(o=>o.sector))].sort();
+  $("sector").insertAdjacentHTML("beforeend", sectors.map(s=>option(s,s[0].toUpperCase()+s.slice(1))).join(""));
+  const required = [...new Set(open.flatMap(o=>[...o.required_skills,...(o.mentioned_skills || [])]))].sort((a,b)=>skillName(a).localeCompare(skillName(b)));
+  $("requiredSkill").insertAdjacentHTML("beforeend", required.map(id=>option(id,skillName(id))).join(""));
+  for (const [id,value] of Object.entries(selected)) $(id).value = value;
+}
+
+function searchCatalogue() {
+  const words = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const country = $("country").value;
+  const degree = $("degree").value;
+  const mode = $("mode").value;
+  const sector = $("sector").value;
+  const skill = $("requiredSkill").value;
+  const date = $("startBy").value;
+  const catalogue = $("catalogueSource").value === "live" ? liveCatalogue : universityCatalogue;
+  return catalogue.filter(o=>{
+    const code = countryCode(o);
+    const degreeLevels = listingLevels(o);
+    if (country && !matchesCountry(o,country)) return false;
+    if (degree && (degree==="unknown" ? degreeLevels.length>0 : !degreeLevels.includes(degree))) return false;
+    if ($("jobType").value && o.job_type !== $("jobType").value) return false;
+    if (mode && o.work_mode!==mode) return false;
+    if (sector && o.sector!==sector) return false;
+    if (skill && ![...o.required_skills,...(o.mentioned_skills || [])].includes(skill)) return false;
+    if (date && (!o.start_date || o.start_date>date)) return false;
+    if (!words.length) return true;
+    const territory = code==="AE" ? "UAE" : code==="unknown" ? "" : code;
+    const keywordText = [o.title,o.employer_name,o.location,o.sector,o.work_mode,
+      countryName(o),territory,o.description,...o.required_skills.map(skillName),...o.desirable_skills.map(skillName)]
+      .join(" ").toLowerCase();
+    return words.every(word=>keywordText.includes(word));
+  });
+}
+
+function setSearchSummary(count) {
+  $("degreeNote").hidden = !$("degree").value || $("degree").value === "unknown";
+  $("searchCount").textContent = `${count} ${count===1 ? "opportunity" : "opportunities"}`;
+  const advancedCount = advancedFields.filter(id=>$(id).value).length;
+  $("advancedCount").textContent = advancedCount ? `(${advancedCount})` : "";
+  $("advancedToggle").setAttribute("aria-label", advancedCount ?
+    `Advanced search, ${advancedCount} ${advancedCount === 1 ? "filter" : "filters"} applied` : "Advanced search");
+  $("clearFilters").hidden = !allFilterFields.some(id=>$(id).value.trim());
+}
+
+function clearSearchFilters() {
+  $("opportunitySearch").reset();
+}
+
+function degreeFact(o) {
+  const degrees = listingLevels(o).map(level=>DEGREE_NAMES[level]).join(", ");
+  return `<p class="cp-muted degree-fact"><strong>Degree level</strong> ${degrees ? esc(degrees) : "Not listed"}</p>`;
+}
+
+$("search").onclick = searchOpps;
+$("opportunitySearch").addEventListener("keydown", event=>{
+  if (event.key !== "Enter" || event.isComposing || event.target.tagName !== "INPUT") return;
+  event.preventDefault();
+  searchOpps();
+});
+$("advancedToggle").onclick = () => {
+  const filters = $("advancedFilters");
+  filters.hidden = !filters.hidden;
+  $("advancedToggle").setAttribute("aria-expanded",String(!filters.hidden));
+};
+$("clearFilters").onclick = () => {
+  clearSearchFilters();
+  searchOpps();
+  $("q").focus();
+};
+for (const id of ["country","degree",...advancedFields]) $(id).onchange = () => searchOpps();
+
+const robot = $("robotLauncher");
+const robotLayer = root.querySelector(".assistant-layer");
+const careerChat = $("careerChat");
+let robotPosition;
+let pointerDrag;
+let suppressPointerClick = false;
+
+function positionRobot(left, top) {
+  const layer = robotLayer.getBoundingClientRect();
+  const size = robot.getBoundingClientRect();
+  const edge = 10;
+  const lowerEdge = Math.min(root.getBoundingClientRect().bottom, window.innerHeight);
+  const maxLeft = Math.max(edge, layer.width - size.width - edge);
+  const maxTop = Math.max(edge, lowerEdge - layer.top - size.height - edge);
+  robotPosition = {
+    left: Math.max(edge, Math.min(maxLeft, left)),
+    top: Math.max(edge, Math.min(maxTop, top))
+  };
+  robot.style.left = `${robotPosition.left}px`;
+  robot.style.top = `${robotPosition.top}px`;
+}
+
+function moveRobotBy(deltaX, deltaY) {
+  const layer = robotLayer.getBoundingClientRect();
+  const bounds = robot.getBoundingClientRect();
+  positionRobot(bounds.left - layer.left + deltaX, bounds.top - layer.top + deltaY);
+}
+
+robot.addEventListener("pointerdown", event=>{
+  if (!event.isPrimary || event.button !== 0) return;
+  suppressPointerClick = false;
+  const box = robot.getBoundingClientRect();
+  pointerDrag = {id:event.pointerId, startX:event.clientX, startY:event.clientY,
+    offsetX:event.clientX-box.left, offsetY:event.clientY-box.top, active:false};
+  robot.setPointerCapture(event.pointerId);
+});
+robot.addEventListener("pointermove", event=>{
+  if (pointerDrag?.id !== event.pointerId) return;
+  if (!pointerDrag.active && Math.hypot(event.clientX-pointerDrag.startX,event.clientY-pointerDrag.startY)<5) return;
+  pointerDrag.active = true;
+  suppressPointerClick = true;
+  robot.classList.add("is-dragging");
+  const anchor = robotLayer.getBoundingClientRect();
+  positionRobot(event.clientX-anchor.left-pointerDrag.offsetX, event.clientY-anchor.top-pointerDrag.offsetY);
+});
+function finishRobotDrag(event) {
+  if (pointerDrag?.id !== event.pointerId) return;
+  pointerDrag = undefined;
+  robot.classList.remove("is-dragging");
+}
+for (const type of ["pointerup","pointercancel","lostpointercapture"]) {
+  robot.addEventListener(type,finishRobotDrag);
+}
+robot.addEventListener("keydown", event=>{
+  const moves = {ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]};
+  const move = moves[event.key];
+  if (!move) return;
+  event.preventDefault();
+  moveRobotBy(...move);
+});
+robot.onclick = event => {
+  if (event.detail && suppressPointerClick) return;
+  const embed = $("chatEmbed");
+  if (!embed.getAttribute("src")) embed.setAttribute("src", embed.dataset.src);
+  careerChat.showModal();
+  $("closeChat").focus();
+};
+$("closeChat").onclick = () => careerChat.close();
+careerChat.addEventListener("close", () => robot.focus({preventScroll:true}));
+const robotResize = new ResizeObserver(()=>{
+  if (robotPosition) positionRobot(robotPosition.left,robotPosition.top);
+});
+robotResize.observe(root);
+window.addEventListener("resize",()=>{
+  if (robotPosition) positionRobot(robotPosition.left,robotPosition.top);
+});
+
+let liveCatalogue = [];
+let liveFeed = {status:"loading", fetched_at:null};
+
+function renderFeedStatus() {
+  const university = $("catalogueSource").value === "university";
+  const label = $("feedStatus");
+  if (university) {
+    label.textContent = "University listings from the P03 team export. Internal applications are available for testing.";
+    return;
+  }
+  const sourceList = (liveFeed.sources || []).filter(source => source.status !== "unavailable")
+    .map(source => source.source).join(", ");
+  const date = liveFeed.fetched_at ? new Date(liveFeed.fetched_at).toLocaleString(undefined,
+    {dateStyle:"medium",timeStyle:"short"}) : "";
+  label.textContent = liveFeed.status === "loading" ? "Loading live opportunities…" :
+    liveFeed.status === "unavailable" ? "Live opportunities are unavailable. University listings are available in the source selector." :
+    `Sources: ${sourceList} · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
+}
+
+async function loadLiveCatalogue() {
+  try {
+    liveFeed = await api("/api/external-opportunities");
+    liveCatalogue = liveFeed.jobs;
+    for (const job of liveCatalogue) state.opps[job.opportunity_id] = job;
+  } catch {
+    liveFeed = {status:"unavailable", fetched_at:null};
+  }
+  open = [...universityCatalogue, ...liveCatalogue];
+  makeSearchOptions();
+  renderFeedStatus();
+  await searchOpps();
+  renderSaved();
+}
+
+$("catalogueSource").onchange = () => {
+  renderFeedStatus();
+  searchOpps();
+};
+
+function interviewDetails(a) {
+  if (!a.interview) return "";
+  const i = a.interview;
+  const when = new Date(i.starts_at).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return `<section class="interview-info" aria-label="Interview details">
+    <strong>${a.application_status === "Interview completed" ? "Interview completed" : "Interview"}</strong>
+    <p>${esc(when)} · ${i.duration_minutes} min · ${esc(zone)}</p>
+    <p>${i.mode === "online" ? "Online" : "In person"} · ${esc(i.location)}</p>
+  </section>`;
+}
+
+let interviewApp;
+root.addEventListener("click", async event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  if (button.dataset.interview) {
+    interviewApp = button.dataset.interview;
+    const application = state.allApps.find(a=>a.application_id===interviewApp);
+    const existing = application.interview;
+    $("interviewTitle").textContent = existing ? "Reschedule interview" : "Schedule interview";
+    $("interviewContext").textContent = `${application.student_name} · ${application.opportunity_title}`;
+    const when = existing ? new Date(existing.starts_at) : new Date(Date.now()+86400000);
+    const offset = when.getTimezoneOffset()*60000;
+    $("interviewTime").value = new Date(when.getTime()-offset).toISOString().slice(0,16);
+    $("interviewZone").textContent = `Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+    $("interviewDuration").value = existing?.duration_minutes || 30;
+    $("interviewMode").value = existing?.mode || "online";
+    $("interviewLocation").value = existing?.location || "";
+    setMsg("interviewMsg","");
+    $("interviewDialog").showModal();
+  }
+  if (button.dataset.completeInterview) {
+    button.disabled = true;
+    try {
+      await api(`/api/applications/${button.dataset.completeInterview}/interview/complete`,json({actor_role:"employer"}));
+      await loadAllApps();
+    } catch (error) {
+      setMsg("employerMsg",error.message,"error");
+      button.disabled = false;
+    }
+  }
+});
+
+$("interviewCancel").onclick = () => $("interviewDialog").close();
+$("interviewSave").onclick = async () => {
+  const time = $("interviewTime");
+  const location = $("interviewLocation");
+  if (!time.reportValidity() || !location.reportValidity()) return;
+  const save = $("interviewSave");
+  save.disabled = true;
+  try {
+    await api(`/api/applications/${interviewApp}/interview`, json({
+      starts_at:new Date(time.value).toISOString(),
+      duration_minutes:Number($("interviewDuration").value),
+      mode:$("interviewMode").value, location:location.value, actor_role:"employer"
+    }));
+    $("interviewDialog").close();
+    await loadAllApps();
+  } catch (error) {
+    setMsg("interviewMsg",error.message,"error");
+  } finally {
+    save.disabled = false;
+  }
+};
+
+(async () => {
+  state.skills = await api("/api/skills");
+  universityCatalogue = await api("/api/opportunities");
+  open = [...universityCatalogue];
+  makeSearchOptions();
+  renderRules(await api("/api/rules"));
+  state.students = await api("/api/students");
+  const options = state.students.map(s => `<option value="${esc(s.student_id)}">${esc(s.display_name)} (${esc(s.student_id)})</option>`).join("");
+  $("student").innerHTML = options;
+  $("runsStudent").innerHTML = options;
+  $("evStudent").innerHTML = options;
+  $("evSkill").innerHTML = Object.entries(state.skills).map(([id, n]) => `<option value="${esc(id)}">${esc(n)} (${esc(id)})</option>`).join("");
+  await onStudentChange();
+  showTab("recs");
+  loadLiveCatalogue();
+})().catch(err => setMsg("recMsg", err.message, "error"));
+
+})();
+</script>
+</body>
+</html>

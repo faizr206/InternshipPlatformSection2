@@ -1,0 +1,7 @@
+{
+  "botpress": {
+    "enabled": false,
+    "scripts": []
+  },
+  "_note": "Optional Botpress mode. After creating the bot, paste its two public webchat embed script URLs (the inject script and the bot config script) into scripts and set enabled to true. These are public embed URLs, never an API key or token. Only cdn.botpress.cloud and files.bpcontent.cloud are accepted."
+}

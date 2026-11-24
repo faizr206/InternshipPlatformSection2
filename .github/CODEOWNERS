@@ -1,0 +1,27 @@
+# Each team owns, tests and demos its own module (BUS2010 binder: one integrated product,
+# separate team increments). Add every team member's GitHub username to their line.
+
+# Shared platform: core, database, CI, design system (integration owners from all teams)
+/backend/app/core/                 @faizr206 @ray-suton @Lizhengxi25
+/backend/app/db.py                 @faizr206 @ray-suton @Lizhengxi25
+/backend/app/main.py               @faizr206 @ray-suton @Lizhengxi25
+/.github/                          @faizr206 @ray-suton @Lizhengxi25
+
+# P01-P03: profiles, employer submission, review and publication
+/backend/app/modules/profiles/     @ray-suton
+/backend/app/modules/submissions/  @ray-suton
+/backend/app/modules/review/       @ray-suton
+
+# P04/P05: discovery, applications, AI matching
+/backend/app/modules/applications/ @faizr206
+/backend/app/modules/matching/     @faizr206
+
+# P06/P07: preparation, co-op progress, assistant
+/backend/app/modules/preparation/  @Lizhengxi25
+/backend/app/modules/progress/     @Lizhengxi25
+/backend/app/modules/assistant/    @Lizhengxi25
+
+# Original team repositories, imported with history (read-only reference)
+/legacy/p01-p03-ipp/               @ray-suton
+/legacy/p04-p05-coop/              @faizr206
+/legacy/p06-p07-waypoint/          @Lizhengxi25
