@@ -1,0 +1,306 @@
+{
+  "project": "IPP Walking Skeleton Demo (Coop)",
+  "last_updated": "2026-11-24",
+  "notes": "Historical feature verification is retained below. The shared-seed integration is verified by current store, runtime UI, contract and asset-hash tests; see PROGRESS.md for fresh evidence and browser/deployment checks. No Sprint 0 R-numbers have been invented.",
+  "features": [
+    {
+      "id": "F01",
+      "name": "Employer submits an opportunity (IPP-01 / EMP-01)",
+      "description": "Employer HR form requires organization, title, description and location; whitespace-only values are rejected; a valid submission gets a unique ID (OP-040, …) and starts as Pending Review.",
+      "verification_steps": [
+        "Employer HR > Fill sample data > Submit for review: OP-040 appears as Pending Review",
+        "Leave organization as spaces and submit: inline errors, nothing created, typed values kept"
+      ],
+      "passes": true,
+      "notes": "Store tests + UI run (valid and error cases)."
+    },
+    {
+      "id": "F02",
+      "name": "Simulated HR authorization blocks submission (IPP-02 / EMP-02)",
+      "description": "Unticking 'Simulate an authorized HR representative' disables submission and states that real authorization is deferred.",
+      "verification_steps": [
+        "Untick the checkbox: submit disabled and blocked message visible",
+        "Re-tick: submit enabled"
+      ],
+      "passes": true,
+      "notes": "Simulated control only; real authorization is deferred (IPP-17)."
+    },
+    {
+      "id": "F03",
+      "name": "Employer sees approval status (IPP-03 / EMP-03)",
+      "description": "Opportunity status list reads the shared record, so administrator approval is reflected on the same ID.",
+      "verification_steps": [
+        "After admin approves OP-040, Employer HR list shows OP-040 as Approved"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F04",
+      "name": "Administrator review queue (IPP-04 / ADM-01)",
+      "description": "Lists Pending Review opportunities with organization, title, description, location and ID; shows an empty-state message when none.",
+      "verification_steps": [
+        "Queue shows OP-040 after submission",
+        "After all pending listings are approved the queue shows 'The review queue is empty'"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F05",
+      "name": "Administrator approves an opportunity (IPP-05 / ADM-02, ADM-03)",
+      "description": "Approve changes the same record to Approved, removes it from the queue, lists it under Approved opportunities and makes it visible to students.",
+      "verification_steps": [
+        "Approve OP-040; Student view now lists 4 open published opportunities"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F06",
+      "name": "Student browse and search (IPP-06 / STU-01)",
+      "description": "Students browse/search only published AND open listings with canonical employer_name and shared skill labels. Closed and unpublished listings cannot be applied to, including via direct store calls.",
+      "verification_steps": [
+        "Before approval, 'harbor' finds nothing and total stays 3",
+        "Search 'harbor' after approval finds OP-040",
+        "Search 'zzzz' shows the no-match message"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F07",
+      "name": "Student applies with confirmation (IPP-07 / STU-02)",
+      "description": "Confirmation dialog names opportunity and applicant and says it does not approve a placement; cancel creates nothing; confirm creates APP-001 (Submitted, with submitted_at) plus a faculty review record.",
+      "verification_steps": [
+        "Apply > Cancel: applications stay 0",
+        "Apply > Submit application: APP-001 created, status Submitted",
+        "Escape closes the dialog without applying"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F08",
+      "name": "Duplicate application prevention (IPP-08 / STU-02)",
+      "description": "After applying, the card shows 'Application submitted' and offers no Apply button; the store also rejects a second application for the same student and opportunity.",
+      "verification_steps": [
+        "After applying, no Apply button for that opportunity",
+        "Store test: second submitApplication returns duplicate"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F09",
+      "name": "My applications (IPP-09 / STU-03)",
+      "description": "Lists application ID, linked opportunity, application status and a separate 'Not placed' placement status; the application count updates.",
+      "verification_steps": [
+        "My applications tab shows APP-001 / OP-040 / Submitted / Not placed; tab count reads (1)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F10",
+      "name": "Student demo profile (IPP-10 / STU-04)",
+      "description": "Four selectable synthetic students use the highest submitted profile version, ignoring drafts. Display-name corrections append a new version. Profile shows evidence status, interests and availability, explicitly marking missing values; eligibility is not fabricated.",
+      "verification_steps": [
+        "Save a blank name: error; save 'Layla H.': heading and Faculty view update"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F11",
+      "name": "Faculty read-only application view (IPP-11 / FAC-01, FAC-03)",
+      "description": "Shows student name, organization, title, application/student/opportunity/review IDs and review status; no action controls; informative empty state.",
+      "verification_steps": [
+        "Faculty view shows APP-001, COOP-B001, OP-040, REV-001",
+        "No buttons, inputs or selects inside the view content"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F12",
+      "name": "Application vs placement status (IPP-12 / FAC-02)",
+      "description": "Application status Submitted and placement status Not placed are displayed separately, with a statement that viewing an application does not approve a placement.",
+      "verification_steps": [
+        "Faculty and Student views show both statuses and the disclaimer"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F13",
+      "name": "Role switching with visible disclosure (IPP-13)",
+      "description": "Four role views reachable from the sidebar (hash routes) plus an Overview; persistent banner states that role switching and HR authorization are simulated; a 'Simulated' tag marks the persona in the top bar.",
+      "verification_steps": [
+        "Visit each role; banner present on all"
+      ],
+      "passes": true,
+      "notes": "Opens on the Overview (DEFAULT_ROUTE in src/app.js); set it to 'student' to open on the Student view as in the Lab 3 appendix reference."
+    },
+    {
+      "id": "F14",
+      "name": "Records persist across role changes and reloads (IPP-14)",
+      "description": "Shared JSON is fetched at startup; demo edits persist under ipp-demo-v2 across role changes/reloads. Old v1 storage is isolated. Storage failure falls back to memory with a warning.",
+      "verification_steps": [
+        "Create a full journey, reload the page: Faculty view still shows APP-001"
+      ],
+      "passes": true,
+      "notes": "Blocked-storage fallback covered by a store test, not exercised in a real private window."
+    },
+    {
+      "id": "F15",
+      "name": "Reset demo data with confirmation (IPP-15)",
+      "description": "Confirmed reset restores the exact shared seed: five profile records for four students, five listings (three available), no applications or corrections.",
+      "verification_steps": [
+        "Reset > Cancel keeps data",
+        "Reset > confirm restores 5 listings, 3 available, 0 applications"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F16",
+      "name": "Integrated four-role acceptance flow (IPP-16)",
+      "description": "One new record travels Employer > Admin > Student > Faculty with consistent IDs while placement stays Not placed.",
+      "verification_steps": [
+        "Follow the demo script in PROJECT_DESCRIPTION.md"
+      ],
+      "passes": true,
+      "notes": "Store-level test plus a scripted run of the real UI in Chrome (historical 32 checks, 0 failures)."
+    },
+    {
+      "id": "F17",
+      "name": "Responsive layout, keyboard and screen-reader basics",
+      "description": "Single-column layout on narrow screens with a fixed bottom tab bar and no horizontal overflow; labeled controls; aria-live announcements; arrow-key tab navigation; focus management after dialogs and actions; reduced-motion support.",
+      "verification_steps": [
+        "Load at 390px width: no horizontal overflow in any of 7 route states, 5-item bottom tab bar",
+        "Arrow keys move between student tabs"
+      ],
+      "passes": false,
+      "notes": "Layout and keyboard verified in Chrome (390px iframe). Not verified: real phone, other browsers, an actual screen reader, a formal contrast audit. The Internship Assistant and coordinator tab were also checked at 390px and with the keyboard in headless Chrome (2026-11-24); still no real device or screen-reader check."
+    },
+    {
+      "id": "F18",
+      "name": "Overview page with live metrics",
+      "description": "Landing page with a hero, four live stat tiles (pending, approved, applications, placement status), clickable step cards per role, the journey tracker, recent activity and a working/simulated/deferred summary.",
+      "verification_steps": [
+        "Open the app: it lands on the Overview",
+        "Complete the journey in other roles and return: stats read 0 / 3 / 1 and the journey shows 4 completed steps"
+      ],
+      "passes": true,
+      "notes": "Scripted UI run (Chrome) and store tests."
+    },
+    {
+      "id": "F19",
+      "name": "Live journey tracker",
+      "description": "Shows how the most recent submitted record moves through Employer HR, Administrator, Student and Faculty (Done / Next step / Waiting), links each step to its role, and always shows placement status separately as Not placed.",
+      "verification_steps": [
+        "Submit an opportunity: step 1 done, step 2 is the next step",
+        "Approve then apply: all four steps done and a Complete chip appears"
+      ],
+      "passes": true,
+      "notes": "getJourney() covered by store tests; rendering covered by the scripted UI run."
+    },
+    {
+      "id": "F20",
+      "name": "Recent activity feed",
+      "description": "Records each hand-off (submitted, approved, applied, display name changed, reset) with the acting role and a relative time that refreshes; new entries are highlighted once; capped at 60 entries; survives reloads.",
+      "verification_steps": [
+        "Perform the journey: the feed lists the events newest first",
+        "Reload: the feed is still there"
+      ],
+      "passes": true,
+      "notes": "Failed actions and unchanged names are not logged (store tests)."
+    },
+    {
+      "id": "F21",
+      "name": "Employer live listing preview",
+      "description": "As the employer types, a preview card shows how students will see the listing, with placeholders for empty fields and a description character counter.",
+      "verification_steps": [
+        "Type an organization, title and description: the preview and counter update immediately"
+      ],
+      "passes": true,
+      "notes": "Layout switches by main-column width (container query): preview above the form when narrow, beside it when wide. The wide layout was not exercised on a wide screen in this session."
+    },
+    {
+      "id": "F22",
+      "name": "Student filters and sorting",
+      "description": "Work-mode filter (All / On-site / Hybrid / Remote), sort (Newest first / Title A-Z) alongside search, a result count, and a Clear filters action in the no-results state.",
+      "verification_steps": [
+        "Filter Hybrid: only Product Design Intern",
+        "Filter Remote: empty state with Clear filters; clearing restores all"
+      ],
+      "passes": true
+    },
+    {
+      "id": "F23",
+      "name": "Cache-safe releases",
+      "description": "Asset URLs in index.html carry a content hash written by `npm run stamp`, so a deploy cannot serve new HTML with old scripts or styles; the test suite fails if the hashes are stale.",
+      "verification_steps": [
+        "Edit styles.css without re-stamping: npm test fails",
+        "Live site loads hash-versioned scripts and stylesheet and runs the new build"
+      ],
+      "passes": true,
+      "notes": "Added after a live check caught old assets being served with the new HTML. Old cached index.html can still briefly pair with new files until its 10 minute cache expires."
+    },
+    {
+      "id": "F24",
+      "name": "Employer HR views applications",
+      "description": "After a student applies, Employer HR sees the applicant in a read-only Applicants tab (name, student ID, eligibility, application and opportunity IDs, Submitted vs Not placed, submitted time), with a live count on the tab, a '1 applicant · View' link on each opportunity, and a link from the student's apply confirmation. HR receives a narrower data projection than Faculty: no review records.",
+      "verification_steps": [
+        "Apply as the student, then open Employer HR > Applicants: the applicant card appears with Submitted and Not placed",
+        "Employer HR > Opportunities: the approved opportunity shows '1 applicant · View', which opens the Applicants tab",
+        "The Applicants tab has no controls and shows no REV-/FAC- IDs; Faculty still shows REV-001"
+      ],
+      "passes": true,
+      "notes": "Store tests cover the data boundary; scripted Chrome run (22 checks, 21 pass; the one miss was a wrong expectation of a 'new' highlight on arrival, which is not a feature) plus real-key tab navigation and a 390px layout check. The simulated HR user sees applicants for every organization (no per-employer scoping without real accounts). Shortlist/interview/offer actions are deferred. Deployed to GitHub Pages and verified live (17/17 checks)."
+    },
+    {
+      "id": "F25",
+      "name": "Cross-team synthetic seed contract",
+      "status": "implemented",
+      "priority": "high",
+      "description": "Load data/ipp_sample_data.json without renaming fields; latest submitted profiles, published/open-only student listing access, supervisor-field omission and explicit missing data. Preserve Overview, activity, filtering and Employer Applicants.",
+      "verification_steps": [
+        "Layla uses submitted v2; drafts ignored and corrections preserve history",
+        "Only OP-028, OP-031 and OP-034 initially appear/apply; OP-036 and OP-039 blocked",
+        "Supervisor fields absent from student cards, dialog, toast and application history",
+        "JSON field names and records remain compatible with P04/P05 and P06/P07"
+      ],
+      "passes": true,
+      "notes": "Store and runtime regression tests. No AI ranking or shared storage added."
+    },
+    {
+      "id": "F26",
+      "name": "Internship Assistant (FAQ chatbot)",
+      "description": "A chatbot page (#assistant), reachable from an 'Ask the Internship Assistant' button in the top bar, the Overview and the sidebar, answers internship questions only from data/faq.txt. Each answer shows its FAQ section as the source; unknown questions get \"I don't know yet. I've noted your question for the coordinator.\" and are saved to an unanswered list; messages that look like personal information are refused and never stored; a 'Prototype. Synthetic data. Not official university policy.' banner and a privacy reminder are shown. In-browser keyword matcher: no language model, no API key, no third-party service.",
+      "verification_steps": [
+        "Open #assistant and ask the 8 FAQ questions: each returns its exact answer and section",
+        "Ask 'Can I intern remotely?': on-site answer. Ask 'Are co-op students paid?' and 'Will I get money?': 'I don't know yet'",
+        "Ask 'Is my application approved?' and 'Can I apply?': refused, not answered with an unrelated FAQ entry",
+        "Type an email address into the question: refused, not shown and not stored"
+      ],
+      "passes": true,
+      "notes": "Approach B of the Sprint 2 lab (Approach A, Botpress, needs a team member's account and was not built; setup steps are in docs/assistant.md). Verified by 26 engine tests (including a 3000-question invariant that every reply is an approved answer verbatim), runtime and contract tests (116 total) and a real-keystroke headless Chrome 158 run (32 checks). Rewordings can be missed; the matcher refuses rather than guesses. Not tested on a real phone, Safari/Firefox or a screen reader."
+    },
+    {
+      "id": "F27",
+      "name": "Coordinator FAQ approval (Administrator > Assistant FAQ)",
+      "description": "The Administrator view has an Assistant FAQ tab listing unanswered questions (deduplicated, with a count), an add-entry form (Section, Question, Answer) labelled 'coordinator approval required', pending entries with Approve and Discard, and the approved FAQ with a Download faq.txt export. Pending entries are never used by the assistant; approving one closes the unanswered questions it covers. Reset demo data clears this state.",
+      "verification_steps": [
+        "Ask an unknown question, then open Administrator > Assistant FAQ: it is listed",
+        "Write an answer and submit: the entry is Pending and the assistant still says 'I don't know yet'",
+        "Approve it: the assistant now answers from it and the unanswered question closes",
+        "Download faq.txt: the 9 approved entries in the original format"
+      ],
+      "passes": true,
+      "notes": "Verified by runtime tests and a real-click headless Chrome run (20 checks). Unanswered questions and coordinator additions are stored per browser (localStorage), so a coordinator does not see questions asked on other devices; a shared store is the same deferred gap as IPP-18."
+    },
+    {
+      "id": "F28",
+      "name": "Optional Botpress mode (Approach A hook)",
+      "description": "Data-driven and off by default: data/chatbot-config.json can list the two public Botpress webchat embed script URLs. When enabled, the Assistant page shows an opt-in card with a third-party and personal-information warning, and loads the scripts in order only after a click. Only https URLs on cdn.botpress.cloud and files.bpcontent.cloud without credentials, ports or token-like parameters are accepted; anything else is ignored. The built-in matcher stays available.",
+      "verification_steps": [
+        "With the shipped config (disabled): the Assistant page shows no Botpress card and loads no third-party script",
+        "With a valid enabled config: the card appears, nothing loads until the click, then the scripts load in order",
+        "With a disallowed host, http, credentials or a token parameter: the config is ignored"
+      ],
+      "passes": false,
+      "notes": "Implemented and verified with stand-in scripts only: validator unit tests (lookalike hosts, credentials, ports, secret parameters), runtime tests (opt-in, ordering, failure, invalid configs) and a real-Chrome run (7 checks) using a deliberately missing script on the allowed host. Not verified with a real Botpress bot, because none has been created yet; needs a team member's Botpress account. Bring-your-own-LLM (for example a K2 Think key) is documented by Botpress as Enterprise-only, so the free plan uses Botpress's built-in model. No key is stored anywhere in the repository."
+    }
+  ]
+}
