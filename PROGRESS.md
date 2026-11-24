@@ -6,7 +6,7 @@ Authoritative planning lives in the course's Lab 3 – Sprint 1 walking-skeleton
 
 Sprint 1: walking skeleton demo. Local standalone implementation is complete and verified; the shared Lovable/GitHub build is a separate class activity.
 
-## 2026-11-24: Internship Assistant (FAQ chatbot): committed locally, not pushed
+## 2026-11-24: Internship Assistant (FAQ chatbot): published to GitHub Pages
 
 **Work done**
 - Built Approach B of the Sprint 2 lab: an in-browser FAQ assistant at `#assistant`, answering only from `data/faq.txt` (the 8 approved entries, verbatim). "Ask the Internship Assistant" button in the top bar, on the Overview and in the sidebar. Answers show their FAQ section as the source; unknown questions get "I don't know yet. I've noted your question for the coordinator." and are saved; personal information is refused and never echoed or stored; the exact banner "Prototype. Synthetic data. Not official university policy." and a privacy reminder are shown.
@@ -18,6 +18,7 @@ Sprint 1: walking skeleton demo. Local standalone implementation is complete and
 **Verification**
 - `npm test`: **116/116** (75 existing + 26 engine + runtime and contract tests for the assistant). Engine tests include all 8 questions, 24 rewordings, typos, 39 questions that must be refused (threshold margin enforced), PII, the coordinator flow, persistence, and an invariant over 3000 generated questions (every reply is exactly an approved answer).
 - Real Chrome 158 (headless, isolated profile, real keystrokes and clicks): assistant test plan **32/32** (8 FAQ, "Can I intern remotely?", "Will I get money?", "Are co-op students paid?", rewordings, typo, near-misses, PII, keyboard); coordinator workflow **20/20**; phone and widths **13/13** (390px no overflow on five pages; top bar at 1000/1100/1280px). The Claude-in-Chrome extension was not connected, so this used a separate headless Chrome over the DevTools protocol.
+- Live site (GitHub Pages, fresh headless Chrome profile so nothing cached): assistant test plan **32/32** and coordinator tab **6/6**; every hash-versioned asset and `data/faq.txt` on the live site matches the pushed files; `plan.md` is still 404. Published as commit 858505b at <https://ray-suton.github.io/ipp-walking-skeleton-demo/#assistant>.
 - Failures found and fixed: "Is my application approved?" and "Can I apply?" wrongly matched an unrelated FAQ entry (stricter match rule, now regression tests); a synonym collision ("listing" -> "list"); "co-op"/"coop" counted as different words; Download faq.txt hidden in a collapsed list; top bar cramped at 1000px.
 
 **Known limits and risks**
@@ -26,7 +27,7 @@ Sprint 1: walking skeleton demo. Local standalone implementation is complete and
 - Not tested: real phone/tablet, Safari/Firefox, screen reader, a Botpress mode.
 
 **Recommended next step**
-Decide whether to push (publishes to the public GitHub Pages site), then re-run the live check with a fresh page load. If the team wants Approach A, a team member creates the Botpress bot (steps in docs/assistant.md) and the embed URLs can be wired in as an optional mode.
+Share the link with the team and have the coordinator review `data/faq.txt` (it is placeholder lab content, not official policy). If the team wants Approach A, a team member creates the Botpress bot (steps in docs/assistant.md) and the embed URLs can be wired in as an optional mode. Anyone who had the site open recently should hard-refresh (Cmd+Shift+R).
 
 ## 2026-11-17: shared synthetic seed integration
 
