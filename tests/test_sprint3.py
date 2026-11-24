@@ -120,7 +120,11 @@ def test_p04_06_ac1_confirmation_creates_linked_placement_and_p07_handoff(client
     assert len(handoffs) == 1
     payload = handoffs[0]["payload"]
     assert payload["placement_id"] == "PL-0001"
-    assert payload["placement_status"] == "university_confirmed"
+    assert payload["status"] == "university_confirmed"
+    # field names P07 asked for on 10 Nov
+    assert {"employer_name", "location", "role", "period_start", "period_end",
+            "supervisor_name", "academic_advisor"} <= payload.keys()
+    assert (payload["role"], payload["location"]) == ("Aviation Analytics Intern", "Dubai")
     assert payload["application_id"] == app_id and payload["confirmed_by"] == "COORD-01"
     assert "supervisor_contact" in payload  # goes to P07, never to the student
 
@@ -219,6 +223,7 @@ def test_p05_06_ac1_gap_passes_ids_and_versions_to_p06(client):
     assert r.status_code == 201
     gap = r.json()
     assert gap["p06_payload"] == {
+        "gap_id": gap["gap_id"], "reason": "OP-028 requires Jira; not yet demonstrated",
         "student_id": "COOP-B001", "skill_id": "SK-JIRA", "opportunity_id": "OP-028",
         "opportunity_version": rec["opportunity_version"], "recommendation_id": rec["recommendation_id"],
         "profile_version": rec["profile_version"]}

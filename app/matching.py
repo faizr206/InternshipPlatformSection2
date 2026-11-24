@@ -3,6 +3,8 @@
 Mandatory condition (on/off in rules.json): the student's availability covers the opportunity dates.
 Preferences (scored, weights in rules.json): sector in interests, required skills held, desirable skills held.
 Missing information is reported as unknown, never treated as satisfied.
+Evidence (rules-v3): a required skill the student holds only as self_declared still scores, but is
+listed as a gap until reviewed evidence exists ("not yet demonstrated", as agreed with P01 / P06).
 Change "version" in rules.json whenever the rules change, so stored recommendations stay traceable.
 """
 import json
@@ -51,10 +53,14 @@ def match(student: dict, opp: dict, skill_names: dict[str, str], rules: dict = R
         status = held.get(skill_id)
         return f"{name} ({skill_id}, {'reviewed' if status == 'reviewed' else 'self-declared'})"
 
+    evidence_gaps = rules.get("evidence", {}).get("self_declared_required_skill_is_gap", False)
     for skill_id in opp.get("required_skills") or []:
         if skill_id in held:
             score += w["required_skill"]
             reasons.append(f"Has required skill {label(skill_id)}")
+            if evidence_gaps and held[skill_id] != "reviewed":
+                gaps.append(f"Required skill {skill_names.get(skill_id, skill_id)} is self-declared; "
+                            f"reviewed evidence needed ({skill_id})")
         else:
             gaps.append(f"Missing required skill {skill_names.get(skill_id, skill_id)} ({skill_id})")
     for skill_id in opp.get("desirable_skills") or []:

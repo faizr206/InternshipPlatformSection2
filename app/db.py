@@ -23,6 +23,18 @@ import sqlite3
 from pathlib import Path
 
 FIXTURES = Path(__file__).parent / "fixtures"
+# Data received from the P01-P03 team (file handoff, 24 Nov): latest submitted profiles and
+# published listings, in the fields of our data dictionary v3. Kept exactly as delivered.
+P01P03_DATA = Path(__file__).parent / "data" / "p01p03"
+
+
+def data_source() -> str:
+    """Where P01 profiles and P03 listings come from.
+
+    "p01p03" (default): the P01-P03 team's export. "fixtures": our own synthetic set
+    (6 profiles, 6 listings with the Sprint 1-3 test cases), used by the automated tests.
+    """
+    return os.environ.get("DATA_SOURCE", "p01p03")
 log = logging.getLogger(__name__)
 
 SCHEMA = """
@@ -147,12 +159,31 @@ def init_db() -> None:
         conn.executescript(SCHEMA)
         _migrate_recommendation_eligibility(conn)
         _migrate_sprint2_columns(conn)
-        # Fixtures are read-only stand-ins for P01/P03, so the files are the source of truth:
-        # refresh them on every startup (e.g. after the shared skill IDs changed).
-        # Stored recommendations, applications, events, corrections and profile
-        # revisions are never touched.
-        _load(conn, "students.json", "students", "student_id", "profile_version")
-        _load(conn, "opportunities.json", "opportunities", "opportunity_id", "version")
+        # P01/P03 records are read-only inputs, so the files are the source of truth: reload
+        # them on every startup (and drop rows from the other source). Stored recommendations,
+        # applications, events, corrections and profile revisions are never touched.
+        conn.execute("DELETE FROM students")
+        conn.execute("DELETE FROM opportunities")
+        if data_source() == "fixtures":
+            students = json.loads((FIXTURES / "students.json").read_text())
+            listings = json.loads((FIXTURES / "opportunities.json").read_text())
+        else:
+            students = latest_submitted(json.loads((P01P03_DATA / "p01_student_profiles.json").read_text()))
+            listings = json.loads((P01P03_DATA / "p03_published_listings.json").read_text())
+        _load(conn, students, "students", "student_id", "profile_version")
+        _load(conn, listings, "opportunities", "opportunity_id", "version")
+
+
+def latest_submitted(profiles: list[dict]) -> list[dict]:
+    """P01 rule: read the latest profile version with profile_status = submitted; ignore drafts."""
+    latest: dict[str, dict] = {}
+    for p in profiles:
+        if p.get("profile_status", "submitted") != "submitted":
+            continue
+        current = latest.get(p.get("student_id"))
+        if current is None or (p.get("profile_version") or 0) > (current.get("profile_version") or 0):
+            latest[p.get("student_id")] = p
+    return list(latest.values())
 
 
 def _migrate_recommendation_eligibility(conn: sqlite3.Connection) -> None:
@@ -194,8 +225,8 @@ def _migrate_sprint2_columns(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE applications ADD COLUMN updated_at TEXT")
 
 
-def _load(conn, filename, table, id_field, version_field) -> None:
-    for record in json.loads((FIXTURES / filename).read_text()):
+def _load(conn, records, table, id_field, version_field) -> None:
+    for record in records:
         if not record.get(id_field) or not isinstance(record.get(version_field), int):
             log.warning("Skipping malformed %s record: %s", table, record)
             continue

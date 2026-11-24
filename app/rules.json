@@ -1,5 +1,5 @@
 {
-  "version": "rules-v2",
+  "version": "rules-v3",
   "mandatory": {
     "availability_covers_dates": true
   },
@@ -7,5 +7,8 @@
     "interest": 3,
     "required_skill": 2,
     "desirable_skill": 1
+  },
+  "evidence": {
+    "self_declared_required_skill_is_gap": true
   }
 }

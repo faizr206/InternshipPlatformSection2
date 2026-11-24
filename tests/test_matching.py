@@ -64,7 +64,21 @@ def test_changing_a_skill_changes_the_result():
     before = by_id(recommend(LAYLA, OPPS, SKILLS))["OP-028"]
     after = by_id(recommend(with_jira, OPPS, SKILLS))["OP-028"]
     assert after["score"] > before["score"]
-    assert after["gaps"] == []
+    assert not any("SK-JIRA" in g for g in after["gaps"])
+
+
+def test_self_declared_required_skill_is_an_evidence_gap_rules_v3():
+    # Layla's SQL is self-declared: it still scores, but is listed as needing reviewed evidence
+    op028 = by_id(recommend(LAYLA, OPPS, SKILLS))["OP-028"]
+    assert any("SK-SQL, self-declared" in r for r in op028["reasons"])
+    assert "Required skill SQL is self-declared; reviewed evidence needed (SK-SQL)" in op028["gaps"]
+    reviewed = {**LAYLA, "skills": [{**s, "evidence_status": "reviewed"} if s["skill_id"] == "SK-SQL" else s
+                                    for s in LAYLA["skills"]]}
+    after = by_id(recommend(reviewed, OPPS, SKILLS))["OP-028"]
+    assert not any("SK-SQL" in g for g in after["gaps"])
+    assert after["score"] == op028["score"]  # evidence changes the gap, not the score
+    # desirable skills never create evidence gaps
+    assert not any("SK-VIZ" in g for g in op028["gaps"])
 
 
 @pytest.mark.parametrize("missing", [None, ""])
@@ -108,6 +122,7 @@ def test_mandatory_rule_can_be_switched_off_in_rules_config():
 
 def test_rules_config_separates_mandatory_from_preferences():
     from app.matching import RULES
-    assert RULES["version"] == "rules-v2"
+    assert RULES["version"] == "rules-v3"
     assert set(RULES["mandatory"]) == {"availability_covers_dates"}
     assert set(RULES["weights"]) == {"interest", "required_skill", "desirable_skill"}
+    assert RULES["evidence"] == {"self_declared_required_skill_is_gap": True}

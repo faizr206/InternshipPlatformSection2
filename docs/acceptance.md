@@ -8,14 +8,23 @@ she can withdraw an application and inspect its full history; her Jira gap on OP
 P06 preparation, and reviewed Jira evidence produces a new recommendation tied to the new
 profile version, with the original still traceable.
 
-Automated evidence: `uv run pytest` gives **89 passed** (66 Sprint 1–2 tests kept green, 23
-added in `tests/test_sprint3.py`). One Sprint 2 check changed on purpose: `Offer` is now a
+Automated evidence: `uv run pytest` gives **98 passed** (66 Sprint 1–2 tests kept green, 32
+added: `tests/test_sprint3.py`, `tests/test_p01p03_data.py`, rules-v3 checks). One Sprint 2 check changed on purpose: `Offer` is now a
 valid employer action from `Shortlisted`, and still blocked (409, "never") after `Declined`.
 Live browser walk-through in the main Coop UI (`/`, using **Demo as** to switch roles) on a fresh database: Jira gap → P06 fixture → mark
 done (recommendation unchanged) → offer → accept (Awaiting university confirmation) →
 withdraw APP-0002 (cancel first, record unchanged) → coordinator confirms PL-0001 + H07-0001,
-repeat confirm adds nothing → faculty reviews Jira → profile v2, rematch, OP-028 gap gone
-(score 6 → 8), v1 run kept.
+repeat confirm adds nothing → faculty reviews Jira → new profile version, rematch, OP-028 gap gone,
+earlier run kept.
+
+**Integration with P01–P03 data (24 Nov).** The app now reads the P01–P03 team's export.
+Their built-in test cases pass (`tests/test_p01p03_data.py`): only OP-028/031/034 are listed and
+recommended (OP-036 closed, OP-039 unpublished are excluded and cannot be applied to); Layla is
+read at her latest submitted version (v2); COOP-B004 stays "unknown" with missing interests and
+availability named; supervisor contact stays hidden. In their data Layla holds Jira as
+*self-declared*, so **rules-v3** lists a self-declared required skill as an evidence gap: OP-028
+shows the Jira gap on v2, and the faculty review creates v3 with the gap closed (score unchanged at 8),
+checked in the browser and in `test_jira_story_with_p01_data_gap_prepare_review_rematch`.
 
 | Story | Acceptance check | Result | Evidence |
 |---|---|---|---|
@@ -27,11 +36,11 @@ repeat confirm adds nothing → faculty reviews Jira → profile v2, rematch, OP
 | | AC2 Cancelling leaves the record unchanged; withdrawal after confirmation and other invalid transitions are blocked with an explanation | Met | `test_p04_07_ac2_cancelled_withdrawal_leaves_record_unchanged`, `test_p04_07_ac2_invalid_withdrawals_are_blocked_with_explanation`; Cancel button sends no request |
 | **P05-06** Connect a skill gap to preparation | AC1 A Jira gap passes student ID, skill ID, opportunity/version and recommendation ID to P06; the link shows the activity or a labelled fixture | Met | `test_p05_06_ac1_gap_passes_ids_and_versions_to_p06`; "Prepare →" on each gap opens the P06 fixture activity |
 | | AC2 No module → clear next action; completing a resource never changes the recommendation | Met | `test_p05_06_ac2_no_module_gives_clear_next_action` (Python has no P06 activity), `test_p05_06_ac2_completing_activity_never_changes_the_recommendation` |
-| **P05-07** Rerun matching after a profile change | AC1 Reviewed Jira evidence or changed availability creates a recommendation tied to the new profile version; recorded test shows the expected change | Met | `test_p05_07_ac1_reviewed_jira_evidence_rematches_against_new_version` (gap removed, +2 score under rules-v2), `test_p05_07_ac1_changing_availability_creates_a_new_versioned_run` |
+| **P05-07** Rerun matching after a profile change | AC1 Reviewed Jira evidence or changed availability creates a recommendation tied to the new profile version; recorded test shows the expected change | Met | `test_p05_07_ac1_reviewed_jira_evidence_rematches_against_new_version` (fixture data: Jira missing → gap removed, +2 score; P01 data: self-declared Jira evidence gap removed), `test_p05_07_ac1_changing_availability_creates_a_new_versioned_run` |
 | | AC2 Old recommendations keep their versions and reasons; same input and method versions give the same rules result; AI behaviour documented | Met | `test_p05_07_ac2_old_runs_keep_versions_and_same_inputs_give_same_rules_result`. AI here is deterministic (`ai-termmatch-v1`, `ai-insights-v1`), so it also repeats exactly; a future model-based AI would need its variability recorded |
 
 ### Shared completion checks (Sprint 3)
-- **Simulated, labelled in the UI:** role switching; P01/P03 data (fixtures + revisions);
+- **Simulated, labelled in the UI:** role switching; P01/P03 data (file export from the P01–P03 team + revisions, not a live API);
   P06 activities ("P06 fixture"); P07 receipt ("mock outbox", `receipt_status: mock-received`).
 - **Working:** offers and responses, withdrawal, placement confirmation with a single P07
   handoff, gap handoffs with source versions, profile updates as new versions with rematching.

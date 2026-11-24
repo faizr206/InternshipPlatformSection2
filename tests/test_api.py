@@ -51,7 +51,7 @@ def test_walking_skeleton_thread(client):
     # Layla gets rules-based recommendations
     recs = client.post("/api/students/COOP-B001/recommendations").json()
     op028 = next(r for r in recs if r["opportunity_id"] == "OP-028")
-    assert op028["method_version"] == "rules-v2"
+    assert op028["method_version"] == "rules-v3"
     assert op028["recommendation_id"].startswith("REC-")
     assert any("SK-JIRA" in g for g in op028["gaps"])
 
@@ -142,7 +142,7 @@ def test_missing_required_application_field_is_rejected(client):
 
 def test_rules_endpoint(client):
     rules = client.get("/api/rules").json()
-    assert rules["version"] == "rules-v2" and "mandatory" in rules and "weights" in rules
+    assert rules["version"] == "rules-v3" and "mandatory" in rules and "weights" in rules
 
 
 def test_two_listings_can_be_compared_with_versions_and_requirements(client):
@@ -391,7 +391,7 @@ def test_ai_finds_nothing_when_the_student_has_no_relevant_skills(client):
     assert recs
     assert all(r["ai_matches"] == [] for r in recs)
     assert all(r["ai_method_version"] == "ai-termmatch-v1" for r in recs)  # version still recorded
-    assert all(r["method_version"] == "rules-v2" for r in recs)  # rules baseline still usable
+    assert all(r["method_version"] == "rules-v3" for r in recs)  # rules baseline still usable
 
 
 # ---------------------------------------------------------------- P05-05 corrections

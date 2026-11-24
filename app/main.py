@@ -77,12 +77,14 @@ def get_student(conn, student_id: str) -> dict | None:
     P05 never edits the P01 fixture table; accepted corrections are stored as new
     versions in profile_revisions (P05-05 AC2).
     """
-    row = conn.execute(
-        "SELECT data FROM profile_revisions WHERE student_id = ? ORDER BY profile_version DESC LIMIT 1",
+    rev = conn.execute(
+        "SELECT profile_version, data FROM profile_revisions WHERE student_id = ? "
+        "ORDER BY profile_version DESC LIMIT 1",
         (student_id,),
     ).fetchone()
-    if not row:
-        row = conn.execute("SELECT data FROM students WHERE student_id = ?", (student_id,)).fetchone()
+    base = conn.execute("SELECT profile_version, data FROM students WHERE student_id = ?", (student_id,)).fetchone()
+    # The newer version wins, so a newer P01 export is never hidden by an older local revision.
+    row = rev if rev and (not base or rev["profile_version"] > base["profile_version"]) else base
     return json.loads(row["data"]) if row else None
 
 
@@ -674,18 +676,25 @@ def confirm_placement(application_id: str, body: ConfirmPlacementIn):
         # Fields agreed with P07 at Scrum of Scrums (10 Nov): only university-confirmed
         # placements, with application_id, confirmed_by and confirmed_at; supervisor
         # contact from P03 goes to P07 and is never shown to students.
+        # Names follow P07's requested record (Zhengxi, 10 Nov): placement_id, student_id,
+        # opportunity_id, employer/location/role, period_start/period_end, supervisor,
+        # academic_advisor, status. P04 does not hold the academic advisor, so it is null
+        # until P01 or the coordinator supplies it.
         payload = {
             "placement_id": placement_id,
-            "placement_status": "university_confirmed",
-            "application_id": application_id,
+            "status": "university_confirmed",
             "student_id": row["student_id"],
             "opportunity_id": row["opportunity_id"],
-            "opportunity_version": row["opportunity_version"],
             "employer_name": opp.get("employer_name"),
-            "start_date": opp.get("start_date"),
-            "end_date": opp.get("end_date"),
+            "location": opp.get("location"),
+            "role": opp.get("title"),
+            "period_start": opp.get("start_date"),
+            "period_end": opp.get("end_date"),
             "supervisor_name": opp.get("supervisor_name"),
             "supervisor_contact": opp.get("supervisor_contact"),
+            "academic_advisor": None,
+            "application_id": application_id,
+            "opportunity_version": row["opportunity_version"],
             "confirmed_by": confirmed_by,
             "confirmed_at": ts,
         }
@@ -871,8 +880,15 @@ def gap_dict(conn, row) -> dict:
     d["activity"] = activity
     d["source"] = "P06 fixture (labelled; live P06 module not connected)"
     d["next_action"] = (GAP_EVIDENCE_NOTE if activity else GAP_NO_MODULE_ACTION)
-    d["p06_payload"] = {k: d[k] for k in ("student_id", "skill_id", "opportunity_id",
-                                          "opportunity_version", "recommendation_id", "profile_version")}
+    # P06's requested record (Zhengxi, 10 Nov): gap_id, student_id, skill_id, opportunity_id,
+    # reason; plus the three trace fields we agreed to add.
+    d["p06_payload"] = {
+        "gap_id": d["gap_id"], "student_id": d["student_id"], "skill_id": d["skill_id"],
+        "opportunity_id": d["opportunity_id"],
+        "reason": f"{d['opportunity_id']} requires {d['skill_name']}; not yet demonstrated",
+        "recommendation_id": d["recommendation_id"], "opportunity_version": d["opportunity_version"],
+        "profile_version": d["profile_version"],
+    }
     return d
 
 

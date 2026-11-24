@@ -33,6 +33,13 @@ Stories: Sprint 1 — P05-01, P05-02, P05-03, P04-01, P04-03.
 Sprint 2 — P05-04, P05-05, P04-02, P04-04.
 Sprint 3 — P04-05, P04-06, P04-07, P05-06, P05-07.
 
+## Data from P01–P03
+The app reads the P01–P03 team's export in `app/data/p01p03/` (4 students at their latest
+submitted version, 5 listings incl. a closed one and an unpublished one). Draft profiles are
+ignored. `tests/test_p01p03_data.py` checks the test cases they built in. To use our own
+synthetic set instead: `DATA_SOURCE=fixtures uv run uvicorn app.main:app`. Replacing the files
+with a newer export is enough: records reload on every start (delete `app.db` for a clean demo).
+
 ## Run
 
 Requires [uv](https://docs.astral.sh/uv/).
@@ -51,6 +58,8 @@ API and SQLite. Use **Demo as** in the header to switch between the simulated ro
 Student (Layla), Employer reviewer, University coordinator and Faculty reviewer. The extra
 example roles in Explore (OP-101 to OP-108, e.g. Microsoft, Google) are catalogue samples only:
 they can be browsed and saved, not applied to. The earlier four-role layout is still at `/classic`.
+The robot button opens a placeholder for the **FAQ chatbot, which P06 owns**; it is not
+connected yet and answers nothing (P04/P05 own matching, not the chatbot).
 
 ### Public demo (ngrok)
 
@@ -73,9 +82,10 @@ uv run pytest
 
 | Path | What |
 |---|---|
-| `app/fixtures/*.json` | Synthetic profiles (stand-in for P01), listings incl. descriptions (stand-in for P03), the shared skill vocabulary and the P05 alias map |
-| `app/db.py` | SQLite schema + additive migrations; loads fixtures when the DB is empty/started |
-| `app/matching.py` | Rules baseline engine (`rules-v2`) |
+| `app/data/p01p03/` | **P01 profiles and P03 listings from the P01–P03 team** (file export, 24 Nov), used when the app runs |
+| `app/fixtures/*.json` | Our own synthetic set (6 profiles, 6 listings with built-in test cases) used by the automated tests (`DATA_SOURCE=fixtures`), the shared skill vocabulary and the P05 alias map |
+| `app/db.py` | SQLite schema + additive migrations; reloads P01/P03 records on every start (`DATA_SOURCE`, default `p01p03`) |
+| `app/matching.py` | Rules baseline engine (`rules-v3`) |
 | `app/ai.py` | Bounded AI: skill-term matching (`ai-termmatch-v1`) and recommendation insights (`ai-insights-v1`) |
 | `app/rules.json` | Editable rules: mandatory conditions and preference weights |
 | `docs/data-dictionary.md` | Records, statuses, transitions and API contract (v3) |
@@ -85,7 +95,7 @@ uv run pytest
 | `app/static/student-preview/index.html` | Main UI (`/`): Coop design with a Demo-as role switcher |
 | `app/static/index.html` | Earlier four-role layout (`/classic`) |
 
-## Matching rules (rules-v2)
+## Matching rules (rules-v3)
 - Only `published` + `open` listings can be recommended.
 - **Mandatory:** the student's availability must cover the opportunity dates. Eligibility is
   `eligible` when dates are covered, `ineligible` for a conflict, or `unknown` when any date is
@@ -95,6 +105,9 @@ uv run pytest
 - **Preferences:** a sector in the student's interests adds 3, each required skill held adds 2,
   each desirable skill held adds 1.
 - Missing required skills are listed as **gaps**. Self-declared skills are never labelled as reviewed.
+- **Evidence (new in rules-v3):** a required skill the student holds only as *self-declared* still
+  scores, but is also listed as a gap ("reviewed evidence needed") until a reviewer checks it. This
+  matches P01 and P06 ("not yet demonstrated"): Layla's self-declared Jira is a gap on OP-028 until reviewed.
 
 ## Bounded AI assistance (ai-termmatch-v1)
 - A deterministic, offline skill-term matcher: it finds terms in the listing title/description
@@ -155,8 +168,8 @@ never overwritten). A rematch then stores a new run; earlier runs stay queryable
   transition rules, correction requests with version-traceable rematching, SQLite persistence,
   simulated role enforcement at the API level (403 on the wrong role).
 - **Simulated:** role switching (no login — labelled in the sidebar), employer/coordinator
-  actors, AI assistance (deterministic, labelled). Profiles and listings come from fixtures,
-  not live P01/P03 modules.
+  actors, AI assistance (deterministic, labelled). Profiles and listings come from the
+  P01–P03 team's file export (24 Nov), not a live P01/P03 interface.
 - **Also real (Sprint 3):** offers and responses, withdrawal, placement confirmation with a single
   handoff record, gap handoff records, profile updates as new versions with rematching.
 - **Simulated (Sprint 3):** P06 activities (fixture), P07 receipt (mock outbox).

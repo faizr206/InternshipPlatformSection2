@@ -1,7 +1,10 @@
 # Data dictionary v3 (P04 / P05, Sprint 3)
 
 All records are synthetic. P04 owns applications; P05 owns recommendations. P01 profiles and
-P03 listings are **fixtures** until the interfaces with those teams are agreed.
+P03 listings come from the **P01–P03 team's file export** (`app/data/p01p03/`, received 24 Nov,
+same fields as below; extra `profile_status`: only `submitted` versions are read, the latest per
+student). Our own synthetic set in `app/fixtures/` is used by the automated tests
+(`DATA_SOURCE=fixtures`). Neither is a live interface yet.
 
 Roles are **simulated** in the UI sidebar (Student, Employer reviewer, Coordinator, Faculty
 reviewer). Mutating endpoints take an `actor_role` field and reject other roles with `403`.
@@ -60,7 +63,7 @@ Scrums agreement; this local map is the labelled fallback.
 | run_id | Groups one matching run |
 | student_id, profile_version | Input profile version used |
 | opportunity_id, opportunity_version | Input listing version used |
-| method_version | Rules version from `app/rules.json`, currently `rules-v2` |
+| method_version | Rules version from `app/rules.json`, currently `rules-v3` (adds evidence gaps: a required skill held only as `self_declared` is listed in `gaps` as "reviewed evidence needed"; the score is unchanged) |
 | eligibility | `eligible`, `unknown` (needs checking), `ineligible` (mandatory conflict) |
 | compatible | true only when eligibility is `eligible` |
 | score | Preference score |
@@ -124,17 +127,19 @@ neither a second placement nor a second handoff (P04-06 AC2).
 
 ## P07 handoff (owner: P04; table `p07_handoffs`, mock outbox)
 One row per placement (`placement_id` unique): `handoff_id` (`H07-0001`), `sent_at`,
-`receipt_status` (`mock-received` until P07 is live) and `payload`:
-`{placement_id, placement_status: "university_confirmed", application_id, student_id,
-opportunity_id, opportunity_version, employer_name, start_date, end_date, supervisor_name,
-supervisor_contact, confirmed_by, confirmed_at}` — fields agreed with P07 at Scrum of Scrums
-(10 Nov). Supervisor contact goes to P07 only, never to the student.
+`receipt_status` (`mock-received` until P07 is live) and `payload`, named as P07 requested
+(Zhengxi, 10 Nov): `{placement_id, status: "university_confirmed", student_id, opportunity_id,
+employer_name, location, role, period_start, period_end, supervisor_name, supervisor_contact,
+academic_advisor}` plus the fields we agreed to add: `application_id, opportunity_version,
+confirmed_by, confirmed_at`. `academic_advisor` is null: P04 does not hold it (source to agree
+with P01 / the coordinator). Supervisor contact goes to P07 only, never to the student.
 
 ## Skill gap handoff (owner: P05; table `skill_gap_handoffs`)
 | Field | Meaning |
 |---|---|
 | gap_id | `GAP-0001`, … (unique per recommendation + skill) |
-| student_id, skill_id, opportunity_id, opportunity_version, recommendation_id, profile_version | Payload passed to P06 (P05-06 AC1; `profile_version` and `recommendation_id` were requested at SoS) |
+| student_id, skill_id, opportunity_id, opportunity_version, recommendation_id, profile_version | Stored source IDs and versions (P05-06 AC1) |
+| p06_payload (API) | What P06 receives, named as P06 requested (10 Nov): `gap_id, student_id, skill_id, opportunity_id, reason` (e.g. "OP-028 requires Jira; not yet demonstrated") plus the trace fields we added: `recommendation_id, opportunity_version, profile_version` |
 | activity_id | P06 activity from `app/fixtures/p06_activities.json` (labelled fixture), or null when none exists — the student then sees a clear next action |
 | created_at, completed_at | Completing an activity is recorded but **never** changes a recommendation or marks the skill reviewed (P05-06 AC2) |
 
