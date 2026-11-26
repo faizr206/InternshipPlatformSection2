@@ -15,6 +15,11 @@ calls instead of file exports.
 
 All people, opportunities and records are synthetic. Roles are simulated: there is no login.
 
+## Working on this repo
+
+- **[AGENTS.md](AGENTS.md)**: layout, commands and the rules every change must follow (for teammates and AI agents).
+- **[docs/PLAN.md](docs/PLAN.md)**: the integration plan, what is finished and the open tasks per team. Pick a task there.
+
 ## Run
 
 Requires [uv](https://docs.astral.sh/uv/) and Node 22.
@@ -58,6 +63,9 @@ CI runs both on every push and pull request.
 
 ## Integration status
 
+Details and open tasks: [docs/PLAN.md](docs/PLAN.md).
+
+
 | Step | Status |
 |---|---|
 | 1. Repo bootstrap: team histories, CI, CODEOWNERS | Done |
@@ -65,6 +73,6 @@ CI runs both on every push and pull request.
 | 3. P01–P03 rules ported to the backend (profiles, submission, review, publish, close) | Done |
 | 4. P06/P07 rules ported to the backend | Planned |
 | 5. Live handoffs + one co-op assistant | Planned |
-| 6. Frontend shell + design system | Planned |
+| 6. Frontend shell + design system (mock API) | Done |
 | 7. Frontend screens per module | Planned |
 | 8. End-to-end tests, demo script, data dictionary v4 | Planned |
