@@ -44,7 +44,7 @@ P06/P07 were browser-only apps (localStorage) and handoffs were JSON files and m
 | 2 | Backend core + P04/P05 moved into modules (108 tests) | ✅ Done | Faiz |
 | 3 | P01–P03 ported: profiles, submission, review, publish, close (37 tests) | ✅ Done | Faiz |
 | 4 | P06/P07 ported to the backend + demo scenarios (22 + 7 tests) | ✅ Done | Faiz |
-| 5 | Live handoffs ✅ · one co-op assistant ⬜ | 🟡 In progress | |
+| 5 | Live handoffs + one co-op assistant + home endpoints (33 tests) | ✅ Done | Faiz |
 | 6 | Frontend shell + design system (mock API, 22 tests) | ✅ Done | Faiz |
 | 7 | Frontend screens per module | ⬜ Not started | |
 | 8 | End-to-end tests, demo script, data dictionary v4, deploy | ⬜ Not started | |
@@ -105,10 +105,10 @@ use snake_case, and store records in new tables in `backend/app/db.py`.
 | ✅ **P04 → P07:** confirming a placement creates the P07 placement once (idempotent); replaces the mock outbox but keeps `p07_handoffs` as the record | `applications/router.py` `confirm_placement`; `importPlacements` `app.js:423-442` | |
 | ✅ **P06 → P07:** readiness summary shown in P07 progress | `readinessPayload` `app.js:1071` | |
 | ✅ `GET /api/handoffs` + JSON export of every handoff record (Records page) | | |
-| ⬜ **Assistant** (`modules/assistant/`, P06-owned): port the retrieval engine (IDF ranking, threshold 0.45, privacy + sensitive-topic guards) to Python | `ai_engine.js`, `ai_data.js` | |
-| ⬜ Merge FAQ corpora: waypoint 12 entries + P01–P03 `data/faq.txt` 8 entries, de-duplicated, source noted | `legacy/p01-p03-ipp/data/faq.txt` | |
-| ⬜ Coordinator loop: unanswered questions → write answer (pending) → approve → used | `legacy/p01-p03-ipp/src/faq.js:285-443` | |
-| ⬜ Optional LLM via OpenRouter when `OPENROUTER_API_KEY` is in `.env` (strict JSON, cited FAQ IDs only); otherwise retrieval-only | `legacy/p06-p07-waypoint/source/server.py` | |
+| ✅ **Assistant** (`modules/assistant/`, P06-owned): port the retrieval engine (IDF ranking, threshold 0.45, privacy + sensitive-topic guards) to Python | `ai_engine.js`, `ai_data.js` | |
+| ✅ Merge FAQ corpora: waypoint 12 entries + P01–P03 `data/faq.txt` 8 entries, de-duplicated, source noted | `legacy/p01-p03-ipp/data/faq.txt` | |
+| ✅ Coordinator loop: unanswered questions → write answer (pending) → approve → used | `legacy/p01-p03-ipp/src/faq.js:285-443` | |
+| ✅ Optional LLM via OpenRouter when `OPENROUTER_API_KEY` is in `.env` (strict JSON, cited FAQ IDs only); otherwise retrieval-only | `legacy/p06-p07-waypoint/source/server.py` | |
 | ✅ `tests/integration/test_layla_journey.py`: the whole target demo above, plus negatives (closed listing, duplicate application, unconfirmed placement, gap for a skill without a module, stale profile version) | | |
 
 ## Step 7: frontend screens (each team builds its own pages)
@@ -118,11 +118,11 @@ The shell, nav, role switcher, Home and assistant drawer exist. Pages are placeh
 hooks in `src/api/`, and extend the mock handlers until the endpoint exists.
 
 **Endpoints the shell already calls but the backend doesn't have yet** (shared, do first):
-- [ ] `GET /api/home/journey/{student_id}`: 7 stages P01→P07 for the tracker
-- [ ] `GET /api/home/todos?role=&student_id=`: per-role to-do list
-- [ ] `GET /api/home/counts?role=&student_id=`: sidebar badges
-- [ ] `GET /api/events?student_id=`: filter the feed by student (today only `limit` and `module`)
-- [x] `/api/demo/*` (settings, today, reset) · - [ ] `POST /api/assistant/ask` (step 5)
+- [x] `GET /api/home/journey/{student_id}`: 7 stages P01→P07 for the tracker
+- [x] `GET /api/home/todos?role=&student_id=`: per-role to-do list
+- [x] `GET /api/home/counts?role=&student_id=`: sidebar badges
+- [x] `GET /api/events?student_id=`: filter the feed by student
+- [x] `/api/demo/*` (settings, today, reset) and `POST /api/assistant/ask`
 
 | Team | Pages | Owner |
 |---|---|---|
@@ -154,4 +154,6 @@ hooks in `src/api/`, and extend the mock handlers until the endpoint exists.
 - Who is the tiebreaker for shared changes to `core/`, `db.py` and `tokens.css`? (proposal: one rep per team must approve)
 - Keep the P04/P05 live job feeds (Remotive, Arbeitnow, Remote OK, Jobicy) in the integrated demo, or behind a toggle?
 - Botpress chatbot: dropped in favour of the merged assistant. Confirm with P01–P03.
+- Assistant: P01–P03's approved answers on remote work and working abroad (FAQ-13, FAQ-14) now answer those
+  questions, so they are no longer handed to the coordinator as waypoint did. Confirm both teams agree.
 - Final hosting: ngrok from one laptop, or a free host (Render/Fly) for the presentation?

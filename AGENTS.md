@@ -12,8 +12,8 @@ One integrated app for the BUS2010 Internship Practicum Platform, merging three 
 |---|---|---|
 | P01–P03 | Student profiles · employer submission · university review/publication | `profiles`, `submissions`, `review` |
 | P04/P05 | Discovery and application tracking · AI-assisted matching | `applications`, `matching` |
-| P06/P07 | Internship preparation (LMS) · co-op learning progress · co-op assistant | `preparation`, `progress` (`assistant` still to port) |
-| Shared | Demo date, scenarios, people, handoff records | `demo` |
+| P06/P07 | Internship preparation (LMS) · co-op learning progress · co-op assistant | `preparation`, `progress`, `assistant` |
+| Shared | Demo date, scenarios, people, handoff records · home journey/to-dos | `demo`, `home` |
 
 The demo thread: Layla Hassan (`COOP-B001`) and the Emirates Group listing `OP-028`. All records are
 **synthetic**; roles are **simulated** (no login).
@@ -86,7 +86,7 @@ one is a bug even if tests pass.
     every page shows its owner chip (`P01`…`P07`); the synthetic-data banner stays on every page;
     keep text contrast WCAG AA (gold is never text on white: use `text-gold-ink`).
 11. **No secrets in git.** `.env` is ignored; commit only `.env.example`. The optional OpenRouter key
-    for the assistant goes in `.env`.
+    for the assistant goes in `backend/.env` (see `backend/.env.example`). Tests must never call the real model.
 
 ## Gotchas
 

@@ -11,8 +11,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app import db
+from app.core.common import get_student
 from app.modules.applications.router import router as applications_router
+from app.modules.assistant.router import router as assistant_router
 from app.modules.demo.router import router as demo_router
+from app.modules.home.router import router as home_router
 from app.modules.matching.router import router as matching_router
 from app.modules.preparation.router import router as preparation_router
 from app.modules.profiles.router import router as profiles_router
@@ -39,15 +42,31 @@ app.include_router(matching_router)
 app.include_router(preparation_router)
 app.include_router(progress_router)
 app.include_router(demo_router)
+app.include_router(assistant_router)
+app.include_router(home_router)
 
 
 @app.get("/api/events")
-def list_events(limit: int = 60, module: str = ""):
-    """Platform activity feed, newest first (every module logs who did what to which record)."""
+def list_events(limit: int = 60, module: str = "", student_id: str = ""):
+    """Platform activity feed, newest first (every module logs who did what to which record).
+
+    `student_id` keeps events about that student: actions they took, or records that name them.
+    `id`, `actor`, `role` and `owner` repeat event_id, actor_name, actor_role and module for the frontend."""
+    clauses, params = [], []
+    if module:
+        clauses.append("module = ?")
+        params.append(module)
     with db.connect() as conn:
-        query = "SELECT * FROM events" + (" WHERE module = ?" if module else "") + " ORDER BY event_id DESC LIMIT ?"
-        rows = conn.execute(query, ((module,) if module else ()) + (max(1, min(limit, 500)),)).fetchall()
-    return [dict(r) for r in rows]
+        if student_id:
+            student = get_student(conn, student_id)
+            name = student["display_name"] if student else student_id
+            clauses.append("(ref = ? OR actor_name = ? OR text LIKE ?)")
+            params += [student_id, name, f"%{name}%"]
+        query = "SELECT * FROM events" + (" WHERE " + " AND ".join(clauses) if clauses else "") + \
+                " ORDER BY event_id DESC LIMIT ?"
+        rows = conn.execute(query, params + [max(1, min(limit, 500))]).fetchall()
+    return [{**dict(r), "id": str(r["event_id"]), "actor": r["actor_name"], "role": r["actor_role"],
+             "owner": r["module"], "student_id": student_id or None} for r in rows]
 
 
 @app.get("/api/health", include_in_schema=False)

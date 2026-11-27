@@ -72,7 +72,7 @@ Details and open tasks: [docs/PLAN.md](docs/PLAN.md).
 | 2. Backend core + P04/P05 moved into modules | Done |
 | 3. P01–P03 rules ported to the backend (profiles, submission, review, publish, close) | Done |
 | 4. P06/P07 rules ported to the backend + demo scenarios | Done |
-| 5. Live handoffs (done) + one co-op assistant | In progress |
+| 5. Live handoffs + one co-op assistant + home endpoints | Done |
 | 6. Frontend shell + design system (mock API) | Done |
 | 7. Frontend screens per module | Planned |
 | 8. End-to-end tests, demo script, data dictionary v4 | Planned |

@@ -18,7 +18,7 @@ ACTIVITY_TABLES = (
     "listing_versions", "listing_decisions", "profile_drafts", "profile_reviews", "handoffs",
     "prep_gaps", "prep_resources", "prep_boards", "prep_submissions", "p07_placements", "p07_agreements",
     "p07_logs", "p07_evidence", "p07_judgements", "p07_milestones", "p07_actions", "p07_final_reviews",
-    "demo_settings",
+    "assistant_entries", "assistant_questions", "demo_settings",
 )
 
 

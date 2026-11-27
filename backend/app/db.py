@@ -305,6 +305,34 @@ CREATE TABLE IF NOT EXISTS p07_final_reviews (
     employer TEXT,
     advisor TEXT
 );
+-- Co-op assistant (P06): coordinator-written entries and questions handed to the coordinator.
+CREATE TABLE IF NOT EXISTS assistant_entries (
+    faq_id TEXT PRIMARY KEY,
+    topic TEXT NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'approved')),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    approved_by TEXT,
+    approved_at TEXT,
+    from_question TEXT
+);
+CREATE TABLE IF NOT EXISTS assistant_questions (
+    question_id TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    normalized TEXT NOT NULL,
+    asked_by_role TEXT NOT NULL,
+    student_id TEXT,
+    reason TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    first_asked_at TEXT NOT NULL,
+    last_asked_at TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('open', 'answered', 'dismissed')),
+    reply TEXT,
+    replied_by TEXT,
+    replied_at TEXT
+);
 """
 
 
