@@ -46,7 +46,7 @@ P06/P07 were browser-only apps (localStorage) and handoffs were JSON files and m
 | 4 | P06/P07 ported to the backend + demo scenarios (22 + 7 tests) | ✅ Done | Faiz |
 | 5 | Live handoffs + one co-op assistant + home endpoints (33 tests) | ✅ Done | Faiz |
 | 6 | Frontend shell + design system (mock API, 22 tests) | ✅ Done | Faiz |
-| 7 | Frontend screens per module | ⬜ Not started | |
+| 7 | Frontend screens per module (first version of every page, real API) | 🟡 First pass done | Faiz |
 | 8 | End-to-end tests, demo script, data dictionary v4, deploy | ⬜ Not started | |
 
 Steps 4, 5 (backend) and 7 (frontend) can run in parallel per team. Step 7 pages can start on the
@@ -113,9 +113,15 @@ use snake_case, and store records in new tables in `backend/app/db.py`.
 
 ## Step 7: frontend screens (each team builds its own pages)
 
-The shell, nav, role switcher, Home and assistant drawer exist. Pages are placeholders in
-`frontend/src/pages/ModulePage.tsx`. Add real pages under `frontend/src/pages/<module>/`, add types and
-hooks in `src/api/`, and extend the mock handlers until the endpoint exists.
+First pass done 27 Nov: every nav item has a working page on the real backend in `frontend/src/pages/modules/`
+(API calls in `src/api/modules.ts`, shared pieces in `src/components/kit.tsx`). Each team should now **own and
+polish its pages**: review the flows with their own users, improve copy and layout, and add component tests.
+
+Open follow-ups for every team:
+- [ ] Component tests per page (today only the shell is tested; API behaviour is covered by backend tests)
+- [ ] Use `GET /api/people` for persona names in `src/lib/personas.ts` (still the old placeholder names)
+- [ ] Code-split pages (`React.lazy`) — the bundle is ~600 kB
+- [ ] Click-through check of every role at 375px width
 
 **Endpoints the shell already calls but the backend doesn't have yet** (shared, do first):
 - [x] `GET /api/home/journey/{student_id}`: 7 stages P01→P07 for the tracker
@@ -126,15 +132,16 @@ hooks in `src/api/`, and extend the mock handlers until the endpoint exists.
 
 | Team | Pages | Owner |
 |---|---|---|
-| P01–P03 | ⬜ Student profile editor with version history and evidence badges · ⬜ Coordinator profile review · ⬜ Employer opportunity form with live preview, versions, returned reason · ⬜ Coordinator review queue with checklist, publish, close | |
-| P04/P05 | ⬜ Explore catalogue + filters · ⬜ Recommendation cards (rules score, AI ring, why/gaps/unknowns, AI panel; see `legacy/p04-p05-coop/artifacts/Sprint 2 - AI assistant.png`) · ⬜ Apply dialog with AI draft · ⬜ Application tracker + timeline · ⬜ Employer applicant queue (decisions, interview, offer) · ⬜ Coordinator: placement confirmation, corrections | |
-| P06 | ⬜ Preparation plan · ⬜ Jira module + practice board · ⬜ Evidence submission · ⬜ Reviewer queue with checklist · ⬜ Coordinator gaps | |
-| P07 | ⬜ Placement + advisor assignment · ⬜ Learning agreement + sign-off · ⬜ Logbook (student / supervisor) · ⬜ Progress, judgements, actions · ⬜ Final review | |
-| Shared | ⬜ Records page (handoffs + events, JSON export) · ⬜ Assistant drawer on the real API · ⬜ Coordinator FAQ approvals | |
+| P01–P03 | ✅ Student profile editor with version history and evidence badges · ✅ Coordinator profile review · ✅ Employer opportunity form with live preview, versions, returned reason · ✅ Coordinator review queue with checklist, publish, close | |
+| P04/P05 | ✅ Explore catalogue + filters · ✅ Recommendation cards (rules score, AI ring, why/gaps/unknowns, AI panel; see `legacy/p04-p05-coop/artifacts/Sprint 2 - AI assistant.png`) · ✅ Apply dialog with AI draft · ✅ Application tracker + timeline · ✅ Employer applicant queue (decisions, interview, offer) · ✅ Coordinator: placement confirmation, corrections | |
+| P06 | ✅ Preparation plan · ✅ Jira module + practice board · ✅ Evidence submission · ✅ Reviewer queue with checklist · ✅ Coordinator gaps | |
+| P07 | ✅ Placement + advisor assignment · ✅ Learning agreement + sign-off · ✅ Logbook (student / supervisor) · ✅ Progress, judgements, actions · ✅ Final review | |
+| Shared | ✅ Records page (handoffs + events, JSON export) · ✅ Assistant drawer on the real API · ✅ Coordinator FAQ approvals | |
 
 ## Step 8: finish
 
-- [ ] Playwright e2e for the target demo (both Sprint 3 journeys + P01–P03 + P06/P07), run in CI
+- [ ] Playwright e2e for the target demo (both Sprint 3 journeys + P01–P03 + P06/P07), run in CI. The API-level
+  version already exists: `backend/tests/integration/test_layla_journey.py`
 - [ ] `docs/demo-script.md`: click-by-click script for the final presentation
 - [ ] `docs/data-dictionary.md` v4: one dictionary for all modules (start from `legacy/p04-p05-coop/docs/data-dictionary.md`)
 - [ ] `scripts/demo.sh`: build frontend → uvicorn serves it → ngrok (adapt `legacy/p04-p05-coop/scripts/demo.sh`)

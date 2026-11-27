@@ -42,4 +42,6 @@ export function useSetToday() {
 }
 
 export const useAskAssistant = () =>
-  useMutation({ mutationFn: (v: { question: string; role: string }) => api.askAssistant(v.question, v.role) });
+  useMutation({
+    mutationFn: (v: { question: string; role: string; student_id?: string }) => api.askAssistant(v.question, v.role, v.student_id),
+  });

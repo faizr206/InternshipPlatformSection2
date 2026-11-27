@@ -30,7 +30,9 @@ backend/            FastAPI + SQLite (Python ≥3.12, uv)
   app/seed/         seed data: p01p03/ (P01–P03 export), p06/, fixtures/ (test set)
   tests/            pytest, one file per module/story group
 frontend/           React 18 + Vite + TS + Tailwind v4 + TanStack Query (see frontend/README.md)
-  src/api/          typed client; src/mocks/ is an in-memory API used while endpoints are missing
+  src/api/          typed client (modules.ts = every backend endpoint); src/mocks/ = in-memory API for unit tests
+  src/pages/modules one page per nav item (ProfilePage, OpportunitiesPage, … RecordsPage), role-aware
+  src/components/kit.tsx  shared page pieces: useAction (toast + refetch all), Section, Field, StatusBadge, Timeline
   src/lib/nav.ts    nav items, owner chips, which roles see what
   src/styles/tokens.css   the ONLY place colours/fonts are defined (Coop blue palette)
 legacy/             the 3 original repos with full git history. READ-ONLY reference for porting.
@@ -43,8 +45,8 @@ docs/PLAN.md        roadmap, status and open tasks
 scripts/dev.sh                       # backend :8000 + frontend :5173 (add --reset for fresh data)
 cd backend && uv sync && uv run pytest
 cd backend && uv run uvicorn app.main:app --reload     # API docs at http://127.0.0.1:8000/docs
-cd frontend && npm install && npm run dev               # mock API by default
-cd frontend && VITE_USE_MOCKS=false npm run dev         # use the real backend
+cd frontend && npm install && npm run dev               # real backend via the /api proxy (start it first)
+cd frontend && VITE_USE_MOCKS=true npm run dev          # in-memory mock API, no backend
 cd frontend && npm run typecheck && npm test && npm run build
 ```
 
@@ -82,7 +84,8 @@ one is a bug even if tests pass.
    eligibility, score, gaps or unknowns, and never invents qualifications. Label it in the UI.
 9. **One test per acceptance criterion**, named after the story where possible
    (`test_p04_06_ac2_repeat_confirmation_is_idempotent`). Keep all existing tests green.
-10. **Frontend:** colours and fonts only from `tokens.css` utilities (`bg-navy`, `text-muted`, …);
+10. **Frontend:** every mutation goes through `useAction()` from `components/kit.tsx` (it refetches all queries,
+    because one module's action can change another's records). Colours and fonts only from `tokens.css` utilities (`bg-navy`, `text-muted`, …);
     every page shows its owner chip (`P01`…`P07`); the synthetic-data banner stays on every page;
     keep text contrast WCAG AA (gold is never text on white: use `text-gold-ink`).
 11. **No secrets in git.** `.env` is ignored; commit only `.env.example`. The optional OpenRouter key

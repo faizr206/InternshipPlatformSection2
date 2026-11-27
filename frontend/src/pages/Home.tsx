@@ -225,7 +225,13 @@ function EventList({ events }: { events?: ActivityEvent[] }) {
           <Avatar name={e.actor} />
           <div className="min-w-0 flex-1 text-[13px]">
             <p className="leading-5">
-              <span className="font-semibold">{e.actor}</span> <span className="text-ink/85">{e.action}</span>
+              {e.text ? (
+                <span className="text-ink/90">{e.text}</span>
+              ) : (
+                <>
+                  <span className="font-semibold">{e.actor}</span> <span className="text-ink/85">{e.action}</span>
+                </>
+              )}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11.5px] text-muted">
               <OwnerChip owner={e.owner} />

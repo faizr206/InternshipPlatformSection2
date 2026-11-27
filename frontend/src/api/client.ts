@@ -1,7 +1,7 @@
 import { mockFetch } from "@/mocks/handlers";
 
-/** Mocks are on unless VITE_USE_MOCKS is explicitly "false". */
-export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== "false";
+/** The real FastAPI backend by default. Unit tests (and VITE_USE_MOCKS=true) use the in-memory mock API. */
+export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true" || import.meta.env.MODE === "test";
 
 export class ApiError extends Error {
   constructor(
@@ -47,7 +47,15 @@ export async function request<T>(path: string, opts: RequestOptions = {}): Promi
   const data = text ? JSON.parse(text) : undefined;
   if (!res.ok) {
     const detail = (data as { detail?: unknown } | undefined)?.detail;
-    throw new ApiError(res.status, typeof detail === "string" ? detail : res.statusText, data);
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail && typeof detail === "object" && "message" in detail
+          ? [String((detail as { message: unknown }).message), ...Object.values((detail as { errors?: Record<string, string> }).errors ?? {})].join(" ")
+          : Array.isArray(detail)
+            ? detail.map((d: { msg?: string; loc?: unknown[] }) => `${(d.loc ?? []).slice(-1)[0] ?? "field"}: ${d.msg}`).join("; ")
+            : res.statusText;
+    throw new ApiError(res.status, message, data);
   }
   return data as T;
 }
