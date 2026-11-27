@@ -12,8 +12,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app import db
 from app.modules.applications.router import router as applications_router
+from app.modules.demo.router import router as demo_router
 from app.modules.matching.router import router as matching_router
+from app.modules.preparation.router import router as preparation_router
 from app.modules.profiles.router import router as profiles_router
+from app.modules.progress.router import router as progress_router
 from app.modules.review.router import router as review_router
 from app.modules.submissions.router import router as submissions_router
 
@@ -33,6 +36,9 @@ app.include_router(submissions_router)
 app.include_router(review_router)
 app.include_router(applications_router)
 app.include_router(matching_router)
+app.include_router(preparation_router)
+app.include_router(progress_router)
+app.include_router(demo_router)
 
 
 @app.get("/api/events")

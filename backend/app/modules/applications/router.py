@@ -10,10 +10,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app import db
-from app.core.common import (all_opportunities, get_opportunity, get_student, now, require_role,
+from app.core.common import (all_opportunities, get_opportunity, get_student, next_id, now, record_handoff,
+                             require_role,
                              student_and_opportunity as _student_and_opportunity, student_view)
 from app.modules.applications import live_jobs
 from app.modules.matching.matching import is_eligible_listing
+from app.modules.progress import service as p07
 
 router = APIRouter(tags=["P04 applications"])
 
@@ -507,7 +509,9 @@ def confirm_placement(application_id: str, body: ConfirmPlacementIn):
                                      f"(this application is {row['application_status']}).")
         opp = get_opportunity(conn, row["opportunity_id"]) or {}
         count = conn.execute("SELECT COUNT(*) FROM placements").fetchone()[0]
-        placement_id = f"PL-{count + 1:04d}"
+        # PL ids are shared with placements P07 received by file import, so take the next free one in both.
+        placement_id = next_id(conn, "PL", ["SELECT placement_id FROM placements",
+                                            "SELECT placement_id FROM p07_placements"], 4)
         confirmed_by = (body.actor_name or "COORD-01 (simulated coordinator)").strip()
         ts = now()
         conn.execute(
@@ -541,11 +545,17 @@ def confirm_placement(application_id: str, body: ConfirmPlacementIn):
             "confirmed_by": confirmed_by,
             "confirmed_at": ts,
         }
+        # Live P04 -> P07 handoff: P07 checks and stores the placement in this transaction. The
+        # p07_handoffs row stays as the agreed record of what was sent, with P07's receipt result.
+        outcome, why = p07.receive_placement(conn, payload, confirmed_by)
         conn.execute(
             "INSERT INTO p07_handoffs (handoff_id, placement_id, payload, sent_at, receipt_status) "
-            "VALUES (?,?,?,?, 'mock-received')",
-            (f"H07-{count + 1:04d}", placement_id, json.dumps(payload), ts),
+            "VALUES (?,?,?,?,?)",
+            (f"H07-{count + 1:04d}", placement_id, json.dumps(payload), ts,
+             "received" if outcome == "added" else f"{outcome}: {why}"),
         )
+        record_handoff(conn, "P04", "P07", "confirmed_placement", payload, row["student_id"], placement_id,
+                       "delivered" if outcome == "added" else outcome)
         _set_status(conn, application_id, "Offer accepted", PLACEMENT_CONFIRMED)
         _add_event(conn, application_id, "Placement confirmed", "coordinator", confirmed_by, None, ts)
         placement = conn.execute("SELECT * FROM placements WHERE placement_id = ?", (placement_id,)).fetchone()

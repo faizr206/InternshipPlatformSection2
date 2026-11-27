@@ -6,7 +6,7 @@ live handoffs between modules. Rules for how to work are in [`../AGENTS.md`](../
 **How to use this file:** pick an unchecked task, write your name in the `Owner` column (or after the
 task) in the same PR, tick it when merged. Keep it short; details go in the PR.
 
-_Last updated: 26 Nov 2026._
+_Last updated: 27 Nov 2026._
 
 ## Why
 
@@ -43,8 +43,8 @@ P06/P07 were browser-only apps (localStorage) and handoffs were JSON files and m
 | 1 | Repo bootstrap: team histories, CI, CODEOWNERS | ✅ Done | Faiz |
 | 2 | Backend core + P04/P05 moved into modules (108 tests) | ✅ Done | Faiz |
 | 3 | P01–P03 ported: profiles, submission, review, publish, close (37 tests) | ✅ Done | Faiz |
-| 4 | P06/P07 ported to the backend | ⬜ Not started | |
-| 5 | Live handoffs + one co-op assistant | ⬜ Not started | |
+| 4 | P06/P07 ported to the backend + demo scenarios (22 + 7 tests) | ✅ Done | Faiz |
+| 5 | Live handoffs ✅ · one co-op assistant ⬜ | 🟡 In progress | |
 | 6 | Frontend shell + design system (mock API, 22 tests) | ✅ Done | Faiz |
 | 7 | Frontend screens per module | ⬜ Not started | |
 | 8 | End-to-end tests, demo script, data dictionary v4, deploy | ⬜ Not started | |
@@ -54,7 +54,13 @@ mock API (`src/mocks/handlers.ts`) and switch to the real endpoints when they la
 
 ---
 
-## Step 4: P06/P07 backend (Team P6/P7)
+## Step 4: P06/P07 backend (Team P6/P7) ✅
+
+Done 27 Nov: `backend/app/modules/preparation`, `progress`, `demo` (scenarios are built through the real
+endpoints, so loading one is also a regression test). API: `/api/p06/*`, `/api/p07/*`, `/api/demo/*`,
+`/api/people`, `/api/handoffs`. Tests: `tests/test_p06_preparation.py`, `tests/test_p07_progress.py`,
+`tests/integration/test_layla_journey.py`. Remaining follow-up: frontend personas use different names than
+the agreed demo people. Switch `frontend/src/lib/personas.ts` to `GET /api/people`.
 
 Source: `legacy/p06-p07-waypoint/source/src/` (`app.js`, `data.js`, `ai_engine.js`, `ai_data.js`).
 Waypoint keeps everything in one localStorage object and hard-codes COOP-B001: generalise to `student_id`,
@@ -63,47 +69,47 @@ use snake_case, and store records in new tables in `backend/app/db.py`.
 ### P06 preparation (`backend/app/modules/preparation/`)
 | Task | Source | Owner |
 |---|---|---|
-| ⬜ Module catalogue: MOD-JIRA-101 full (outcome, resource, practice task, checklist); SQL and VIZ outlines. Seed in `app/seed/p06/` | `data.js:17-57` | |
-| ⬜ Preparation plan per student: list of gaps (source P05 / manual / match), open/closed | `data.js:124-137`, `pagePlan` `app.js:193` | |
-| ⬜ Mark resource done. **Never** marks the skill demonstrated (P06 AC2) | `app.js:1087` | |
-| ⬜ Jira practice board: add item (≥8 chars), move with owner + reason (≥3 words) | `app.js:1137-1140` | |
-| ⬜ Evidence submission (≥25 words), versioned snapshots | `app.js:1142` | |
-| ⬜ Reviewer decision: demonstrated (all checklist items ticked) / revision / not_yet (comment required) | `app.js:1149` | |
-| ⬜ Coordinator manual gap; duplicate open gap for same skill blocked | `app.js:1159` | |
-| ⬜ Tests: port `source/tests/acceptance_test.py` P06-AC1..4, P06-X, P06-EXC as API tests | | |
+| ✅ Module catalogue: MOD-JIRA-101 full (outcome, resource, practice task, checklist); SQL and VIZ outlines. Seed in `app/seed/p06/` | `data.js:17-57` | |
+| ✅ Preparation plan per student: list of gaps (source P05 / manual / match), open/closed | `data.js:124-137`, `pagePlan` `app.js:193` | |
+| ✅ Mark resource done. **Never** marks the skill demonstrated (P06 AC2) | `app.js:1087` | |
+| ✅ Jira practice board: add item (≥8 chars), move with owner + reason (≥3 words) | `app.js:1137-1140` | |
+| ✅ Evidence submission (≥25 words), versioned snapshots | `app.js:1142` | |
+| ✅ Reviewer decision: demonstrated (all checklist items ticked) / revision / not_yet (comment required) | `app.js:1149` | |
+| ✅ Coordinator manual gap; duplicate open gap for same skill blocked | `app.js:1159` | |
+| ✅ Tests: port `source/tests/acceptance_test.py` P06-AC1..4, P06-X, P06-EXC as API tests | | |
 
 ### P07 co-op progress (`backend/app/modules/progress/`)
 | Task | Source | Owner |
 |---|---|---|
-| ⬜ Placement record (from P04 confirmation), assign academic advisor (coordinator) | `placementFromP04` `data.js:101-111`, `app.js:1217` | |
-| ⬜ Learning agreement: 3 goals → outcomes LO1–LO4; student/supervisor/advisor sign-off, locks when all signed; advisor can't sign before assignment | `app.js:513`, `app.js:1097` | |
-| ⬜ Logbook: submit (≥8 words, evidence refs), supervisor acknowledge / request detail, student revise (text must change), history kept | `app.js:540`, `1169-1180` | |
-| ⬜ Milestones (supervisor ticks) | `app.js:1129` | |
-| ⬜ Outcome judgements (evidence required unless level "none"); missing evidence shown | `app.js:582`, `1184` | |
-| ⬜ Actions with owner, due date, closure evidence; overdue uses the demo date | `app.js:1187-1191` | |
-| ⬜ Employer feedback (≥10 words) separate from advisor final review; no "achieved" without in-period or P06 evidence | `app.js:628`, `1194-1196` | |
-| ⬜ Tests: port acceptance P07-AC1..4, P07-X, P07-EXC | | |
+| ✅ Placement record (from P04 confirmation), assign academic advisor (coordinator) | `placementFromP04` `data.js:101-111`, `app.js:1217` | |
+| ✅ Learning agreement: 3 goals → outcomes LO1–LO4; student/supervisor/advisor sign-off, locks when all signed; advisor can't sign before assignment | `app.js:513`, `app.js:1097` | |
+| ✅ Logbook: submit (≥8 words, evidence refs), supervisor acknowledge / request detail, student revise (text must change), history kept | `app.js:540`, `1169-1180` | |
+| ✅ Milestones (supervisor ticks) | `app.js:1129` | |
+| ✅ Outcome judgements (evidence required unless level "none"); missing evidence shown | `app.js:582`, `1184` | |
+| ✅ Actions with owner, due date, closure evidence; overdue uses the demo date | `app.js:1187-1191` | |
+| ✅ Employer feedback (≥10 words) separate from advisor final review; no "achieved" without in-period or P06 evidence | `app.js:628`, `1194-1196` | |
+| ✅ Tests: port acceptance P07-AC1..4, P07-X, P07-EXC | | |
 
 ### Demo scenarios and clock (`backend/app/modules/demo/`, shared)
 | Task | Source | Owner |
 |---|---|---|
-| ⬜ `GET /api/demo/settings`, `PUT /api/demo/today`, `POST /api/demo/reset?scenario=fresh\|reviewed\|midpoint\|end` (rebuild DB from seed + scenario fixtures) | `PRESETS` `data.js:139-305` | |
-| ⬜ Retire the `faculty` role alias once the frontend uses `reviewer` | `profiles/router.py` | |
+| ✅ `GET /api/demo/settings`, `PUT /api/demo/today`, `POST /api/demo/reset?scenario=fresh\|reviewed\|midpoint\|end` (rebuild DB from seed + scenario fixtures) | `PRESETS` `data.js:139-305` | |
+| ✅ Retire the `faculty` role alias once the frontend uses `reviewer` | `profiles/router.py` | |
 
 ## Step 5: live handoffs + assistant
 
 | Task | Detail | Owner |
 |---|---|---|
-| ⬜ **P05 → P06:** "Prepare →" on a gap creates the P06 gap/plan item directly (replaces file import + `seed/p06/p06_activities.json`). Keep waypoint's checks: versions current, skill has a module, no duplicate | `importGaps` `app.js:403-422`; `matching/router.py` `handoff_gap` | |
-| ⬜ **P06 → P01 → P05:** reviewer "demonstrated" → new P01 profile version with `evidence_status: reviewed`, `evidence_id`, reviewer, date → automatic rematch (P05-07) | `profiles/router.py` `update_profile` | |
-| ⬜ **P04 → P07:** confirming a placement creates the P07 placement once (idempotent); replaces the mock outbox but keeps `p07_handoffs` as the record | `applications/router.py` `confirm_placement`; `importPlacements` `app.js:423-442` | |
-| ⬜ **P06 → P07:** readiness summary shown in P07 progress | `readinessPayload` `app.js:1071` | |
-| ⬜ `GET /api/handoffs` + JSON export of every handoff record (Records page) | | |
+| ✅ **P05 → P06:** "Prepare →" on a gap creates the P06 gap/plan item directly (replaces file import + `seed/p06/p06_activities.json`). Keep waypoint's checks: versions current, skill has a module, no duplicate | `importGaps` `app.js:403-422`; `matching/router.py` `handoff_gap` | |
+| ✅ **P06 → P01 → P05:** reviewer "demonstrated" → new P01 profile version with `evidence_status: reviewed`, `evidence_id`, reviewer, date → automatic rematch (P05-07) | `profiles/router.py` `update_profile` | |
+| ✅ **P04 → P07:** confirming a placement creates the P07 placement once (idempotent); replaces the mock outbox but keeps `p07_handoffs` as the record | `applications/router.py` `confirm_placement`; `importPlacements` `app.js:423-442` | |
+| ✅ **P06 → P07:** readiness summary shown in P07 progress | `readinessPayload` `app.js:1071` | |
+| ✅ `GET /api/handoffs` + JSON export of every handoff record (Records page) | | |
 | ⬜ **Assistant** (`modules/assistant/`, P06-owned): port the retrieval engine (IDF ranking, threshold 0.45, privacy + sensitive-topic guards) to Python | `ai_engine.js`, `ai_data.js` | |
 | ⬜ Merge FAQ corpora: waypoint 12 entries + P01–P03 `data/faq.txt` 8 entries, de-duplicated, source noted | `legacy/p01-p03-ipp/data/faq.txt` | |
 | ⬜ Coordinator loop: unanswered questions → write answer (pending) → approve → used | `legacy/p01-p03-ipp/src/faq.js:285-443` | |
 | ⬜ Optional LLM via OpenRouter when `OPENROUTER_API_KEY` is in `.env` (strict JSON, cited FAQ IDs only); otherwise retrieval-only | `legacy/p06-p07-waypoint/source/server.py` | |
-| ⬜ `tests/integration/test_layla_journey.py`: the whole target demo above, plus negatives (closed listing, duplicate application, unconfirmed placement, gap for a skill without a module, stale profile version) | | |
+| ✅ `tests/integration/test_layla_journey.py`: the whole target demo above, plus negatives (closed listing, duplicate application, unconfirmed placement, gap for a skill without a module, stale profile version) | | |
 
 ## Step 7: frontend screens (each team builds its own pages)
 
@@ -116,7 +122,7 @@ hooks in `src/api/`, and extend the mock handlers until the endpoint exists.
 - [ ] `GET /api/home/todos?role=&student_id=`: per-role to-do list
 - [ ] `GET /api/home/counts?role=&student_id=`: sidebar badges
 - [ ] `GET /api/events?student_id=`: filter the feed by student (today only `limit` and `module`)
-- [ ] `/api/demo/*` and `POST /api/assistant/ask` (see steps 4 and 5)
+- [x] `/api/demo/*` (settings, today, reset) · - [ ] `POST /api/assistant/ask` (step 5)
 
 | Team | Pages | Owner |
 |---|---|---|
