@@ -21,8 +21,11 @@ from app.modules.submissions import service
 router = APIRouter(tags=["P03 review"])
 
 DEFAULT_COORDINATOR = "COORD-01 (simulated coordinator)"
-CHECKLIST = ("Complete description", "Named supervision", "Realistic timing", "Meaningful tasks",
-             "Learning relevance")
+# The seven checks agreed in the product backlog (P3-03) and the P01-P03 approved FAQ ("How is an opportunity
+# approved?"): completeness, on-site, duration, supervisor, learning value, employer reliability, workplace safety.
+CHECKLIST = ("Complete: all required details are filled in", "On-site placement (remote roles are not approved)",
+             "Suitable duration and dates", "Named workplace supervisor", "Clear learning value",
+             "Reliable employer", "Safe workplace")
 
 
 class DecisionIn(BaseModel):

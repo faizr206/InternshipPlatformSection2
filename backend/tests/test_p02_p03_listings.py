@@ -161,6 +161,14 @@ def test_seed_unpublished_listing_is_in_the_queue_and_can_be_published(client):
     assert "OP-039" in {o["opportunity_id"] for o in client.get("/api/opportunities").json()}
 
 
+def test_checklist_has_the_seven_agreed_checks():
+    """Backlog P3-03: completeness, on-site, duration, supervisor, learning value, employer reliability, safety."""
+    from app.modules.review.router import CHECKLIST
+    keywords = ("complete", "on-site", "duration", "supervisor", "learning value", "reliable employer", "safe workplace")
+    assert len(CHECKLIST) == 7
+    assert all(any(k in item.lower() for item in CHECKLIST) for k in keywords)
+
+
 def test_checklist_is_recorded_but_never_approves_by_itself(client):
     """P03 AC4: a completed checklist alone does not approve; the decision is explicit."""
     opp_id = submit(client).json()["opportunity_id"]

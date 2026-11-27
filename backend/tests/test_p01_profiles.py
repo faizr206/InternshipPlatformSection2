@@ -125,12 +125,20 @@ def test_roles_are_enforced(client):
 
 
 def test_new_profile_version_reaches_matching(client):
-    """P01 -> P05: matching reads the latest submitted version; the earlier run keeps its version."""
+    """P01 -> P05 (backlog P5-02): submitting a new version reruns matching on it; the earlier run is kept."""
     first = client.post("/api/students/COOP-B001/recommendations").json()
     assert {r["profile_version"] for r in first} == {2}
     client.put("/api/students/COOP-B001/profile/draft", json={**STUDENT, "interests": ["aviation", "energy"]})
-    client.post("/api/students/COOP-B001/profile/submit", json=STUDENT)
-    second = client.post("/api/students/COOP-B001/recommendations").json()
-    assert {r["profile_version"] for r in second} == {3}
+    submitted = client.post("/api/students/COOP-B001/profile/submit", json=STUDENT).json()
+    assert submitted["rematched"] is True
+    latest = client.get("/api/students/COOP-B001/recommendations").json()
+    assert {r["profile_version"] for r in latest} == {3}
     runs = client.get("/api/students/COOP-B001/recommendation-runs").json()
     assert [r["profile_version"] for r in runs] == [2, 3]
+
+
+def test_no_rematch_before_the_first_run(client):
+    """A student who never ran matching is not given a run they did not ask for."""
+    client.put("/api/students/COOP-B002/profile/draft", json={**STUDENT, "goals": "Energy analytics"})
+    assert client.post("/api/students/COOP-B002/profile/submit", json=STUDENT).json()["rematched"] is False
+    assert client.get("/api/students/COOP-B002/recommendation-runs").json() == []
