@@ -148,6 +148,25 @@ Open follow-ups for every team:
 - [ ] Accessibility pass: 375px width per role, keyboard, screen reader, contrast (open Sprint 3 retro action)
 - [ ] Merge `integration/bootstrap` into `main`; protect `main` (CI required)
 
+## Product backlog check (27 Nov, against `IPP Section 2 — Product Backlog and Ownership`)
+
+All 19 stories were checked against their acceptance criteria in the combined app.
+
+- **Met:** P1-02, P1-03, P2-01, P2-02, P3-01, P3-02, P3-03, D-01, P4-01, P4-02, P4-03, P5-01, P5-02, P6-01, P6-02,
+  P7-01, P7-02.
+  - Fixed on 27 Nov: P3-03 now uses the seven agreed checks; P5-01 shows the top three recommendations; P5-02
+    reruns matching when a student submits a new profile version.
+- **Open:**
+  - ⬜ **P1-01 Create profile:** students can edit the four synthetic profiles, but no flow creates a profile for a
+    new student. Decide with P01–P03: add one, or agree the synthetic students are enough for the demo.
+  - ⬜ **D-02 FAQ handoff:** the backlog says P01–P03 sent 9 answers with a Source column on 24 Nov. That file is
+    not in any repo (waypoint's `faq_partner.js` is still empty), so the assistant uses the 8 older answers from
+    `legacy/p01-p03-ipp/data/faq.txt`. Get the file and add it to `backend/app/seed/assistant/faq.json`.
+  - Small wording differences from the acceptance criteria: listings show "Pending review" (not "Submitted"),
+    and the assistant's unknown answer is not the exact "I don't know yet" phrase.
+- **The spreadsheet itself is out of date:** its "In combined app" column still says "screen planned" for rows that
+  now have screens.
+
 ## Definition of done (every task)
 
 - Code in the owning module; rules from the legacy source kept or a deliberate change noted in the PR

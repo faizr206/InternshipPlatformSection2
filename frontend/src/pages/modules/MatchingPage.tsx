@@ -16,7 +16,11 @@ export default function MatchingPage() {
   const runs = useQuery({ queryKey: ["p05-runs", studentId], queryFn: () => p05.runs(studentId) });
   const all = useQuery({ queryKey: ["listings"], queryFn: listings.all });
   const action = useAction();
+  const [showAll, setShowAll] = useState(false);
   const byId = new Map((all.data ?? []).map((o) => [o.opportunity_id, o]));
+  // Backlog P5-01: three ranked recommendations (eligible first, then score); the rest stay one click away.
+  const shown = showAll ? recs.data ?? [] : (recs.data ?? []).slice(0, 3);
+  const hidden = (recs.data?.length ?? 0) - shown.length;
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
@@ -31,7 +35,14 @@ export default function MatchingPage() {
         </div>
         {!recs.data ? <Loading /> : recs.data.length === 0 ? (
           <Card><EmptyState icon={<Sparkles className="h-6 w-6" />} title="No recommendations yet">{role === "student" ? "Run matching to see explained suggestions." : "The student has not run matching yet."}</EmptyState></Card>
-        ) : recs.data.map((r, i) => <RecCard key={r.recommendation_id} r={r} rank={i + 1} listing={byId.get(r.opportunity_id)} />)}
+        ) : (
+          <>
+            <h2 className="text-[15px] font-semibold">Your top {Math.min(3, recs.data.length)} recommendations</h2>
+            {shown.map((r, i) => <RecCard key={r.recommendation_id} r={r} rank={i + 1} listing={byId.get(r.opportunity_id)} />)}
+            {hidden > 0 && <Button variant="secondary" onClick={() => setShowAll(true)}>Show {hidden} more ranked listing{hidden > 1 ? "s" : ""}</Button>}
+            {showAll && recs.data.length > 3 && <Button variant="ghost" onClick={() => setShowAll(false)}>Show top three only</Button>}
+          </>
+        )}
         {role === "coordinator" && <Corrections />}
       </div>
       <Section icon={<History className="h-4 w-4" />} title="Matching runs" subtitle="Earlier runs keep their profile version">

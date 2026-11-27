@@ -64,7 +64,7 @@ export default function ProfilePage() {
             onSave={(values, submit) => action.run(async () => {
               await p01.saveDraft(studentId, values);
               if (submit) await p01.submit(studentId);
-            }, submit ? "Profile submitted as a new version" : "Draft saved — P04/P05 still read the submitted version", () => setEditing(false))}
+            }, submit ? "Profile submitted as a new version (existing matches are rerun on it)" : "Draft saved — P04/P05 still read the submitted version", () => setEditing(false))}
           />
         )}
 

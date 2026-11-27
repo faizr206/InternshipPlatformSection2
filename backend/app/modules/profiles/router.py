@@ -234,7 +234,13 @@ def submit_profile(student_id: str, body: ProfileSubmitIn):
         version = _new_profile_version(conn, new_profile, "P01:student-submission")
         log_event(conn, "P01", "student", new_profile["display_name"], "profile_submitted",
                   f"{new_profile['display_name']} submitted profile version {version}", student_id)
-        return {**_profile_state(conn, student_id), "new_version": True}
+        # P5-02: a student who already has recommendations gets them rerun on the new version straight away;
+        # the earlier run stays stored for history.
+        rematched = bool(conn.execute("SELECT 1 FROM recommendations WHERE student_id = ? LIMIT 1",
+                                      (student_id,)).fetchone())
+        if rematched:
+            _run_matching(conn, get_student(conn, student_id))
+        return {**_profile_state(conn, student_id), "new_version": True, "rematched": rematched}
 
 
 @router.post("/api/students/{student_id}/profile/review", status_code=201)
