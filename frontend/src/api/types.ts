@@ -12,7 +12,7 @@ export type Owner = "P01" | "P02" | "P03" | "P04" | "P05" | "P06" | "P07" | "Cor
 export interface StudentSummary {
   student_id: string;
   display_name: string;
-  programme: string;
+  programme?: string | null;
   interests: string[];
   profile_version: number;
 }
@@ -61,6 +61,8 @@ export interface ActivityEvent {
   ref?: string | null;
   owner: Owner;
   student_id?: string | null;
+  /** Human-readable sentence ("Coordinator returned … for revision"). */
+  text?: string;
 }
 
 /** Sidebar badge counts, keyed by nav item key. */
@@ -82,6 +84,11 @@ export interface AssistantAnswer {
   source: string | null;
   mode: "retrieval" | "llm";
   confident: boolean;
+  kind?: "answer" | "handoff" | "refused" | "chat";
+  faq_id?: string | null;
+  question_id?: string | null;
+  guard?: string | null;
+  approved_text?: { faq_id: string; answer: string }[];
 }
 
 export interface HomeQuery {

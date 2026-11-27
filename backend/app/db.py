@@ -207,6 +207,132 @@ CREATE TABLE IF NOT EXISTS profile_reviews (
     actor_name TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS demo_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+-- Every cross-module handoff record (P05->P06 gap, P06->P01 evidence, P06->P07 readiness,
+-- P04->P07 placement). Kept as contract evidence and exportable as JSON.
+CREATE TABLE IF NOT EXISTS handoffs (
+    handoff_id TEXT PRIMARY KEY,
+    from_module TEXT NOT NULL,
+    to_module TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    student_id TEXT,
+    ref TEXT,
+    payload TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+-- P06 internship preparation
+CREATE TABLE IF NOT EXISTS prep_gaps (
+    gap_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    opportunity_id TEXT,
+    opportunity_version INTEGER,
+    recommendation_id TEXT,
+    profile_version INTEGER,
+    source TEXT NOT NULL CHECK (source IN ('P05', 'manual')),
+    reason TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('open', 'closed')),
+    closed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS prep_resources (
+    student_id TEXT NOT NULL,
+    module_id TEXT NOT NULL,
+    completed_at TEXT NOT NULL,
+    PRIMARY KEY (student_id, module_id)
+);
+CREATE TABLE IF NOT EXISTS prep_boards (
+    student_id TEXT PRIMARY KEY,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS prep_submissions (
+    evidence_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    module_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('submitted', 'revision', 'not_yet', 'demonstrated')),
+    versions TEXT NOT NULL,
+    reviews TEXT NOT NULL,
+    UNIQUE (student_id, skill_id)
+);
+-- P07 co-op learning progress (one record set per confirmed placement)
+CREATE TABLE IF NOT EXISTS p07_placements (
+    placement_id TEXT PRIMARY KEY,
+    student_id TEXT NOT NULL UNIQUE,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_agreements (
+    placement_id TEXT PRIMARY KEY,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_logs (
+    log_id TEXT PRIMARY KEY,
+    placement_id TEXT NOT NULL,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_evidence (
+    evidence_id TEXT PRIMARY KEY,
+    placement_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    source TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_judgements (
+    placement_id TEXT NOT NULL,
+    outcome_id TEXT NOT NULL,
+    data TEXT NOT NULL,
+    PRIMARY KEY (placement_id, outcome_id)
+);
+CREATE TABLE IF NOT EXISTS p07_milestones (
+    milestone_id TEXT PRIMARY KEY,
+    placement_id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    done INTEGER NOT NULL,
+    done_at TEXT
+);
+CREATE TABLE IF NOT EXISTS p07_actions (
+    action_id TEXT PRIMARY KEY,
+    placement_id TEXT NOT NULL,
+    data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS p07_final_reviews (
+    placement_id TEXT PRIMARY KEY,
+    employer TEXT,
+    advisor TEXT
+);
+-- Co-op assistant (P06): coordinator-written entries and questions handed to the coordinator.
+CREATE TABLE IF NOT EXISTS assistant_entries (
+    faq_id TEXT PRIMARY KEY,
+    topic TEXT NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'approved')),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    approved_by TEXT,
+    approved_at TEXT,
+    from_question TEXT
+);
+CREATE TABLE IF NOT EXISTS assistant_questions (
+    question_id TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    normalized TEXT NOT NULL,
+    asked_by_role TEXT NOT NULL,
+    student_id TEXT,
+    reason TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    first_asked_at TEXT NOT NULL,
+    last_asked_at TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('open', 'answered', 'dismissed')),
+    reply TEXT,
+    replied_by TEXT,
+    replied_at TEXT
+);
 """
 
 

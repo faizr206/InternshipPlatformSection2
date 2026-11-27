@@ -33,64 +33,69 @@ def load_env(path=HERE.parent / ".env"):
         os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
-SYSTEM = """You are the IPP co-op FAQ assistant for students in a university co-op programme (a classroom prototype).
-Rules:
-1. Answer ONLY with facts stated in the APPROVED ENTRIES provided. Do not add policy, numbers, dates, names or advice that the entries do not state.
-2. If no entry answers the question, set handoff to true. A co-op coordinator will answer instead. Never guess.
-3. You cannot approve placements, change records or discuss other students.
-4. Write in plain English, at most 80 words, speaking to the student as "you".
-5. List in faq_ids the IDs of the entries you used. Use only IDs from the list given.
-Return JSON only, matching the schema."""
+SYSTEM = """You are the friendly co-op assistant inside the IPP Coop Platform, a university classroom prototype.
+Students ask you about internships, matching, preparing skills such as Jira, placements, their co-op log, or anything else. Be natural, warm and genuinely helpful, like a good student advisor in a chat.
+
+- Answer every message. Greetings and small talk get a short friendly reply.
+- The APPROVED ENTRIES below are the programme's official answers. When one is relevant, base your answer on it, rephrase it naturally, and list its ID in faq_ids.
+- When no entry fits, still help from general knowledge (for example how to prepare for an interview, what Jira is, how to write a good log entry). Leave faq_ids empty.
+- Do not invent university-specific rules such as pay, GPA, credits, visas or deadlines. For those, give general guidance if useful, say the co-op coordinator will confirm, and set needs_coordinator to true.
+- Never approve placements or share information about other students.
+- Keep replies short: 1 to 5 sentences, plain English, speaking to the student as "you"."""
 
 SCHEMA = {
-    "name": "faq_reply",
+    "name": "assistant_reply",
     "strict": True,
     "schema": {
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            "answer": {"type": "string", "description": "Answer to the student, or empty when handing off"},
+            "answer": {"type": "string"},
             "faq_ids": {"type": "array", "items": {"type": "string"}},
-            "handoff": {"type": "boolean"},
-            "reason": {"type": "string", "description": "One short sentence: which entry answers it, or why none does"},
+            "needs_coordinator": {"type": "boolean"},
+            "reason": {"type": "string"},
         },
-        "required": ["answer", "faq_ids", "handoff", "reason"],
+        "required": ["answer", "faq_ids", "needs_coordinator", "reason"],
     },
 }
 
 
 def build_messages(question, candidates):
     entries = "\n\n".join(
-        f"[{c['id']}] Topic: {c.get('topic', '')}\nQuestion: {c.get('q', '')}\nApproved answer: {c.get('a', '')}\nSource: {c.get('source', '')}"
+        f"[{c['id']}] Topic: {c.get('topic', '')}\nAnswers questions like: {c.get('q', '')}"
+        + (f" / {c['alts']}" if c.get("alts") else "")
+        + f"\nApproved answer: {c.get('a', '')}\nSource: {c.get('source', '')}"
         for c in candidates)
     return [{"role": "system", "content": SYSTEM},
             {"role": "user", "content": f"APPROVED ENTRIES:\n{entries}\n\nSTUDENT QUESTION:\n{question}"}]
 
 
 def validate_reply(raw, candidate_ids):
-    """Turn the model's text into a safe reply. Anything doubtful becomes a handoff."""
+    """Keep the model's reply; drop citations of entries we did not send. Only an empty reply goes to a person."""
     try:
         r = json.loads(raw)
     except (TypeError, ValueError):
-        return {"answer": "", "faq_ids": [], "handoff": True, "reason": "The model did not return valid JSON."}
-    ids = [i for i in r.get("faq_ids", []) if i in candidate_ids]
+        return {"answer": "", "faq_ids": [], "needs_coordinator": True, "reason": "The model did not return a readable reply."}
     answer = str(r.get("answer", "")).strip()
-    if r.get("handoff") or not ids or not answer:
-        why = str(r.get("reason", "")).strip() or "No approved entry answers this question."
-        if not r.get("handoff") and not ids:
-            why = "The model cited no approved entry, so the question goes to a person."
-        return {"answer": "", "faq_ids": [], "handoff": True, "reason": why[:300]}
-    return {"answer": answer[:1200], "faq_ids": ids, "handoff": False, "reason": str(r.get("reason", "")).strip()[:300]}
+    if not answer:
+        return {"answer": "", "faq_ids": [], "needs_coordinator": True, "reason": str(r.get("reason", "")).strip()[:300] or "Empty reply."}
+    ids = [i for i in r.get("faq_ids", []) if i in candidate_ids]
+    return {"answer": answer[:1500], "faq_ids": ids, "needs_coordinator": bool(r.get("needs_coordinator")), "reason": str(r.get("reason", "")).strip()[:300]}
 
 
 def ask_model(question, candidates, key, model, timeout=25):
-    body = {"model": model, "messages": build_messages(question, candidates), "temperature": 0, "max_tokens": 500,
+    # Inkling 2 Mini reasons before it answers. Keep the reasoning short and leave room for the answer,
+    # or the reasoning uses up every token and the reply comes back empty.
+    body = {"model": model, "messages": build_messages(question, candidates), "temperature": 0.5, "max_tokens": 2500,
+            "reasoning": {"effort": "low", "exclude": True},
             "response_format": {"type": "json_schema", "json_schema": SCHEMA}}
     req = urllib.request.Request(OPENROUTER_URL, data=json.dumps(body).encode(), method="POST", headers={
         "Authorization": f"Bearer {key}", "Content-Type": "application/json", "X-Title": "IPP co-op assistant (classroom prototype)"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         data = json.loads(resp.read())
-    raw = data["choices"][0]["message"].get("content") or ""
+    raw = (data["choices"][0]["message"].get("content") or "").strip()
+    if raw.startswith("```"):  # tolerate a fenced JSON block
+        raw = raw.strip("`").split("\n", 1)[-1].rsplit("```", 1)[0]
     return validate_reply(raw, {c["id"] for c in candidates})
 
 
@@ -118,7 +123,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
             q = str(req["question"])[:500]
-            cands = [{k: str(c.get(k, ""))[:2000] for k in ("id", "topic", "q", "a", "source")} for c in req["candidates"][:6]]
+            cands = [{k: str(c.get(k, ""))[:2000] for k in ("id", "topic", "q", "alts", "a", "source")} for c in req["candidates"][:6]]
         except (ValueError, KeyError, TypeError):
             return self._json(400, {"error": "Bad request"})
         model = os.environ.get("OPENROUTER_MODEL", DEFAULT_MODEL)

@@ -24,13 +24,13 @@ npm run dev          # http://localhost:5173 (in-memory mock API by default)
 The typed client in `src/api/` sends every request through `request()` in `src/api/client.ts`.
 `VITE_USE_MOCKS` picks where it goes:
 
-- unset or `true` (default for now): `src/mocks/handlers.ts`, an in-memory fake built from
+- unset or `false` (default): real `fetch` to `/api/...`, proxied in dev to uvicorn on port 8000.
+- `true`, and always in unit tests: `src/mocks/handlers.ts`, an in-memory fake built from
   `legacy/p01-p03-ipp/data/ipp_sample_data.json` plus per-scenario fixtures. No backend needed.
-- `false`: real `fetch` to `/api/...`, proxied in dev to uvicorn on port 8000.
 
 ```bash
-VITE_USE_MOCKS=false npm run dev     # talk to the FastAPI backend
-VITE_USE_MOCKS=false npm run build   # production build against the real API
+npm run dev                          # talk to the FastAPI backend (start it first)
+VITE_USE_MOCKS=true npm run dev      # mock API only, no backend
 ```
 
 Copy `.env.example` to `.env.local` to set it permanently. Endpoints the UI expects

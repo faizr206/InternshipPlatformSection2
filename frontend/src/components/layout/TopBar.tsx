@@ -15,13 +15,13 @@ export function TopBar({ onMenu }: { onMenu: () => void }) {
   return (
     <header className="border-b border-line bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 nav:px-7">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-[min(100%,240px)] flex-1 items-center gap-2">
           <Button variant="ghost" size="icon" className="-ml-1.5 nav:hidden" aria-label="Open navigation" onClick={onMenu}>
             <Menu className="h-5 w-5" aria-hidden />
           </Button>
           <div className="min-w-0">
             <nav aria-label="Breadcrumb" className="hidden sm:block">
-              <ol className="flex items-center gap-1 text-[12px] text-muted">
+              <ol className="flex items-center gap-1 text-[12px] whitespace-nowrap text-muted">
                 <li>Coop Platform</li>
                 {match && match.item.path !== "/" && (
                   <>

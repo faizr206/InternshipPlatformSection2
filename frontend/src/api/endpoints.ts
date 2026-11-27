@@ -23,6 +23,6 @@ export const api = {
   navCounts: (q: HomeQuery) => request<NavCounts>("/api/home/counts", { query: { ...q } }),
   events: (opts: { limit?: number; student_id?: string } = {}) =>
     request<ActivityEvent[]>("/api/events", { query: opts }),
-  askAssistant: (question: string, role: string) =>
-    request<AssistantAnswer>("/api/assistant/ask", { method: "POST", body: { question, role } }),
+  askAssistant: (question: string, role: string, student_id?: string) =>
+    request<AssistantAnswer>("/api/assistant/ask", { method: "POST", body: { question, role, student_id } }),
 };

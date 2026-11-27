@@ -1,11 +1,12 @@
 import * as RT from "@radix-ui/react-toast";
-import { CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 interface ToastMsg {
   id: number;
   title: string;
   description?: string;
+  tone?: "ok" | "error";
 }
 
 const Ctx = createContext<(t: Omit<ToastMsg, "id">) => void>(() => {});
@@ -23,7 +24,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             onOpenChange={(o) => !o && setToasts((xs) => xs.filter((x) => x.id !== t.id))}
             className="flex items-start gap-3 rounded-card border border-line bg-surface p-3.5 shadow-pop animate-fade-in"
           >
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ok" aria-hidden />
+            {t.tone === "error" ? (
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-bad" aria-hidden />
+            ) : (
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ok" aria-hidden />
+            )}
             <div>
               <RT.Title className="text-sm font-semibold">{t.title}</RT.Title>
               {t.description && <RT.Description className="text-[13px] text-muted">{t.description}</RT.Description>}

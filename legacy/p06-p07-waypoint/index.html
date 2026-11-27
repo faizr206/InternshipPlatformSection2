@@ -2264,12 +2264,15 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
     const msgs = S.chat.map((m) => {
       const user = `<div class="msg user"><div class="bubble">${esc(m.q)}</div><div class="meta">${esc(m.by)} · ${d(m.at)}</div></div>`;
       let bot;
-      if (m.res.kind === "answer") {
+      if (m.res.kind === "chat") {
+        bot = `<div class="msg bot"><div class="bubble"><p>${esc(m.llm ? m.llm.text : "")}</p><div class="src">${m.llm && m.llm.model ? `${esc(modelName(m.llm.model))} (AI) · general answer, not from the approved FAQ` : "Assistant"}${m.llm && m.llm.handoffId ? ` · also sent to ${esc(PEOPLE.coordinator.name)} to confirm (${esc(m.llm.handoffId)})` : ""}</div>
+          <div class="btn-row" style="margin-top:8px">${m.flagged ? `<span class="small muted">Sent to a coordinator</span>` : `<button class="btn ghost sm" type="button" data-action="chat-flag" data-id="${m.id}">Not what you asked? Ask a person</button>`}</div></div></div>`;
+      } else if (m.res.kind === "answer") {
         const f = faqById(m.res.faqId);
         const ai = m.llm && m.llm.text;
         const cited = ai ? m.llm.ids.map(faqById).filter(Boolean) : [];
         bot = `<div class="msg bot">${thoughtHTML(m)}<div class="bubble"><p>${esc(ai ? m.llm.text : f.a)}</p>
-          ${ai ? `<div class="src">Written by ${esc(modelName(m.llm.model))} (AI) from approved source${cited.length > 1 ? "s" : ""} · ${cited.map((c) => `${c.id} · ${esc(c.source)}`).join("; ")}</div>
+          ${ai ? `<div class="src">Written by ${esc(modelName(m.llm.model))} (AI) from approved source${cited.length > 1 ? "s" : ""} · ${cited.map((c) => `${c.id} · ${esc(c.source)}`).join("; ")}${m.llm.handoffId ? ` · also sent to ${esc(PEOPLE.coordinator.name)} to confirm (${esc(m.llm.handoffId)})` : ""}</div>
           <details class="thought" style="margin-top:6px"><summary>Check the approved text</summary>${cited.map((c) => `<p class="small" style="margin:6px 0"><span class="id">${c.id}</span> ${esc(c.a)}</p>`).join("")}</details>`
           : `<div class="src" title="Match score ${m.res.score.toFixed(2)}">Approved source · ${f.id} · ${esc(f.source)}${m.res.guard === "privacy" ? " · privacy rule" : ""}${m.llm && m.llm.error ? " · AI model unavailable, approved text shown" : ""}</div>`}
           <div class="btn-row" style="margin-top:8px">${f.link && !embed ? `<a class="btn secondary sm" href="${f.link}">Open page</a>` : ""}
@@ -2457,23 +2460,28 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
       placement: pagePlacement, agreement: pageAgreement, logbook: pageLogbook, progress: pageProgress, final: pageFinal, records: pageRecords,
       assistant: pageAssistant, matches: pageMatches, "ai-checks": pageAIChecks };
     const y = window.scrollY;
-    if (r === "embed") { document.body.classList.add("embedded"); document.getElementById("root").innerHTML = pageEmbed() + `<div class="toast" role="status" aria-live="polite" id="toast"></div>`; document.title = "IPP co-op assistant · Team P6/P7"; const cl = $("#chatlog"); if (cl) cl.scrollTop = cl.scrollHeight; if (ui.anim && !ui.anim.started) playAnswer(); return; }
+    /* Keep whatever the user is typing (and the caret) when the page redraws. */
+    const ae = document.activeElement, focusId = ae && ae.id && /^(INPUT|TEXTAREA)$/.test(ae.tagName) ? ae.id : null;
+    const caret = focusId && typeof ae.selectionStart === "number" ? [ae.selectionStart, ae.selectionEnd] : null;
+    const restore = () => { if (!focusId) return; const el = document.getElementById(focusId); if (!el) return; el.focus({ preventScroll: true }); if (caret) try { el.setSelectionRange(caret[0], caret[1]); } catch (e) {} };
+    if (r === "embed") { document.body.classList.add("embedded"); document.getElementById("root").innerHTML = pageEmbed() + `<div class="toast" role="status" aria-live="polite" id="toast"></div>`; document.title = "IPP co-op assistant · Team P6/P7"; const cl = $("#chatlog"); if (cl) cl.scrollTop = cl.scrollHeight; restore(); if (ui.anim && !ui.anim.started) playAnswer(); return; }
     document.body.classList.remove("embedded");
     document.getElementById("root").innerHTML = shell((pages[r] || pageNotFound)());
     window.scrollTo(0, y);
     const cl = $("#chatlog"); if (cl) cl.scrollTop = cl.scrollHeight;
     const titleEl = document.querySelector("h1"); document.title = (titleEl ? titleEl.textContent + " · " : "") + "Team P6/P7";
+    restore();
     if (ui.anim && !ui.anim.started) playAnswer();
   }
 
   /* Demo animation: show the thinking steps one by one, then stream the answer word by word.
      Skipped for automated tests (navigator.webdriver) and for people who ask for reduced motion. */
-  const ANIMATE = !(navigator.webdriver || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches));
+  const ANIMATE = false; /* Answers appear at once; the "How I answered" steps stay available under each answer. */
   function playAnswer() {
     const a = ui.anim; a.started = true;
     const m = S.chat.find((x) => x.id === a.id), steps = thoughtSteps(m), t0 = performance.now();
     const box = $("#thinking"), list = box && box.querySelector(".think-steps"), target = $(".anim-target"), log = $("#chatlog");
-    const lockables = [...document.querySelectorAll("form[data-form=ask] input, form[data-form=ask] button, .pill")];
+    const lockables = [...document.querySelectorAll("form[data-form=ask] button, .pill")];
     lockables.forEach((x) => (x.disabled = true));
     const alive = () => box && box.isConnected;
     const scroll = () => { if (log) log.scrollTop = log.scrollHeight; };
@@ -2533,6 +2541,7 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
      Only when the page is served by our local server, which holds the API key. On GitHub Pages or from a file
      the assistant stays retrieval-only. Privacy and policy guards run first and never reach the model. */
   let LLM = null, pendingAsk = null;
+  const GREETING = /^\s*(hi|hello|hey|salam|good (morning|afternoon|evening)|thanks?|thank you)\b[\s!.?]*$/i;
   const modelName = (id) => String(id || "").split("/").pop().split(/[-_]/).map((w) => (/^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
   function detectLLM() {
     if (!/^https?:$/.test(location.protocol)) return;
@@ -2540,19 +2549,22 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
     fetch("api/llm", { signal: ctl.signal }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.available) { LLM = { model: j.model }; render(); } }).catch(() => {});
   }
   function askLLM(q, res) {
-    const cands = IPP_AI.candidates(q, 4);
+    const cands = IPP_AI.candidates(q, 6);
     pendingAsk = { q, by: me().name, at: S.today }; ui.draft.ask = ""; render();
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
     const base = { model: LLM.model, cands: cands.map((f) => f.id) };
     fetch("api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
-      body: JSON.stringify({ question: q, candidates: cands.map((f) => ({ id: f.id, topic: f.topic, q: f.q, a: f.a, source: f.source })) }) })
+      body: JSON.stringify({ question: q, candidates: cands.map((f) => ({ id: f.id, topic: f.topic, q: f.q, alts: (f.alts || []).join(" / "), a: f.a, source: f.source })) }) })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status))))
       .then((j) => {
         clearTimeout(timer); const by = pendingAsk.by; pendingAsk = null;
+        const text = String(j.answer || "").trim();
+        if (!text) return finishAsk(q, res, Object.assign(base, { error: true }), by);
         const ids = (j.faq_ids || []).filter((id) => base.cands.includes(id) && faqById(id));
-        if (j.handoff || !ids.length || !String(j.answer || "").trim())
-          return finishAsk(q, { kind: "handoff", score: res.score, ranked: res.ranked, guard: "llm", reason: `${modelName(base.model)} found no approved entry that answers this. ${j.reason || ""}`.trim() }, base, by);
-        finishAsk(q, { kind: "answer", faq: faqById(ids[0]), score: res.score, ranked: res.ranked, reason: j.reason || `Answered from ${ids.join(", ")}` }, Object.assign(base, { text: String(j.answer).trim(), ids }), by);
+        const llm = Object.assign(base, { text, ids, coordinator: !!j.needs_coordinator });
+        let handoffId = null;
+        if (j.needs_coordinator) { handoffId = nextId("Q-", S.handoffQ); S.handoffQ.push({ id: handoffId, q, from: by, at: S.today, status: "open", reason: `${modelName(base.model)} asked the coordinator to confirm. ${j.reason || ""}`.trim() }); event(`Assistant asked the coordinator to confirm ${handoffId}`); llm.handoffId = handoffId; }
+        finishAsk(q, { kind: ids.length ? "answer" : "chat", faq: ids.length ? faqById(ids[0]) : null, score: res.score, ranked: res.ranked, reason: j.reason || "" }, llm, by);
       })
       .catch(() => { clearTimeout(timer); const by = pendingAsk ? pendingAsk.by : me().name; pendingAsk = null; finishAsk(q, res, Object.assign(base, { error: true }), by); });
   }
@@ -2561,14 +2573,15 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
   function askQuestion(q) {
     if (pendingAsk) return;
     const res = IPP_AI.answer(q, { selfId: "COOP-B001" });
-    if (LLM && res.guard !== "privacy" && res.guard !== "policy") return askLLM(q, res);
+    if (LLM && res.guard !== "privacy") return askLLM(q, res);
+    if (GREETING.test(q)) return finishAsk(q, { kind: "chat", score: 0, ranked: res.ranked, reason: "Greeting" }, { text: `Hi ${PEOPLE.student.short}! Ask me about internship matching, preparing a skill such as Jira, your placement or your co-op log.` });
     finishAsk(q, res, null);
   }
   function finishAsk(q, res, llm, by) {
     const m = { id: nextId("M-", S.chat), q, by: by || me().name, at: S.today, res: { kind: res.kind, faqId: res.faq ? res.faq.id : null, score: res.score, reason: res.reason, guard: res.guard || null, ranked: res.ranked } };
     if (llm) m.llm = llm;
     if (res.kind === "handoff") { const id = nextId("Q-", S.handoffQ); S.handoffQ.push({ id, q, from: me().name, at: S.today, status: "open", reason: res.reason }); m.handoffId = id; event(`Assistant handed question ${id} to the coordinator`); }
-    S.chat.push(m); ui.draft.ask = "";
+    S.chat.push(m); if (!llm) ui.draft.ask = "";
     const note = res.kind === "handoff" ? `Sent to ${PEOPLE.coordinator.name}: no approved answer` : null;
     if (ANIMATE) { ui.anim = { id: m.id, started: false, toast: note }; commit(null); } else commit(note);
     const inp = $("#askq"); if (inp) inp.focus();
@@ -2631,6 +2644,7 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
     if (go) { e.preventDefault(); go(); }
   });
 
+  document.addEventListener("input", (e) => { if (e.target && e.target.id === "askq") ui.draft.ask = e.target.value; });
   document.addEventListener("change", (e) => {
     const el = e.target.closest("[data-change]"); if (!el) return;
     const c = el.dataset.change;
@@ -2712,7 +2726,7 @@ if (typeof window !== "undefined") window.IPP_AI = IPP_AI;
         if (bad.length) er.rule = `${bad.map((o) => o.id).join(", ")} cannot be marked achieved without evidence from this period.`;
         if (Object.keys(er).length) { ui.errors.final = er; return render(); }
         S.final.advisor = { by: me().name, at: S.today, outcomes, summary, nextGoal: next, period: PERIOD.id }; ui.errors.final = null; event("Recorded the final review for Period 1"); commit("Final review recorded for Period 1"); },
-      "ask": () => { const q = (fd.get("q") || "").trim(); if (q.length < 3) { ui.errors.ask = "Type a question first."; return render(); } ui.errors.ask = null; askQuestion(q); },
+      "ask": () => { const q = (fd.get("q") || "").trim(); if (!q) { ui.errors.ask = "Type a question first."; return render(); } ui.errors.ask = null; askQuestion(q); },
       "handoff-reply": () => { const h = S.handoffQ.find((x) => x.id === f.dataset.id), r = (fd.get("reply") || "").trim();
         if (words(r) < 4) { ui.errors["hr-" + h.id] = "Write a reply of at least four words."; return render(); }
         Object.assign(h, { status: "answered", reply: r, by: me().name, answeredAt: S.today }); ui.errors["hr-" + h.id] = null; event(`Answered handed-over question ${h.id}`); commit(`Reply sent for ${h.id}`); },

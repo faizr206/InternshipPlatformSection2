@@ -1,0 +1,120 @@
+{
+  "_source": "Team P6/P7 waypoint source/src/data.js (MODULES, OUTCOMES, BOARD_START), ported 27 Nov 2026",
+  "modules": [
+    {
+      "module_id": "MOD-JIRA-101",
+      "skill_id": "SK-JIRA",
+      "status": "full",
+      "title": "Tracking team work in Jira",
+      "outcome": "Create, assign and progress work items on a team board, and explain each status change so a colleague can follow the work.",
+      "minutes": 90,
+      "resource": {
+        "title": "How a team board tells the story of the work",
+        "minutes": 20,
+        "parts": [
+          {
+            "heading": "A work item is one piece of work",
+            "text": "Each item has a short summary that says what will be done, for example “Clean turnaround-time data for Terminal 3”. If you cannot finish it in a few days, split it."
+          },
+          {
+            "heading": "Every item has one owner",
+            "text": "The assignee is the person who will move it forward. Unassigned work is invisible work: nobody is accountable for it."
+          },
+          {
+            "heading": "Status shows where the work is",
+            "text": "Items move from To do, to In progress, to Done. Move an item when its real state changes, not to look busy."
+          },
+          {
+            "heading": "Explain the change",
+            "text": "When you move an item, leave a one-line reason: what changed and what happens next. This is the record your supervisor and team read."
+          }
+        ]
+      },
+      "task": "Your ground-operations analytics team is starting a sprint. On the simulated board, create at least two work items, assign an owner to every item, move one item from To do through In progress to Done, and give a reason for each status change. Then submit the board with a short explanation.",
+      "checklist": [
+        "Creates at least two work items with clear, specific summaries",
+        "Gives every work item an owner",
+        "Moves at least one item from To do through In progress to Done",
+        "Explains each status change in plain language"
+      ]
+    },
+    {
+      "module_id": "MOD-SQL-101",
+      "skill_id": "SK-SQL",
+      "status": "outline",
+      "title": "Querying operational data with SQL",
+      "outcome": "Write SELECT, JOIN and GROUP BY queries that answer a stated operational question, and check the result for missing data.",
+      "minutes": 120,
+      "resource": null,
+      "task": "Planned: answer three questions about a synthetic flight-delay table and explain one data-quality issue.",
+      "checklist": [
+        "Query answers the stated question",
+        "Joins use the correct keys",
+        "Aggregates are grouped correctly",
+        "One data-quality issue is identified"
+      ]
+    },
+    {
+      "module_id": "MOD-VIZ-101",
+      "skill_id": "SK-VIZ",
+      "status": "outline",
+      "title": "Building a clear operational dashboard",
+      "outcome": "Choose a chart that fits the question, label it so a non-specialist can read it, and state the main finding in one sentence.",
+      "minutes": 120,
+      "resource": null,
+      "task": "Planned: redesign a cluttered on-time-performance chart and write the headline finding.",
+      "checklist": [
+        "Chart type fits the question",
+        "Axes and units are labelled",
+        "Colour is used for meaning only",
+        "Headline finding is stated"
+      ]
+    }
+  ],
+  "outcomes": [
+    {
+      "outcome_id": "LO1",
+      "name": "Apply data analysis to an operational problem"
+    },
+    {
+      "outcome_id": "LO2",
+      "name": "Communicate findings to non-specialist stakeholders"
+    },
+    {
+      "outcome_id": "LO3",
+      "name": "Work effectively in a professional team"
+    },
+    {
+      "outcome_id": "LO4",
+      "name": "Reflect on professional growth and ethics"
+    }
+  ],
+  "board_people": [
+    "Layla Hassan",
+    "Omar Saleh",
+    "Priya Nair"
+  ],
+  "board_start": [
+    {
+      "key": "OPS-101",
+      "summary": "Clean turnaround-time data for Terminal 3",
+      "assignee": "",
+      "status": "todo",
+      "created_by": "seed"
+    },
+    {
+      "key": "OPS-102",
+      "summary": "Agree delay-cause categories with the ops team",
+      "assignee": "",
+      "status": "todo",
+      "created_by": "seed"
+    },
+    {
+      "key": "OPS-103",
+      "summary": "Build weekly on-time-performance chart",
+      "assignee": "",
+      "status": "todo",
+      "created_by": "seed"
+    }
+  ]
+}

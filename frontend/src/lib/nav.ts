@@ -65,7 +65,7 @@ export const NAV: NavGroup[] = [
       {
         key: "applications", path: "/applications", label: "Applications", owner: "P04", icon: BriefcaseBusiness,
         roles: ["student", "employer", "coordinator"],
-        summary: "Applications, offers and coordinator-confirmed placements.",
+        summary: "Applications, interviews, offers and coordinator-confirmed placements.",
         plans: ["Apply to published, open listings", "Offers and acceptances", "Coordinator confirms the placement"],
       },
       {
@@ -97,14 +97,14 @@ export const NAV: NavGroup[] = [
     label: "Support",
     items: [
       {
-        key: "assistant", path: "/assistant", label: "Assistant", owner: "P03 · P07", icon: Bot, roles: ALL,
+        key: "assistant", path: "/assistant", label: "Assistant", owner: "P06", icon: Bot, roles: ALL,
         summary: "Answers from the approved FAQ. Questions it can't answer go to the coordinator.",
         plans: ["Approved FAQ answers with sources", "Unanswered questions queue", "Optional LLM mode when configured"],
       },
       {
         key: "records", path: "/records", label: "Records", owner: "Core", icon: ScrollText,
         roles: ["coordinator", "reviewer", "advisor"],
-        summary: "Audit trail of every decision: who, what, when and why.",
+        summary: "Every cross-team handoff and the activity log: who did what, when, to which record.",
         plans: ["Searchable event log", "Version history per record", "Export for the practicum report"],
       },
     ],

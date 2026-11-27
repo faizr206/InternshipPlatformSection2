@@ -1,11 +1,12 @@
 import { Check, Lock } from "lucide-react";
+import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { buttonStyles, Card, EmptyState, OwnerChip } from "@/components/ui";
 import { roleLabel, useDemo } from "@/context/DemoContext";
 import { canSee, type NavItem } from "@/lib/nav";
 
-/** Placeholder for a module page until its integration step lands. */
-export default function ModulePage({ item }: { item: NavItem }) {
+/** Role guard for a module page; renders the real page, or a placeholder if a module has none yet. */
+export default function ModulePage({ item, page: Page }: { item: NavItem; page?: ComponentType }) {
   const { role } = useDemo();
   const Icon = item.icon;
 
@@ -24,6 +25,14 @@ export default function ModulePage({ item }: { item: NavItem }) {
       </Card>
     );
   }
+
+  if (Page)
+    return (
+      <div className="space-y-4">
+        <p className="max-w-3xl text-[14px] text-muted">{item.summary}</p>
+        <Page />
+      </div>
+    );
 
   return (
     <div className="space-y-5">

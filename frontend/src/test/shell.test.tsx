@@ -66,11 +66,12 @@ describe("pages", () => {
     expect(screen.getByText(/Welcome back, Dr. Salma/)).toBeInTheDocument();
   });
 
-  it("shows the owner chip on module placeholders", async () => {
+  it("shows the owner chip and the real module page", async () => {
     renderApp("/applications");
     const header = (await screen.findByRole("heading", { level: 1, name: "Applications" })).parentElement!;
     expect(within(header).getByText("P04")).toBeInTheDocument();
-    expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
+    expect(screen.getByText(/Applications, interviews, offers and coordinator-confirmed placements/)).toBeInTheDocument();
+    expect(screen.queryByText("Nothing here yet")).not.toBeInTheDocument();
   });
 
   it("answers from the FAQ in the assistant drawer", async () => {

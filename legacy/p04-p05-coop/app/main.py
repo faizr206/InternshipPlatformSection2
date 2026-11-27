@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -1047,6 +1048,8 @@ class ProfileUpdateIn(BaseModel):
     skill_id: str | None = None
     evidence_id: str | None = None
     rematch: bool = True
+    email: str | None = None
+    interests: list[str] | None = None
 
 
 @app.post("/api/students/{student_id}/profile-updates", status_code=201)
@@ -1055,10 +1058,12 @@ def update_profile(student_id: str, body: ProfileUpdateIn):
     Older runs keep their original versions and reasons (P05-07 AC2)."""
     if body.kind == "availability":
         require_role(body.actor_role, "student", "change availability")
+    elif body.kind in {"contact", "interests", "self_declared_skill"}:
+        require_role(body.actor_role, "student", "edit profile")
     elif body.kind == "skill_evidence":
         require_role(body.actor_role, "faculty", "review skill evidence")
     else:
-        raise HTTPException(422, "kind must be 'availability' or 'skill_evidence'.")
+        raise HTTPException(422, "Unsupported profile update kind.")
     with db.connect() as conn:
         student = get_student(conn, student_id)
         if not student:
@@ -1072,6 +1077,26 @@ def update_profile(student_id: str, body: ProfileUpdateIn):
                 raise HTTPException(422, "Availability start must be on or before the end date.")
             new_profile["availability_start"], new_profile["availability_end"] = start, end
             source = "profile-update:availability"
+        elif body.kind == "contact":
+            email = (body.email or "").strip()
+            if email and (len(email) > 254 or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email)):
+                raise HTTPException(422, "Enter a valid email address.")
+            new_profile["email"] = email
+            source = "profile-update:contact"
+        elif body.kind == "interests":
+            interests = list(dict.fromkeys(item.strip().lower() for item in body.interests or [] if item.strip()))
+            if len(interests) > 15 or any(len(item) > 80 for item in interests):
+                raise HTTPException(422, "Use up to 15 interests, with at most 80 characters each.")
+            new_profile["interests"] = interests
+            source = "profile-update:interests"
+        elif body.kind == "self_declared_skill":
+            if body.skill_id not in db.skill_names():
+                raise HTTPException(422, "Choose a skill from the list.")
+            entries = new_profile.setdefault("skills", [])
+            if any(entry["skill_id"] == body.skill_id for entry in entries):
+                raise HTTPException(422, "That skill is already on your profile.")
+            entries.append({"skill_id": body.skill_id, "evidence_status": "self_declared"})
+            source = "profile-update:self_declared_skill"
         else:
             skills = db.skill_names()
             if body.skill_id not in skills:

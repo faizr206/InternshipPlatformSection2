@@ -11,9 +11,10 @@ from pydantic import BaseModel
 
 from app import db
 from app.core.common import (all_opportunities, get_student, new_profile_version as _new_profile_version, now,
-                             require_role, student_and_opportunity as _student_and_opportunity)
+                             next_id, record_handoff, require_role, student_and_opportunity as _student_and_opportunity)
 from app.modules.matching.ai import AI_METHOD_VERSION, insights, relevance_scores, statement_draft, term_matches
 from app.modules.matching.matching import RULES, is_eligible_listing, recommend
+from app.modules.preparation import service as prep
 
 router = APIRouter(tags=["P05 matching"])
 
@@ -295,6 +296,8 @@ def gap_dict(conn, row) -> dict:
     d["activity"] = activity
     d["source"] = "P06 activity list from Team P6/P7 (file, 24 Nov; live P06 module not connected)"
     d["next_action"] = (GAP_EVIDENCE_NOTE if activity else GAP_NO_MODULE_ACTION)
+    p06 = conn.execute("SELECT status FROM prep_gaps WHERE gap_id = ?", (d["gap_id"],)).fetchone()
+    d["p06_status"] = p06["status"] if p06 else None
     # P06's requested record (Zhengxi, 10 Nov): gap_id, student_id, skill_id, opportunity_id,
     # reason; plus the three trace fields we agreed to add.
     d["p06_payload"] = {
@@ -324,8 +327,8 @@ def handoff_gap(recommendation_id: str, skill_id: str, body: GapHandoffIn):
         if existing:
             return gap_dict(conn, existing)
         activity = db.p06_activities().get(skill_id)
-        count = conn.execute("SELECT COUNT(*) FROM skill_gap_handoffs").fetchone()[0]
-        gap_id = f"GAP-{count + 1:04d}"
+        # GAP ids are shared with gaps the coordinator enters in P06, so take the next free one in both.
+        gap_id = next_id(conn, "GAP", ["SELECT gap_id FROM skill_gap_handoffs", "SELECT gap_id FROM prep_gaps"], 4)
         conn.execute(
             "INSERT INTO skill_gap_handoffs (gap_id, student_id, skill_id, opportunity_id, opportunity_version, "
             "recommendation_id, profile_version, activity_id, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
@@ -333,6 +336,19 @@ def handoff_gap(recommendation_id: str, skill_id: str, body: GapHandoffIn):
              recommendation_id, rec["profile_version"], activity["activity_id"] if activity else None, now()),
         )
         row = conn.execute("SELECT * FROM skill_gap_handoffs WHERE gap_id = ?", (gap_id,)).fetchone()
+        payload = gap_dict(conn, row)["p06_payload"]
+        # Live P05 -> P06 handoff: skills with a P06 module go straight onto the preparation plan
+        # (one open gap per skill); the handoff record keeps the agreed v3 payload as evidence.
+        if prep.module_for_skill(skill_id):
+            student = get_student(conn, rec["student_id"])
+            prep.add_gap(conn, rec["student_id"], skill_id, payload["reason"], "P05", student["display_name"],
+                         gap_id=gap_id, opportunity_id=rec["opportunity_id"],
+                         opportunity_version=rec["opportunity_version"], recommendation_id=recommendation_id,
+                         profile_version=rec["profile_version"])
+            status = "delivered"
+        else:
+            status = "no_p06_module"
+        record_handoff(conn, "P05", "P06", "skill_gap", payload, rec["student_id"], gap_id, status)
         return gap_dict(conn, row)
 
 

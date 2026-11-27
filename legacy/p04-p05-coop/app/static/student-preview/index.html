@@ -638,13 +638,14 @@
 }
 
 </style>
+<link rel="stylesheet" href="/student-preview/assets/workspace.css?v=dark-contrast-27">
 <div id="coop-preview">
 
 <div class="shell">
 
   <div>
     <header class="public-header">
-      <button type="button" data-go="recs" class="wordmark" aria-label="Coop home"><span class="brand-symbol" aria-hidden="true"></span>Coop</button>
+      <button type="button" data-go="recs" class="wordmark" aria-label="Coop home">Coop</button>
       <nav class="public-links" aria-label="Main navigation">
         <button type="button" data-tab="recs" aria-current="page">For you</button>
         <button type="button" data-tab="browse">Explore</button>
@@ -653,23 +654,22 @@
         <button type="button" data-tab="guide">Career guide</button>
       </nav>
       <div class="header-end">
-      <label class="demo-role"><span class="role-picker-label">Workspace</span>
-        <select id="demoRole" aria-label="Test workspace role">
-          <option value="student">Student</option>
-          <option value="employer">Employer</option>
-          <option value="coordinator">Coordinator</option>
-          <option value="faculty">Faculty reviewer</option>
-        </select></label>
+      <button type="button" class="circle-control" id="messagesButton" data-workspace-panel="messagesDialog" aria-label="Messages" aria-haspopup="dialog"><img class="ui-icon" src="/student-preview/assets/icons/mail.svg" alt="" aria-hidden="true"></button>
+      <button type="button" class="circle-control" id="notificationButton" data-workspace-panel="notificationsDialog" aria-label="Notifications" aria-haspopup="dialog"><img class="ui-icon" src="/student-preview/assets/icons/bell.svg" alt="" aria-hidden="true"><span class="unread-dot" id="notificationDot" hidden></span></button>
       <button type="button" class="avatar-button" data-tab="profile" aria-label="Open Layla Hassan’s profile"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""></button>
       </div>
     </header>
 <div class="assistant-layer">
+<nav class="utility-rail" aria-label="Workspace shortcuts">
+  <button type="button" data-tab="profile" aria-label="Profile" title="Profile"><img class="ui-icon" src="/student-preview/assets/icons/user-round.svg" alt="" aria-hidden="true"></button>
+  <button type="button" data-tab="saved" aria-label="Saved opportunities" title="Saved opportunities"><img class="ui-icon" src="/student-preview/assets/icons/bookmark.svg" alt="" aria-hidden="true"></button>
+  <button type="button" data-tab="apps" aria-label="Your applications" title="Your applications"><img class="ui-icon" src="/student-preview/assets/icons/files.svg" alt="" aria-hidden="true"></button>
+  <button type="button" data-workspace-panel="calendarDialog" aria-label="Interview calendar" title="Interview calendar"><img class="ui-icon" src="/student-preview/assets/icons/calendar-days.svg" alt="" aria-hidden="true"></button>
+  <button type="button" data-workspace-panel="activityDialog" aria-label="Recent activity" title="Recent activity"><img class="ui-icon" src="/student-preview/assets/icons/history.svg" alt="" aria-hidden="true"></button>
+  <button type="button" data-workspace-panel="settingsDialog" aria-label="Workspace settings" title="Workspace settings"><img class="ui-icon" src="/student-preview/assets/icons/settings-2.svg" alt="" aria-hidden="true"></button>
+</nav>
   <button type="button" id="robotLauncher" class="robot-launcher" aria-label="Open the co-op assistant (Team P6/P7)" aria-describedby="robotHelp" aria-haspopup="dialog" aria-controls="careerChat">
-    <span class="robot-art" aria-hidden="true">
-      <span class="robot-antenna"></span>
-      <span class="robot-head"><span class="robot-visor"></span></span>
-      <span class="robot-body"></span>
-    </span>
+    <svg class="assistant-emblem" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 6v4M5 16v5m22-5v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="8" y="10" width="16" height="15" rx="5" stroke="currentColor" stroke-width="1.6"/><path d="M13 17v2m6-2v2" stroke="#e5c687" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="5" r="1.5" fill="#e5c687"/></svg>
   </button>
   <span class="sr-assist" id="robotHelp">Drag to move, or use the arrow keys with the robot focused.</span>
 </div>
@@ -697,12 +697,12 @@
             <div id="tab-recs">
               <header class="feature feature-home">
                 <div class="feature-content">
-                  <h2>Find your next<br> placement.</h2>
-                  <p>Find internships, part-time work, and graduate roles that fit your skills.</p>
+                  <h2 id="welcomeTitle">Welcome back.</h2>
+                  <p>Find roles in AI, research, and business.</p>
                   <button class="cp-btn" data-go="browse" type="button">Explore opportunities</button>
                 </div>
                 <img src="/student-preview/assets/7c42d6ba469072fd.webp" alt="" class="feature-photo">
-              </header>
+              <div class="workspace-summary" id="workspaceSummary"></div></header>
               <div class="section-head"><h2>Your matches</h2><button class="inline-action" id="recommend" type="button">Refresh matches</button></div>
               <div class="cp-toolbar">
 
@@ -712,9 +712,10 @@
               <div id="recs"></div>
             </div>
 
-            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2><p>Explore current roles and university placements.</p></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
+            <div id="tab-browse" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Explore opportunities</h2></div><img src="/student-preview/assets/4018f2d4a8bf9536.webp" alt="" class="feature-photo"></header>
 <div class="source-tools"><label for="catalogueSource">Show<select id="catalogueSource"><option value="live">Live opportunities</option><option value="university">University listings</option></select></label></div>
 <p id="feedStatus" role="status">Loading live opportunities…</p>
+<details id="feedDetails" class="fit-details" hidden><summary>Listing sources</summary><p id="feedSources" class="cp-muted"></p></details>
 <form id="opportunitySearch" class="opportunity-search" aria-label="Search opportunities">
   <div class="basic-search">
     <label class="keyword-field" for="q">Search
@@ -738,39 +739,39 @@
     <button type="button" class="inline-action" id="advancedToggle" aria-label="Advanced search" aria-expanded="false" aria-controls="advancedFilters">Advanced search <span id="advancedCount"></span></button>
     <button type="button" class="inline-action" id="clearFilters" hidden>Clear all</button>
   </div>
-  <fieldset id="advancedFilters" class="advanced-filters" hidden aria-label="Advanced search filters">
-    <label for="jobType">Job type<select id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance</option></select></label>
+
+  <p class="cp-muted filter-note" id="degreeNote" hidden>Degree criteria are shown only when supplied by the listing. Unspecified degrees are excluded by a degree filter.</p>
+</form>
+<div class="discovery-grid" id="discoveryGrid"><aside class="filter-column" id="filterColumn" hidden>  <fieldset id="advancedFilters" class="advanced-filters" hidden aria-label="Advanced search filters"><legend>Refine results</legend>
+    <label for="jobType">Job type<select form="opportunitySearch" id="jobType"><option value="">Any job type</option><option value="internship">Internship</option><option value="part-time">Part-time</option><option value="full-time">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance</option></select></label>
     <label for="mode">Work mode
-      <select id="mode">
+      <select form="opportunitySearch" id="mode">
         <option value="">Any mode</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option>
       </select>
     </label>
     <label for="sector">Sector
-      <select id="sector"><option value="">Any sector</option></select>
+      <select form="opportunitySearch" id="sector"><option value="">Any sector</option></select>
     </label>
     <label for="requiredSkill">Skill keyword
-      <select id="requiredSkill"><option value="">Any skill</option></select>
+      <select form="opportunitySearch" id="requiredSkill"><option value="">Any skill</option></select>
     </label>
     <label for="startBy">Starts on or before
-      <input type="date" id="startBy">
+      <input form="opportunitySearch" type="date" id="startBy">
     </label>
     <p class="cp-muted filter-help" id="dateFilterHelp">Roles with unconfirmed dates are excluded when a start date is set.</p>
-  </fieldset>
-  <p class="cp-muted filter-note" id="degreeNote" hidden>Degree criteria are shown only when supplied by the listing. Unspecified degrees are excluded by a degree filter.</p>
-</form>
-<div class="search-results-head">
+  </fieldset></aside><div class="result-column"><div class="search-results-head">
   <h3 id="searchCount" aria-live="polite"></h3>
   <span class="cp-muted">Select two roles to compare.</span>
 </div>
               <div id="compare"></div>
-              <div id="opps"></div>
+              <div id="opps"></div></div></div>
             </div>
 
 
-            <div id="tab-apps" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Applications</h2><p>Pick up a draft or check the status of an application.</p></div><img src="/student-preview/assets/e985c5a0af90f86b.webp" alt="" class="feature-photo"></header><div id="apps"></div></div>
-            <div id="tab-saved" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Saved opportunities</h2><p>Keep track of the roles you want to come back to.</p></div><img src="/student-preview/assets/459af678c8771a45.webp" alt="" class="feature-photo"></header><div id="savedList"></div></div>
+            <div id="tab-apps" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Applications</h2></div><img src="/student-preview/assets/e985c5a0af90f86b.webp" alt="" class="feature-photo"></header><div id="apps"></div></div>
+            <div id="tab-saved" hidden><header class="feature feature-secondary"><div class="feature-content"><h2>Saved opportunities</h2></div><img src="/student-preview/assets/459af678c8771a45.webp" alt="" class="feature-photo"></header><div id="savedList"></div></div>
             <div id="tab-guide" hidden>
-              <header class="feature feature-secondary"><div class="feature-content"><h2>Career guide</h2><p>See how your experience fits and what to check before applying.</p></div><img src="/student-preview/assets/e26fddd022106113.webp" alt="" class="feature-photo"></header>
+              <header class="feature feature-secondary"><div class="feature-content"><h2>Career guide</h2><p>See how your skills fit a role.</p></div><img src="/student-preview/assets/e26fddd022106113.webp" alt="" class="feature-photo"></header>
               <div class="cp-panel advisor-panel">
 
                 <div class="advisor-controls">
@@ -853,6 +854,38 @@
   <p class="cp-muted" id="interviewZone"></p>
   <p class="msg" role="alert" id="interviewMsg"></p>
   <div class="actions"><button class="cp-btn" id="interviewSave" type="button">Save interview</button><button class="cp-btn secondary" id="interviewCancel" type="button">Cancel</button></div>
+</dialog>
+
+<dialog id="messagesDialog" class="workspace-dialog" aria-labelledby="messagesTitle">
+  <div class="workspace-dialog-head"><h2 id="messagesTitle">Messages</h2><button type="button" class="circle-control" data-close-dialog="messagesDialog" aria-label="Close messages"><img class="ui-icon" src="/student-preview/assets/icons/x.svg" alt="" aria-hidden="true"></button></div>
+  <div class="panel-empty"><span class="empty-icon"><img class="ui-icon" src="/student-preview/assets/icons/mail.svg" alt="" aria-hidden="true"></span><h3>Your inbox is empty</h3><p>There are no conversations yet.</p></div>
+</dialog>
+<dialog id="notificationsDialog" class="workspace-dialog" aria-labelledby="notificationsTitle">
+  <div class="workspace-dialog-head"><h2 id="notificationsTitle">Notifications</h2><button type="button" class="circle-control" data-close-dialog="notificationsDialog" aria-label="Close notifications"><img class="ui-icon" src="/student-preview/assets/icons/x.svg" alt="" aria-hidden="true"></button></div>
+  <div class="panel-actions"><button class="inline-action" type="button" id="markNotificationsRead">Mark all as read</button></div>
+  <div id="notificationList" aria-live="polite"></div>
+</dialog>
+<dialog id="calendarDialog" class="workspace-dialog" aria-labelledby="calendarTitle">
+  <div class="workspace-dialog-head"><h2 id="calendarTitle">Interviews</h2><button type="button" class="circle-control" data-close-dialog="calendarDialog" aria-label="Close interviews"><img class="ui-icon" src="/student-preview/assets/icons/x.svg" alt="" aria-hidden="true"></button></div>
+  <div id="calendarList"></div>
+</dialog>
+<dialog id="activityDialog" class="workspace-dialog" aria-labelledby="activityTitle">
+  <div class="workspace-dialog-head"><h2 id="activityTitle">Recent activity</h2><button type="button" class="circle-control" data-close-dialog="activityDialog" aria-label="Close recent activity"><img class="ui-icon" src="/student-preview/assets/icons/x.svg" alt="" aria-hidden="true"></button></div>
+  <div id="activityList"></div>
+</dialog>
+<dialog id="settingsDialog" class="workspace-dialog" aria-labelledby="settingsTitle">
+  <div class="workspace-dialog-head"><h2 id="settingsTitle">Workspace settings</h2><button type="button" class="circle-control" data-close-dialog="settingsDialog" aria-label="Close workspace settings"><img class="ui-icon" src="/student-preview/assets/icons/x.svg" alt="" aria-hidden="true"></button></div>
+  <label class="appearance-setting">Appearance
+    <select id="appearanceMode"><option value="light">Light</option><option value="dark">Dark</option></select>
+  </label>
+  <p class="cp-muted">Switch roles to test the application workflow.</p>
+  <label class="demo-role"><span class="role-picker-label">Workspace</span>
+        <select id="demoRole" aria-label="Test workspace role">
+          <option value="student">Student</option>
+          <option value="employer">Employer</option>
+          <option value="coordinator">Coordinator</option>
+          <option value="faculty">Faculty reviewer</option>
+        </select></label>
 </dialog>
 
 <!-- Apply / draft dialog -->
@@ -942,6 +975,14 @@
 <script>
 (() => {
 const root = document.getElementById("coop-preview");
+const appearanceMode = root.querySelector("#appearanceMode");
+appearanceMode.value = localStorage.getItem("coop:appearance") === "dark" ? "dark" : "light";
+root.dataset.theme = appearanceMode.value;
+appearanceMode.onchange = () => {
+  root.dataset.theme = appearanceMode.value;
+  localStorage.setItem("coop:appearance", appearanceMode.value);
+};
+
 const visualAssets = {"OP-028": "/student-preview/assets/974facbb687552a3.webp", "OP-031": "/student-preview/assets/0a984719eef967cd.webp", "OP-032": "/student-preview/assets/e82d8abd3b648e7d.webp", "OP-033": "/student-preview/assets/8be8476f80cd742d.webp"};
 const rolePhotos = {"OP-101": {"image": "/student-preview/assets/93c7e737742d126e.webp", "alt": "Colleagues discussing ideas at a whiteboard"}, "OP-102": {"image": "/student-preview/assets/9695a56f9332df37.webp", "alt": "Server racks lining a data center corridor"}, "OP-103": {"image": "/student-preview/assets/0e564b1deb74fbce.webp", "alt": "Close-up of equipment in a server rack"}, "OP-104": {"image": "/student-preview/assets/463b05961dc7091c.webp", "alt": "Robotic arm in an engineering laboratory"}, "OP-105": {"image": "/student-preview/assets/1995f991d95cc999.webp", "alt": "Two colleagues examining analytics on a laptop"}, "OP-106": {"image": "/student-preview/assets/1bd991f661eca63f.webp", "alt": "Team discussing graphs and product data"}, "OP-107": {"image": "/student-preview/assets/78cac49c2d20d73c.webp", "alt": "Researchers reviewing materials together at a worktable"}, "OP-108": {"image": "/student-preview/assets/20aa104b05a87d20.webp", "alt": "Team reviewing charts and documentation at a table"}};
 function employerPhoto(o) {
@@ -1012,11 +1053,13 @@ function renderGuide() {
   }[r.eligibility];
   const details = [...r.reasons, ...r.gaps, ...r.unknowns];
   $("guideResult").innerHTML = `
-    <div class="rec-label"><b>${esc(o.title)}</b><span class="cp-chip accent">Rules score ${r.score}</span></div>
+    <div class="rec-label"><b>Before you apply</b><span class="cp-chip accent">Match score ${r.score}</span></div>
     <div>${esc(advice)}</div>
-    <ul>${details.map(line => `<li>${esc(line)}</li>`).join("")}</ul>
-    ${aiBox(r)}
-    <div class="actions"><button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">Open listing</button>${saveButton(o)}</div>`;
+    <div class="actions"><button class="cp-btn secondary" data-view="${esc(o.opportunity_id)}">Open listing</button>${saveButton(o)}</div>
+    <details class="fit-details"><summary>Why this role matches</summary>
+      ${details.length ? `<ul>${details.map(line => `<li>${esc(line)}</li>`).join("")}</ul>` : ""}
+      ${aiBox(r)}
+    </details>`;
 }
 $("guideRole").onchange = renderGuide;
 root.addEventListener("click", e => {
@@ -1060,32 +1103,92 @@ function setMsg(id, text, kind) {
 // ================= Profile =================
 function renderProfile(s) {
   const skills = s.skills || [];
-  const avail = s.availability_start && s.availability_end
-    ? `${esc(s.availability_start)} → ${esc(s.availability_end)}`
-    : `<span class="cp-chip warn">Not provided</span>`;
   $("profile").innerHTML = `
     <div class="profile-person"><img src="/student-preview/assets/0bdac5847535c1ef.webp" alt=""><div><h2>${esc(s.display_name)}</h2><div class="cp-muted">${esc(s.student_id)}</div></div></div>
-    <h3>Interests</h3>
-    <div class="chips">${(s.interests || []).length
-      ? s.interests.map(i => `<span class="cp-chip accent">${esc(i)}</span>`).join("")
-      : `<span class="cp-chip warn">Not provided</span>`}</div>
-    <h3>Availability</h3>
-    <div>${avail}</div>
-    <h3>Skills</h3>
+    <details class="profile-section"><summary>Contact email</summary>
+      <form class="inline-form" data-profile-kind="contact"><label>Email <input name="email" type="email" maxlength="254" value="${esc(s.email || "")}"></label><button class="cp-btn">Save email</button></form>
+    </details>
+    <details class="profile-section"><summary>CV</summary>
+      <form class="inline-form" id="cvForm"><label>PDF, up to 2 MB <input type="file" name="cv" accept=".pdf,application/pdf" required></label><button class="cp-btn">Save CV</button></form>
+      <p class="cp-muted">Stored in this browser.</p><div id="cvActions" class="actions"></div>
+    </details>
+    <details class="profile-section"><summary>Interests</summary>
+    <form class="inline-form" data-profile-kind="interests"><label>Interests, separated by commas <input name="interests" value="${esc((s.interests || []).join(", "))}"></label><button class="cp-btn">Save interests</button></form>
+    </details>
+    <details class="profile-section"><summary>Skills</summary>
     <div class="chips">${skills.length
       ? skills.map(sk => sk.evidence_status === "reviewed"
           ? `<span class="cp-chip ok" title="Reviewed evidence ${esc(sk.evidence_id || "")} by ${esc(sk.reviewed_by || "?")} on ${esc((sk.reviewed_at || "").slice(0, 10))}">✓ ${esc(skillName(sk.skill_id))}</span>`
           : `<span class="cp-chip" title="Self-declared, not yet reviewed">${esc(skillName(sk.skill_id))} · self-declared</span>`).join("")
       : `<span class="cp-chip warn">None listed</span>`}</div>
-    <p class="cp-muted">A check mark indicates reviewed skill evidence. Profile v${esc(s.profile_version)} · P01 team export.</p>
-    <h3>Update availability</h3>
+    <p class="cp-muted">✓ Reviewed skill evidence</p>
+    <form class="inline-form" data-profile-kind="self_declared_skill">
+      <label>Add a skill <select name="skill_id" required><option value="">Choose a skill</option>
+        ${Object.entries(state.skills).filter(([id]) => !skills.some(skill => skill.skill_id === id)).map(([id, name]) => `<option value="${esc(id)}">${esc(name)}</option>`).join("")}
+      </select></label><button class="cp-btn">Add skill</button>
+    </form>
+    </details>
+    <details class="profile-section"><summary>Availability</summary>
     <div class="inline-form">
       <label>From <input type="date" id="avStart" value="${esc(s.availability_start || "")}"></label>
       <label>To <input type="date" id="avEnd" value="${esc(s.availability_end || "")}"></label>
       <button class="cp-btn small" type="button" id="avSave">Save &amp; refresh matches</button>
     </div>
-    <p class="cp-muted">Your matches refresh when your availability changes.</p>
-    <p class="msg" id="avMsg"></p>`;
+    </details>
+    <p class="msg" id="avMsg" role="status"></p>`;
+  $("profile").querySelectorAll("[data-profile-kind]").forEach(form => {
+    form.onsubmit = async event => {
+      event.preventDefault();
+      const kind = form.dataset.profileKind;
+      const fields = Object.fromEntries(new FormData(form));
+      if (kind === "interests") fields.interests = fields.interests.split(",");
+      try {
+        await api(`/api/students/${s.student_id}/profile-updates`, json({
+          ...fields, kind, actor_role: "student", rematch: kind !== "contact"
+        }));
+        await onStudentChange();
+        $("profile").querySelector(`[data-profile-kind="${kind}"]`).closest("details").open = true;
+        setMsg("avMsg", "Saved.", "success");
+      } catch (error) { setMsg("avMsg", error.message, "error"); }
+    };
+  });
+  const cvKey = `coop:cv:${s.student_id}`;
+  function renderCv() {
+    const cv = JSON.parse(localStorage.getItem(cvKey) || "null");
+    $("cvActions").replaceChildren();
+    if (!cv) return;
+    const download = document.createElement("a");
+    download.className = "cp-btn secondary";
+    download.href = cv.data;
+    download.download = cv.name;
+    download.textContent = cv.name;
+    const remove = document.createElement("button");
+    remove.className = "cp-btn secondary";
+    remove.textContent = "Remove CV";
+    remove.onclick = () => { localStorage.removeItem(cvKey); renderCv(); setMsg("avMsg", "CV removed.", "success"); };
+    $("cvActions").append(download, remove);
+  }
+  $("cvForm").onsubmit = async event => {
+    event.preventDefault();
+    const file = new FormData(event.currentTarget).get("cv");
+    if (!file.name.toLowerCase().endsWith(".pdf") || file.size > 2 * 1024 * 1024) {
+      setMsg("avMsg", "Choose a PDF up to 2 MB.", "error");
+      return;
+    }
+    try {
+      if (await file.slice(0, 5).text() !== "%PDF-") throw new Error("Choose a valid PDF.");
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(new Blob([file], {type: "application/pdf"}));
+      });
+      localStorage.setItem(cvKey, JSON.stringify({name: file.name, data}));
+      renderCv();
+      setMsg("avMsg", "CV saved in this browser.", "success");
+    } catch (error) { setMsg("avMsg", error.message || "Could not save the CV.", "error"); }
+  };
+  renderCv();
   $("avSave").onclick = async () => {
     try {
       const r = await api(`/api/students/${s.student_id}/profile-updates`, json({ kind: "availability",
@@ -1375,18 +1478,20 @@ function studentActions(a) {
 
 async function loadApps() {
   state.apps = await api(`/api/students/${studentId()}/applications`);
+  renderWorkspaceUpdates();
   $("appCount").textContent = state.apps.length ? `(${state.apps.length})` : "";
   if (!state.apps.length) { $("apps").innerHTML = `<div class="empty">No applications or drafts yet.</div>`; return; }
   const opps = await Promise.all(state.apps.map(a => opp(a.opportunity_id)));
   $("apps").innerHTML = state.apps.map((a, i) => `
-    <article class="cp-card">
+    <article class="cp-card" id="application-${esc(a.application_id)}">
       <div class="card-head"><div><div class="cp-title"><b>${esc(opps[i].title)}</b></div>
         <div class="cp-muted company">${esc(opps[i].employer_name)}</div></div>
-      <div class="chips">${statusChip(a.application_status)}${placementChip(a.placement_status)}</div></div>
-      <p class="cp-muted" style="margin:6px 0 0">Next: ${esc(a.history?.at(-1)?.next_action || "")}</p>
+      <div class="chips">${statusChip(a.application_status)}</div></div>
       ${interviewDetails(a)}
       ${studentActions(a) ? `<div class="actions">${studentActions(a)}</div>` : ""}
-      <details class="fit-details"><summary>Application details &amp; history</summary>
+      <details class="fit-details"><summary>Details &amp; history</summary>
+        <div class="chips">${placementChip(a.placement_status)}</div>
+        ${a.history?.at(-1)?.next_action ? `<p>Next: ${esc(a.history.at(-1).next_action)}</p>` : ""}
         <p class="cp-muted">${esc(a.application_id)} · ${esc(a.opportunity_id)} v${esc(a.opportunity_version)} · profile v${esc(a.profile_version)} · ${esc(a.submitted_at)}</p>
         <p>${esc(a.statement || "No statement yet")}</p>
         ${historyHtml(a, true)}
@@ -1914,6 +2019,7 @@ async function onStudentChange() {
   state.student = await api(`/api/students/${studentId()}`);
   state.compare = [];
   renderProfile(state.student);
+  $("welcomeTitle").textContent = `Welcome back, ${state.student.display_name.split(" ")[0]}.`;
   await refreshLists();
 }
 
@@ -2128,8 +2234,9 @@ let liveFeed = {status:"loading", fetched_at:null};
 function renderFeedStatus() {
   const university = $("catalogueSource").value === "university";
   const label = $("feedStatus");
+  $("feedDetails").hidden = university || !["stale", "live", "fresh"].includes(liveFeed.status) && !(liveFeed.sources || []).length;
   if (university) {
-    label.textContent = "University listings from the P03 team export. Internal applications are available for testing.";
+    label.textContent = "";
     return;
   }
   const sourceList = (liveFeed.sources || []).filter(source => source.status !== "unavailable")
@@ -2138,7 +2245,8 @@ function renderFeedStatus() {
     {dateStyle:"medium",timeStyle:"short"}) : "";
   label.textContent = liveFeed.status === "loading" ? "Loading live opportunities…" :
     liveFeed.status === "unavailable" ? "Live opportunities are unavailable. University listings are available in the source selector." :
-    `Sources: ${sourceList} · ${liveCatalogue.length} opportunities · ${liveFeed.status === "stale" ? "Saved feed from" : "Retrieved"} ${date}. Check location restrictions on each listing. Remotive posts are delayed by 24 hours.`;
+    liveFeed.status === "stale" ? "Showing the last available listings." : "";
+  $("feedSources").textContent = `${sourceList} · Retrieved ${date}. Check each listing for location restrictions. Remotive posts are delayed by 24 hours.`;
 }
 
 async function loadLiveCatalogue() {
@@ -2226,6 +2334,103 @@ $("interviewSave").onclick = async () => {
     save.disabled = false;
   }
 };
+
+const notificationReads = new Set();
+try {
+  for (const key of JSON.parse(sessionStorage.getItem("coop.read-notifications") || "[]")) notificationReads.add(key);
+} catch {}
+function saveNotificationReads() {
+  try {sessionStorage.setItem("coop.read-notifications",JSON.stringify([...notificationReads].slice(-500)));} catch {}
+}
+function workspaceEvents() {
+  return state.apps.flatMap(application => (application.history || []).map((event,index)=>({
+    ...event, application,
+    key:`${application.application_id}:${index}:${event.action}:${event.created_at}`
+  }))).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+}
+function shortDate(value) {
+  return new Date(value).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+}
+function eventMarkup(event) {
+  return `<article class="event-row ${notificationReads.has(event.key) ? "" : "is-unread"}">
+    <button type="button" data-open-application="${esc(event.application.application_id)}" data-event-key="${esc(event.key)}">${esc(event.action)}</button>
+    <p>${esc(event.application.opportunity_title)}</p>
+    <time datetime="${esc(event.created_at)}">${esc(shortDate(event.created_at))}</time>
+  </article>`;
+}
+function renderWorkspaceUpdates() {
+  const events = workspaceEvents();
+  const updates = events.filter(event=>event.actor_role !== "student");
+  const unread = updates.filter(event=>!notificationReads.has(event.key)).length;
+  $("notificationDot").hidden = unread === 0;
+  $("notificationButton").setAttribute("aria-label",unread ? `Notifications, ${unread} unread` : "Notifications");
+  $("notificationList").innerHTML = updates.length ? updates.map(eventMarkup).join("") :
+    '<div class="panel-empty"><h3>You’re all caught up</h3><p>Application and interview updates will appear here.</p></div>';
+  $("markNotificationsRead").disabled = unread === 0;
+  $("activityList").innerHTML = events.length ? events.map(eventMarkup).join("") :
+    '<div class="panel-empty"><h3>No activity yet</h3><p>Your application history will appear here.</p></div>';
+  const interviews = state.apps.filter(application=>application.interview &&
+    ["Interview scheduled","Interview completed"].includes(application.application_status))
+    .sort((a,b)=>new Date(a.interview.starts_at)-new Date(b.interview.starts_at));
+  $("calendarList").innerHTML = interviews.length ? interviews.map(application=>`
+    <article class="interview-agenda">
+      <h3>${esc(application.opportunity_title)}</h3>
+      <p>${esc(application.employer_name)}</p>
+      ${interviewDetails(application)}
+      <button type="button" class="inline-action" data-open-application="${esc(application.application_id)}">View application</button>
+    </article>`).join("") :
+    '<div class="panel-empty"><h3>No interviews scheduled</h3><p>Interview invitations will appear here.</p></div>';
+  const saved = savedIds().length;
+  $("workspaceSummary").textContent = `${state.apps.length} ${state.apps.length === 1 ? "application" : "applications"} · ${saved} saved ${saved === 1 ? "opportunity" : "opportunities"}`;
+}
+$("markNotificationsRead").onclick = () => {
+  for (const event of workspaceEvents()) notificationReads.add(event.key);
+  saveNotificationReads();
+  renderWorkspaceUpdates();
+};
+root.addEventListener("click", async event => {
+  const control = event.target.closest("button");
+  if (!control) return;
+  const data = control.dataset;
+  if (data.closeDialog) $(data.closeDialog).close();
+  if (data.workspacePanel) {
+    renderWorkspaceUpdates();
+    $(data.workspacePanel).showModal();
+  }
+  if (data.openApplication) {
+    if (data.eventKey) {
+      notificationReads.add(data.eventKey);
+      saveNotificationReads();
+    }
+    for (const dialog of root.querySelectorAll(".workspace-dialog[open]")) dialog.close();
+    if (state.role !== "student") await switchRole("student");
+    showTab("apps");
+    const card = $(`application-${data.openApplication}`);
+    if (card) {
+      card.setAttribute("tabindex","-1");
+      card.focus();
+      card.scrollIntoView({block:"center",behavior:"smooth"});
+    }
+    renderWorkspaceUpdates();
+  }
+  if (data.save) renderWorkspaceUpdates();
+});
+$("demoRole").onchange = async () => {
+  $("settingsDialog").close();
+  await switchRole($("demoRole").value);
+};
+function updateFilterColumn() {
+  const visible = !$("advancedFilters").hidden;
+  $("filterColumn").hidden = !visible;
+  $("discoveryGrid").classList.toggle("has-filters",visible);
+  $("advancedToggle").setAttribute("aria-expanded",String(visible));
+}
+$("advancedToggle").onclick = () => {
+  $("advancedFilters").hidden = !$("advancedFilters").hidden;
+  updateFilterColumn();
+};
+if (window.matchMedia("(min-width: 1000px)").matches) $("advancedFilters").hidden = false;
+updateFilterColumn();
 
 (async () => {
   state.skills = await api("/api/skills");

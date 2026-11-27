@@ -33,7 +33,7 @@ export function OwnerChip({ owner, className }: { owner: string; className?: str
     <span
       title={owner === "Core" ? "Shared platform core" : `Owned by team module ${owner}`}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border border-gold/50 bg-gold-50 px-1.5 py-px font-mono text-[11px] font-semibold tracking-tight text-gold-ink",
+        "inline-flex shrink-0 items-center gap-1 rounded-md border border-gold/50 bg-gold-50 px-1.5 py-px font-mono text-[11px] font-semibold tracking-tight whitespace-nowrap text-gold-ink",
         className,
       )}
     >

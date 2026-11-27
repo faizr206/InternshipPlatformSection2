@@ -39,6 +39,12 @@ cd frontend && npm install && npm run dev                          # http://127.
 `npm run build` in `frontend/` writes `frontend/dist`, which the backend serves at
 http://127.0.0.1:8000, so the whole platform runs from one process.
 
+**Demo data:** use the date/scenario menu in the top bar, or
+`curl -X POST "http://127.0.0.1:8000/api/demo/reset?scenario=midpoint"`. Scenarios: `fresh` (23 Nov 2026),
+`reviewed` (Jira demonstrated, profile v3), `midpoint` (PL-0001 at Emirates Group, week 7), `end` (ready for
+the final review). **Assistant model (optional):** copy `backend/.env.example` to `backend/.env` and add an
+OpenRouter key; without it the assistant quotes approved answers only.
+
 ## Test
 
 ```bash
@@ -71,8 +77,8 @@ Details and open tasks: [docs/PLAN.md](docs/PLAN.md).
 | 1. Repo bootstrap: team histories, CI, CODEOWNERS | Done |
 | 2. Backend core + P04/P05 moved into modules | Done |
 | 3. P01–P03 rules ported to the backend (profiles, submission, review, publish, close) | Done |
-| 4. P06/P07 rules ported to the backend | Planned |
-| 5. Live handoffs + one co-op assistant | Planned |
-| 6. Frontend shell + design system (mock API) | Done |
-| 7. Frontend screens per module | Planned |
+| 4. P06/P07 rules ported to the backend + demo scenarios | Done |
+| 5. Live handoffs + one co-op assistant + home endpoints | Done |
+| 6. Frontend shell + design system | Done |
+| 7. Frontend screens per module | First pass done (every page works on the real API) |
 | 8. End-to-end tests, demo script, data dictionary v4 | Planned |

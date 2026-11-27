@@ -100,3 +100,49 @@ def new_profile_version(conn, new_profile: dict, source: str) -> int:
         (new_profile["student_id"], new_version, json.dumps(new_profile), source, now()),
     )
     return new_version
+
+
+# --- Demo people and the demo clock (shared by every module) ---
+# Synthetic actors agreed for the demo (Team P6/P7 data.js PEOPLE). The student actor is the
+# selected student's display name.
+DEMO_PEOPLE = {
+    "employer": {"id": "EMP-HR01", "name": "Emirates Group HR (synthetic)", "role": "Employer HR / reviewer"},
+    "coordinator": {"id": "STF-C002", "name": "Sara Al Hammadi", "role": "Co-op coordinator"},
+    "reviewer": {"id": "STF-R014", "name": "Maya Chen", "role": "Learning reviewer"},
+    "supervisor": {"id": "EMP-S310", "name": "R. Khan", "role": "Workplace supervisor"},
+    "advisor": {"id": "FAC-A021", "name": "Dr. Ahmed Youssef", "role": "Academic advisor"},
+}
+ADVISORS = [{"id": "FAC-A021", "name": "Dr. Ahmed Youssef"}, {"id": "FAC-A034", "name": "Dr. Lina Farouk"}]
+
+
+def actor(role: str, given: str | None = None, conn=None, student_id: str | None = None) -> str:
+    """Name to record for an action: the given name, else the demo person for the role
+    (for students, their display name)."""
+    if given and given.strip():
+        return given.strip()
+    if role == "student" and conn is not None and student_id:
+        student = get_student(conn, student_id)
+        if student:
+            return student["display_name"]
+    return DEMO_PEOPLE.get(role, {}).get("name", role)
+
+
+def today(conn) -> str:
+    """The demo date (YYYY-MM-DD). Scenarios set it (e.g. midpoint = 2027-03-18); otherwise the real date.
+    P06/P07 business dates (log dates, due dates, overdue checks, review periods) use it."""
+    row = conn.execute("SELECT value FROM demo_settings WHERE key = 'today'").fetchone()
+    return row["value"] if row else datetime.now(timezone.utc).date().isoformat()
+
+
+def words(text: str | None) -> int:
+    return len((text or "").split())
+
+
+def record_handoff(conn, from_module: str, to_module: str, kind: str, payload: dict,
+                   student_id: str | None = None, ref: str | None = None, status: str = "delivered") -> str:
+    """Store a cross-module handoff record (contract evidence; GET /api/handoffs)."""
+    handoff_id = next_id(conn, "HO", ["SELECT handoff_id FROM handoffs"], width=4)
+    conn.execute("INSERT INTO handoffs (handoff_id, from_module, to_module, kind, student_id, ref, payload, status, "
+                 "created_at) VALUES (?,?,?,?,?,?,?,?,?)",
+                 (handoff_id, from_module, to_module, kind, student_id, ref, json.dumps(payload), status, now()))
+    return handoff_id

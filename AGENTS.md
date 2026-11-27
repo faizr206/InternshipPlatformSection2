@@ -12,7 +12,8 @@ One integrated app for the BUS2010 Internship Practicum Platform, merging three 
 |---|---|---|
 | P01–P03 | Student profiles · employer submission · university review/publication | `profiles`, `submissions`, `review` |
 | P04/P05 | Discovery and application tracking · AI-assisted matching | `applications`, `matching` |
-| P06/P07 | Internship preparation (LMS) · co-op learning progress · co-op assistant | `preparation`, `progress`, `assistant` (to be ported) |
+| P06/P07 | Internship preparation (LMS) · co-op learning progress · co-op assistant | `preparation`, `progress`, `assistant` |
+| Shared | Demo date, scenarios, people, handoff records · home journey/to-dos | `demo`, `home` |
 
 The demo thread: Layla Hassan (`COOP-B001`) and the Emirates Group listing `OP-028`. All records are
 **synthetic**; roles are **simulated** (no login).
@@ -24,12 +25,14 @@ backend/            FastAPI + SQLite (Python ≥3.12, uv)
   app/main.py       app factory: includes each module router, serves frontend/dist
   app/db.py         ONE schema for all modules, seed loading, additive migrations
   app/core/         shared helpers: now(), require_role(), get_student(), get_opportunity(),
-                    next_id(), log_event()
+                    next_id(), log_event(), record_handoff(), today() (demo date), actor()
   app/modules/<m>/  router.py (+ service.py) per module, owned by its team (.github/CODEOWNERS)
   app/seed/         seed data: p01p03/ (P01–P03 export), p06/, fixtures/ (test set)
   tests/            pytest, one file per module/story group
 frontend/           React 18 + Vite + TS + Tailwind v4 + TanStack Query (see frontend/README.md)
-  src/api/          typed client; src/mocks/ is an in-memory API used while endpoints are missing
+  src/api/          typed client (modules.ts = every backend endpoint); src/mocks/ = in-memory API for unit tests
+  src/pages/modules one page per nav item (ProfilePage, OpportunitiesPage, … RecordsPage), role-aware
+  src/components/kit.tsx  shared page pieces: useAction (toast + refetch all), Section, Field, StatusBadge, Timeline
   src/lib/nav.ts    nav items, owner chips, which roles see what
   src/styles/tokens.css   the ONLY place colours/fonts are defined (Coop blue palette)
 legacy/             the 3 original repos with full git history. READ-ONLY reference for porting.
@@ -42,8 +45,8 @@ docs/PLAN.md        roadmap, status and open tasks
 scripts/dev.sh                       # backend :8000 + frontend :5173 (add --reset for fresh data)
 cd backend && uv sync && uv run pytest
 cd backend && uv run uvicorn app.main:app --reload     # API docs at http://127.0.0.1:8000/docs
-cd frontend && npm install && npm run dev               # mock API by default
-cd frontend && VITE_USE_MOCKS=false npm run dev         # use the real backend
+cd frontend && npm install && npm run dev               # real backend via the /api proxy (start it first)
+cd frontend && VITE_USE_MOCKS=true npm run dev          # in-memory mock API, no backend
 cd frontend && npm run typecheck && npm test && npm run build
 ```
 
@@ -81,13 +84,22 @@ one is a bug even if tests pass.
    eligibility, score, gaps or unknowns, and never invents qualifications. Label it in the UI.
 9. **One test per acceptance criterion**, named after the story where possible
    (`test_p04_06_ac2_repeat_confirmation_is_idempotent`). Keep all existing tests green.
-10. **Frontend:** colours and fonts only from `tokens.css` utilities (`bg-navy`, `text-muted`, …);
+10. **Frontend:** every mutation goes through `useAction()` from `components/kit.tsx` (it refetches all queries,
+    because one module's action can change another's records). Colours and fonts only from `tokens.css` utilities (`bg-navy`, `text-muted`, …);
     every page shows its owner chip (`P01`…`P07`); the synthetic-data banner stays on every page;
     keep text contrast WCAG AA (gold is never text on white: use `text-gold-ink`).
 11. **No secrets in git.** `.env` is ignored; commit only `.env.example`. The optional OpenRouter key
-    for the assistant goes in `.env`.
+    for the assistant goes in `backend/.env` (see `backend/.env.example`). Tests must never call the real model.
 
 ## Gotchas
+
+- **Demo date:** P06/P07 business dates (log dates, due dates, overdue, review periods) use `core.today(conn)`,
+  the demo clock set by `PUT /api/demo/today` or a scenario, not the real date. Audit timestamps use `now()`.
+- **Scenarios** (`POST /api/demo/reset?scenario=fresh|reviewed|midpoint|end`) are built in
+  `modules/demo/scenarios.py` by calling the real endpoints. If you change a rule and a scenario stops
+  loading, fix the scenario step or the rule; the integration tests will fail until you do.
+- **Live handoffs** run in the caller's transaction and always write a `handoffs` record
+  (`core.record_handoff`). Don't bypass them with direct inserts into another module's tables.
 
 - The root `.gitignore` started as GitHub's Python template. Its `lib/` rule once hid
   `frontend/src/lib/` from git; it is now anchored to `/lib/`. If CI can't find a file you have

@@ -24,7 +24,7 @@ export function AssistantDrawer({
   onOpenChange: (o: boolean) => void;
   seed?: string;
 }) {
-  const { role } = useDemo();
+  const { role, studentId } = useDemo();
   const ask = useAskAssistant();
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
@@ -36,7 +36,7 @@ export function AssistantDrawer({
     setMsgs((m) => [...m, { id: Date.now(), from: "user", text: question }]);
     setText("");
     ask.mutate(
-      { question, role },
+      { question, role, student_id: role === "student" ? studentId : undefined },
       { onSuccess: (answer) => setMsgs((m) => [...m, { id: Date.now() + 1, from: "bot", answer }]) },
     );
   };
@@ -66,7 +66,7 @@ export function AssistantDrawer({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="text-[15px] font-semibold">Assistant</h2>
-            <OwnerChip owner="P03 · P07" />
+            <OwnerChip owner="P06" />
           </div>
           <p className="text-[12.5px] text-muted">Approved FAQ answers · asking as {roleLabel(role)}</p>
         </div>
@@ -107,9 +107,12 @@ export function AssistantDrawer({
                     <BookOpen className="h-3 w-3 shrink-0" aria-hidden />
                     {m.answer.source}
                   </Badge>
+                ) : m.answer.kind === "chat" ? null : m.answer.kind === "refused" ? (
+                  <Badge tone="bad">Not stored · remove personal details</Badge>
                 ) : (
-                  <Badge tone="warn">Sent to coordinator</Badge>
+                  <Badge tone="warn">Sent to coordinator{m.answer.question_id ? ` · ${m.answer.question_id}` : ""}</Badge>
                 )}
+                {m.answer.mode === "llm" && <Badge tone="ai">AI-written from approved text</Badge>}
                 {!m.answer.confident && m.answer.source && <Badge tone="neutral">Closest match</Badge>}
               </div>
             </div>
@@ -147,7 +150,7 @@ export function AssistantDrawer({
             <ArrowUp className="h-4 w-4" aria-hidden />
           </button>
         </div>
-        <p className="mt-1.5 px-1 text-[11.5px] text-muted">Retrieval-only mode · no personal data leaves the demo.</p>
+        <p className="mt-1.5 px-1 text-[11.5px] text-muted">Answers cite the approved FAQ · never share personal details here.</p>
       </form>
     </Sheet>
   );
